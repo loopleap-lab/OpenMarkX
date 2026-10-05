@@ -160,6 +160,13 @@ def _derive(key: int, n: int) -> bytes:
     return hashlib.shake_256(f"markweightx:{key}".encode()).digest(n)
 
 
+_POS = None                                                  # the scheme scored by forked workers
+
+
+def _pos_score(text):
+    return _POS.score(text)
+
+
 class MarkLLMDistill(Scheme):
     teacher = "KGW"
 
@@ -234,6 +241,16 @@ class MarkLLMDistill(Scheme):
         for t in range(logits.shape[1]):
             out[:, t] = lp(input_ids[:, : t + 1], logits[:, t].clone())   # A8
         return out
+
+    def score_batch(self, texts):
+        """EXPEdit/ITSEdit detection is CPU-bound alignment: score texts in forked workers (they use no CUDA)."""
+        if not self.positional or len(texts) < 32:
+            return [self.score(t) for t in texts]
+        import multiprocessing as mp
+        global _POS
+        _POS = self
+        with mp.get_context("fork").Pool(min(16, os.cpu_count() or 1)) as pool:
+            return pool.map(_pos_score, list(texts), chunksize=4)
 
     def _alignment_cost(self, text):
         """Upstream's test statistic on the true key (the first step of its permutation test)."""
