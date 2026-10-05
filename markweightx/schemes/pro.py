@@ -175,3 +175,14 @@ class PROFPLSmall(PRO):
     """FPL with beta = 0.5: tests whether beta = 5 pulls a LoRA student toward the anti-watermark optimum."""
     name = "pro-fpl-b05"
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
+
+
+@register_scheme
+class PROCooptCentered100(PROCooptCentered):
+    """pro-coopt-c with lambda = 100: the centered term averages over every violating entry (~5k per batch), so at
+    lambda = 1 each entry gets ~1e-4 of gradient and the KL pull still flattens M (seen 2026-10-05)."""
+    name = "pro-coopt-c100"
+
+    def __init__(self, **params):
+        params.setdefault("transform_loss_weight", 100.0)
+        super().__init__(**params)
