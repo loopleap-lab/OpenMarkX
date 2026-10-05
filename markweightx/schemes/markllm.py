@@ -4,6 +4,9 @@ Upstream MarkLLM (pinned 112fa74) is imported unchanged. The fixes below live he
 correctness fixes catalogued from Yifei's fork (ecosystem_design/markllm_fork_changes.md, A1-A8):
   A1 vocabulary width = the model's logits width;  A3 Unbiased key derived from the key, not random;
   A4 DIP hash_key restored;  A6 MorphMark scored row by row;  A8 processors get a copy of the logits.
+Two more of our own: SynthID's processor keeps an n-gram state across calls (seeded with zeros, not the prompt), so
+we call its key/g-value/update steps statelessly on the true last ngram_len-1 tokens; and every teacher samples at
+temperature 1 (upstream defaults EXP/SynthID 0.7 and PF 0.9), so the student learns the watermark, not a temperature.
 """
 from __future__ import annotations
 
@@ -30,10 +33,10 @@ TEACHERS = {
     "EWD":       dict(family="logit-bias", kind="distill_logit", model_detect=True),
     "DIP":       dict(family="reweight", kind="distill_logit"),
     "Unbiased":  dict(family="reweight", kind="distill_logit", model_detect=True, p_value=True),
-    "SynthID":   dict(family="tournament", kind="distill_logit"),
+    "SynthID":   dict(family="tournament", kind="distill_logit", stateless=True),
     "EXP":       dict(family="token-sampling", kind="distill_logit", p_value=True, argmax=True),
     "EXPEdit":   dict(family="token-sampling", kind="distill_sampling", p_value=True),
-    "PF":        dict(family="token-sampling", kind="distill_sampling"),
+    "PF":        dict(family="token-sampling", kind="distill_logit", argmax=True, gamma_p=True),
     "EXPGumbel": dict(family="token-sampling", kind="distill_sampling", p_value=True),
     "ITSEdit":   dict(family="token-sampling", kind="distill_sampling", p_value=True),
 }
@@ -66,6 +69,46 @@ class RowWise:
 
     def __call__(self, input_ids, scores):
         return torch.cat([self.lp(input_ids[b:b + 1], scores[b:b + 1].clone()) for b in range(input_ids.shape[0])])
+
+
+class SynthIDStateless:
+    """SynthID's tournament update with the context taken from the input (no cross-call state)."""
+
+    def __init__(self, wm):
+        self.lp = wm.logits_processor
+
+    def __call__(self, input_ids, scores):
+        lp, n = self.lp, self.lp.ngram_len - 1
+        if input_ids.shape[1] < n:
+            return scores
+        B, V = scores.shape
+        idx = torch.arange(V, device=scores.device).expand(B, V)
+        keys, _ = lp._compute_keys(input_ids[:, -n:], idx)
+        g = lp.sample_g_values(keys)
+        return lp.utils.update_scores(scores.float() / lp.config.temperature, g)
+
+
+class PFArgmax:
+    """PF's permute-and-flip rule as a processor: all mass on argmax(log p - log r), r seeded by upstream
+    get_seed_rng on the last `ngram` tokens (top_p = 1)."""
+
+    def __init__(self, wm):
+        self.wm = wm
+
+    def __call__(self, input_ids, scores):
+        u, c = self.wm.utils, self.wm.config
+        if input_ids.shape[1] < c.ngram:
+            return scores
+        logp = torch.log_softmax(scores.float() / c.gen_kwargs.get("temperature", 1.0), -1)
+        rs = []
+        for row in input_ids:
+            u.rng.manual_seed(u.get_seed_rng(row[-c.ngram:]))
+            rs.append(torch.rand(c.vocab_size, generator=u.rng, device=u.rng.device).roll(-c.payload))
+        rs = torch.stack(rs).to(scores.device)
+        tok = torch.argmax(logp[:, : rs.shape[1]] - rs.log(), -1)
+        out = torch.full_like(scores, -1e4)
+        out[torch.arange(len(tok), device=scores.device), tok] = 0.0
+        return out
 
 
 class ExpArgmax:
@@ -103,6 +146,8 @@ class MarkLLMDistill(Scheme):
         self.kind = meta["kind"]
         self.rowwise = meta.get("rowwise", False)
         self.argmax = meta.get("argmax", False)
+        self.stateless = meta.get("stateless", False)
+        self.gamma_p = meta.get("gamma_p", False)
         self.p_value = meta.get("p_value", False)
         self.needs_model_to_detect = meta.get("model_detect", False)
 
@@ -122,14 +167,20 @@ class MarkLLMDistill(Scheme):
             c.ignore_history_generation = False              # teacher forcing: no per-generation dedupe state
         if self.teacher == "DIP":                            # A4
             c.hash_key = str(k).encode()
+        if hasattr(c, "temperature"):                        # EXP, SynthID (upstream default 0.7)
+            c.temperature = 1.0
+        if self.teacher == "PF":                             # upstream default 0.9
+            c.gen_kwargs["temperature"] = 1.0
         if self.needs_model_to_detect:                       # detectors that run a model see the base, in fp32
             c.generation_model = ModelView(model)
         return {"teacher": self.teacher, "key": k, "config": os.path.basename(cfg_path)}
 
     def processor(self):
         """The decode-time teacher as a LogitsProcessor (for sampling from the teacher)."""
+        if self.stateless:
+            return SynthIDStateless(self.wm)
         if self.argmax:
-            return ExpArgmax(self.wm)
+            return PFArgmax(self.wm) if self.teacher == "PF" else ExpArgmax(self.wm)
         return RowWise(self.wm.logits_processor) if self.rowwise else self.wm.logits_processor
 
     # ---- training signal: upstream logits_processor, teacher-forced position by position ----------------
@@ -142,6 +193,16 @@ class MarkLLMDistill(Scheme):
 
     # ---- detection: upstream detect_watermark -------------------------------------------------------
     def score(self, text):
+        n = len(self.tok(text, add_special_tokens=False)["input_ids"])
+        if self.gamma_p:                                     # PF: sum of -log r ~ Gamma(k, 1) under the null
+            import numpy as np
+            from scipy.stats import gamma
+            per_tok = self.wm.utils.get_scores_by_t(text)
+            k = len(per_tok)
+            if k == 0:
+                return 0.0, n
+            tot = float(np.asarray(self.wm.utils.get_scores(per_tok)).reshape(-1)[0])
+            return -float(gamma.logsf(tot, a=k)) / math.log(10), n
         d = self.wm.detect_watermark(text, return_dict=True)
         s = float(d["score"])
         if self.p_value:                                     # upstream returns a p-value: report -log10 p
