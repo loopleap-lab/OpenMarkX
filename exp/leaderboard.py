@@ -16,7 +16,8 @@ COLS = [("finetune_steps200", "FT 200"), ("finetune_steps800", "FT 800"), ("fine
         ("merge_ratio0.2", "merge .2"), ("merge_ratio0.4", "merge .4"), ("merge_ratio0.6", "merge .6"),
         ("prune_sparsity0.2", "prune 20%"), ("prune_sparsity0.5", "prune 50%"),
         ("quantize_bits8", "int8"), ("quantize_bits4", "nf4"),
-        ("text:word_deletion_ratio0.3", "delete 30%"), ("text:synonym_ratio0.3", "synonym 30%")]
+        ("text:word_deletion_ratio0.3", "delete 30%"), ("text:synonym_ratio0.3", "synonym 30%"),
+        ("attack:spoof_unigram", "forged ↓")]
 NOT_INCLUDED = {"markllm-expgumbel-d": "upstream builds a (V·prefix)×V noise table, 128 GB at V=128k; same Gumbel-max rule as EXP"}
 
 
@@ -51,6 +52,7 @@ def main():
         rep = r["edits"].get("none", {}).get("rep4")
         print(f'| {r["scheme"]} | {f(r["learned"])} | {f(r["ceiling"])} | {r["auc"]:.3f} | ' + " | ".join(cells) +
               f' | {r["ppl"]:.1f} | {f(rep)} |')
+    print("\nforged ↓: share of texts an attacker forges without Alice's model or key (token counts from her 311 texts, then a biased base model); lower is safer.")
     print("\n\\* degenerate text (4-gram repetition > 0.3); the score is inflated by looping, not by the watermark.")
     for k, why in NOT_INCLUDED.items():
         print(f"\nNot included: {k}: {why}.")
