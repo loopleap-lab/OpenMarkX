@@ -35,3 +35,15 @@ def load_release(rel: Release, device: str):
     if rel.adapter and not rel.weights:
         model = PeftModel.from_pretrained(model, rel.adapter)
     return model.eval()
+
+
+class ConfigOnly:
+    """A stand-in for detectors that need only the model's config (vocabulary width) and device, not its weights."""
+
+    def __init__(self, base: str, device: str):
+        from transformers import AutoConfig
+        self.config = AutoConfig.from_pretrained(base_path(base))
+        self.device = torch.device(device)
+
+    def __call__(self, *a, **k):
+        raise RuntimeError("this detector was set up without model weights")

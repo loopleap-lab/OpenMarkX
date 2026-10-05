@@ -41,7 +41,7 @@ def _save_weights(model, tok, out):
 
 @register_edit
 def finetune(rel: Release, out: str, *, steps=800, lr=1e-4, bs=8, seq_len=256, rank=16, device="cuda:0",
-             data: str | None = None, seed=1, offset=10000):
+             data: str | None = None, seed=1, offset=10000, micro_bs: int | None = None):
     """LoRA fine-tune on clean text (next-token loss), then fold the new adapter in. `offset` keeps the
     fine-tuning chunks disjoint from the ones used to embed."""
     from peft import LoraConfig, get_peft_model
@@ -55,15 +55,18 @@ def finetune(rel: Release, out: str, *, steps=800, lr=1e-4, bs=8, seq_len=256, r
     opt = torch.optim.AdamW(params, lr=lr)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 20) * 0.5 * (1 + math.cos(math.pi * s / steps)))
     g = torch.Generator().manual_seed(seed); model.train(); t0 = time.time()
+    mb = micro_bs or bs                                     # same effective batch on any GPU: accumulate micro-batches
     for step in range(steps):
         ids = corpus[torch.randint(len(corpus), (bs,), generator=g)].to(device)
-        lg = model(input_ids=ids).logits[:, :-1].float()
-        loss = F.cross_entropy(lg.reshape(-1, lg.shape[-1]), ids[:, 1:].reshape(-1))
-        loss.backward(); torch.nn.utils.clip_grad_norm_(params, 1.0); opt.step(); sched.step(); opt.zero_grad(set_to_none=True)
+        for i in range(0, bs, mb):
+            lg = model(input_ids=ids[i:i + mb]).logits[:, :-1].float()
+            loss = F.cross_entropy(lg.reshape(-1, lg.shape[-1]), ids[i:i + mb, 1:].reshape(-1)) * (len(ids[i:i + mb]) / bs)
+            loss.backward(); del lg
+        torch.nn.utils.clip_grad_norm_(params, 1.0); opt.step(); sched.step(); opt.zero_grad(set_to_none=True)
         if (step + 1) % 100 == 0:
             print({"ft_step": step + 1, "loss": round(loss.item(), 4), "sec": round(time.time() - t0)}, flush=True)
     model = model.merge_and_unload().eval()
-    p = dict(steps=steps, lr=lr, bs=bs, seq_len=seq_len, rank=rank, seed=seed)
+    p = dict(steps=steps, lr=lr, bs=bs, seq_len=seq_len, rank=rank, seed=seed)    # micro_bs changes memory, not the edit
     return _child(rel, out, "finetune", p, weights=_save_weights(model, tok, out)).save()
 
 
@@ -74,10 +77,10 @@ def merge(rel: Release, out: str, *, partner: str, ratio=0.4, device="cuda:0"):
     from transformers import AutoModelForCausalLM
     tok = load_tokenizer(rel.base)
     model = materialize(rel, device)
-    other = AutoModelForCausalLM.from_pretrained(base_path(partner), torch_dtype=torch.bfloat16).to(device)
+    other = AutoModelForCausalLM.from_pretrained(base_path(partner), torch_dtype=torch.bfloat16)   # stays on CPU
     po = dict(other.named_parameters())
     for n, p in model.named_parameters():
-        p.mul_(1 - ratio).add_(po[n].to(p.dtype), alpha=ratio)
+        p.mul_(1 - ratio).add_(po[n].to(p.device, p.dtype), alpha=ratio)
     del other
     return _child(rel, out, "merge", dict(partner=partner, ratio=ratio), weights=_save_weights(model, tok, out)).save()
 

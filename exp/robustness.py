@@ -18,7 +18,7 @@ import torch
 from markweightx.detect import repetition, scores, summary
 from markweightx.edits import modify, rewrite
 from markweightx.generate import eval_prompts, generate, perplexity
-from markweightx.models import load_base, load_release, load_tokenizer
+from markweightx.models import ConfigOnly, load_base, load_release, load_tokenizer
 from markweightx.registry import get_scheme
 from markweightx.types import Release
 
@@ -48,15 +48,26 @@ def main():
     prompts = eval_prompts(tok, n=a.n)
     assert prompts == texts["prompts"]
     s_null = texts["scores"]["null"]
-    partner = "llama-3.2-1b-instruct"
+    partner = rel.base + "-instruct"                      # merge with the instruct model of the same base
+    big = "8b" in rel.base
 
-    det_model = load_base(rel.base, a.device)             # the detector's model (only some schemes use it)
-    sch = get_scheme(rel.scheme); sch.setup(det_model, tok, a.device, rel.key)
-    ppl_judge = det_model
+    sch = get_scheme(rel.scheme)
+    # detectors that run a language model get the base; the others only need its config. On 8B the base used to
+    # judge perplexity is loaded per edit and freed, so it never sits next to the edited model on one card.
+    resident = load_base(rel.base, a.device) if (sch.needs_model_to_detect or not big) else None
+    sch.setup(resident if resident is not None else ConfigOnly(rel.base, a.device), tok, a.device, rel.key)
+
+    def ppl_of(texts):
+        if resident is not None:
+            return perplexity(resident, tok, prompts, texts)
+        judge = load_base(rel.base, a.device)
+        v = perplexity(judge, tok, prompts, texts)
+        del judge; gc.collect(); torch.cuda.empty_cache()
+        return v
 
     def record(edit, wm_texts, extra=None):
         s = [x for x, _ in scores(sch, wm_texts)]
-        row = {"edit": edit, **summary(s, s_null), "ppl": perplexity(ppl_judge, tok, prompts, wm_texts),
+        row = {"edit": edit, **summary(s, s_null), "ppl": ppl_of(wm_texts),
                "rep4": sum(map(repetition, wm_texts)) / len(wm_texts), **(extra or {})}
         print(json.dumps(row), flush=True)
         with open(out_rows, "a") as f:
@@ -74,6 +85,8 @@ def main():
             continue
         child_dir = f"{a.release}/edits/{t}"
         kw = dict(partner=partner) if op == "merge" else {}
+        if op == "finetune" and big:
+            kw["micro_bs"] = 2                            # 8B on a 24 GB card: same edit, accumulated
         child = modify(rel, op, child_dir, device=a.device, **p, **kw)
         gc.collect(); torch.cuda.empty_cache()
         m = load_release(child, a.device)
