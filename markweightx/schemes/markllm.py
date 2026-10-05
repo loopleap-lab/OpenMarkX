@@ -31,7 +31,7 @@ TEACHERS = {
     "DIP":       dict(family="reweight", kind="distill_logit"),
     "Unbiased":  dict(family="reweight", kind="distill_logit", model_detect=True, p_value=True),
     "SynthID":   dict(family="tournament", kind="distill_logit"),
-    "EXP":       dict(family="token-sampling", kind="distill_sampling", p_value=True),
+    "EXP":       dict(family="token-sampling", kind="distill_logit", p_value=True, argmax=True),
     "EXPEdit":   dict(family="token-sampling", kind="distill_sampling", p_value=True),
     "PF":        dict(family="token-sampling", kind="distill_sampling"),
     "EXPGumbel": dict(family="token-sampling", kind="distill_sampling", p_value=True),
@@ -68,6 +68,28 @@ class RowWise:
         return torch.cat([self.lp(input_ids[b:b + 1], scores[b:b + 1].clone()) for b in range(input_ids.shape[0])])
 
 
+class ExpArgmax:
+    """EXP's sampling rule as a processor: the teacher puts all mass on argmax u^(1/p), with u drawn by upstream's
+    own seed_rng from the last prefix_length tokens (as Gu et al. distill KTH: cross-entropy to the argmax token)."""
+
+    def __init__(self, wm):
+        self.wm = wm
+
+    def __call__(self, input_ids, scores):
+        if input_ids.shape[1] < self.wm.config.prefix_length:          # no full context yet: unwatermarked
+            return scores
+        u = []
+        for row in input_ids:
+            self.wm.utils.seed_rng(row)
+            u.append(torch.rand(self.wm.config.vocab_size, generator=self.wm.utils.rng))
+        u = torch.stack(u).to(scores.device)
+        probs = torch.softmax(scores.float() / self.wm.config.temperature, -1)[:, : u.shape[1]]   # as upstream
+        tok = self.wm.utils.exp_sampling(probs, u).view(-1)
+        out = torch.full_like(scores, -1e4)
+        out[torch.arange(len(tok), device=scores.device), tok] = 0.0
+        return out
+
+
 def _derive(key: int, n: int) -> bytes:
     return hashlib.shake_256(f"markweightx:{key}".encode()).digest(n)
 
@@ -80,6 +102,7 @@ class MarkLLMDistill(Scheme):
         meta = TEACHERS[self.teacher]
         self.kind = meta["kind"]
         self.rowwise = meta.get("rowwise", False)
+        self.argmax = meta.get("argmax", False)
         self.p_value = meta.get("p_value", False)
         self.needs_model_to_detect = meta.get("model_detect", False)
 
@@ -105,6 +128,8 @@ class MarkLLMDistill(Scheme):
 
     def processor(self):
         """The decode-time teacher as a LogitsProcessor (for sampling from the teacher)."""
+        if self.argmax:
+            return ExpArgmax(self.wm)
         return RowWise(self.wm.logits_processor) if self.rowwise else self.wm.logits_processor
 
     # ---- training signal: upstream logits_processor, teacher-forced position by position ----------------

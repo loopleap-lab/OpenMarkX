@@ -13,7 +13,8 @@ def test_registry_has_all_teachers_pro_and_nowm():
     names = set(SCHEMES)
     assert {"pro", "nowm"} <= names
     assert len([n for n in names if n.startswith("markllm-") and n.endswith("-d")]) == 13
-    assert get_scheme("markllm-exp-d").kind == "distill_sampling"
+    assert get_scheme("markllm-expedit-d").kind == "distill_sampling"
+    assert get_scheme("markllm-exp-d").kind == "distill_logit"   # argmax target (Gu et al. KTH recipe)
     assert get_scheme("markllm-kgw-d").kind == "distill_logit"
 
 
