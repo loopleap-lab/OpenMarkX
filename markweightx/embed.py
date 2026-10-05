@@ -28,7 +28,8 @@ def kl_teacher_student(t_logits, s_logits):
 
 
 def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_len=128, lr=2e-4, rank=64,
-          device="cuda:0", key: dict | None = None, data: str | None = None, save_every=500, seed=0, log_every=10):
+          device="cuda:0", key: dict | None = None, data: str | None = None, save_every=500, seed=0, log_every=10,
+          bos: bool = False):
     os.makedirs(out, exist_ok=True)
     tok = load_tokenizer(base)
     model = load_base(base, device)
@@ -42,6 +43,9 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     model = get_peft_model(model, LoraConfig(r=rank, lora_alpha=2 * rank, lora_dropout=0.0, task_type="CAUSAL_LM",
                                              target_modules=LORA_TARGETS.split(",")))
     corpus = torch.load(data or DATA["llama3"])["train"][:, :seq_len]
+    if bos:   # start every chunk with BOS, as real prompts do: otherwise the position after BOS is never trained, and
+              # FPL's perturbations broke it once (pro-full generated " Ur Ur Ur ..." only after BOS, 2026-10-05)
+        corpus = torch.cat([torch.full((len(corpus), 1), tok.bos_token_id, dtype=corpus.dtype), corpus[:, :-1]], 1)
     with torch.no_grad():                                  # catch broken weights before hours of training
         for i in range(0, 64 if str(device).startswith("cuda") else 8, 8):
             if not torch.isfinite(model(input_ids=corpus[i:i + 8].to(device)).logits).all():
@@ -51,7 +55,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     opt = torch.optim.AdamW([{"params": lora}] + sch.param_groups(), lr=lr, weight_decay=0.0)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 50) * 0.5 * (1 + math.cos(math.pi * s / steps)))
     g = torch.Generator().manual_seed(seed)
-    cfg = dict(scheme=scheme, base=base, steps=steps, bs=bs, accum=accum, seq_len=seq_len, lr=lr, rank=rank, seed=seed)
+    cfg = dict(scheme=scheme, base=base, steps=steps, bs=bs, accum=accum, seq_len=seq_len, lr=lr, rank=rank, seed=seed, bos=bos)
     json.dump(cfg, open(f"{out}/embed_args.json", "w"), indent=1)
     log = open(f"{out}/train_log.jsonl", "a"); t0 = time.time(); skipped = 0
     booster = getattr(sch, "booster", None)                # PRO's Booster robust training (simulated fine-tune)

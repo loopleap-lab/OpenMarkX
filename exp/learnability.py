@@ -34,10 +34,11 @@ def main():
     ap.add_argument("--n", type=int, default=500)
     ap.add_argument("--tag", default="e2")
     ap.add_argument("--skip_embed", action="store_true")
+    ap.add_argument("--bos", action="store_true", help="start every training chunk with BOS")
     a = ap.parse_args()
     out = f"{RUNS}/{a.tag}/{a.base}/{a.scheme}"
     t0 = time.time()
-    rel = Release.open(out) if a.skip_embed else embed(a.scheme, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device)
+    rel = Release.open(out) if a.skip_embed else embed(a.scheme, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos)
     t_embed = time.time() - t0
     torch.cuda.empty_cache()
 
