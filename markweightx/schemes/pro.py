@@ -25,10 +25,14 @@ class PRO(Scheme):
     needs_model_to_detect = False
 
     def __init__(self, gamma=0.5, delta=1.0, chunk_size=10, transform_loss_weight=1e-3, tau_init=10.0, tau_max=1000.0,
-                 co_opt=True, **params):
+                 co_opt=True, transform_lr=1e-5, transform_wd=0.01, **params):
         super().__init__(gamma=gamma, delta=delta, chunk_size=chunk_size, **params)
         self.gamma, self.delta, self.chunk = gamma, delta, chunk_size
         self.w_aux, self.tau0, self.tau1, self.co_opt = transform_loss_weight, tau_init, tau_max, co_opt
+        # PRO's own run trains the transform at its global lr (1e-5); at the LoRA lr (2e-4) the KL objective flattens the
+        # transform until v - mean is numerical noise and the mark is unreadable (seen 2026-10-05). Keep PRO's setting.
+        self.t_lr, self.t_wd = transform_lr, transform_wd
+        self.spread = []
 
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)
@@ -57,6 +61,9 @@ class PRO(Scheme):
     def trainable_params(self):
         return list(self.wm.transform_model.parameters()) if self.co_opt else []
 
+    def param_groups(self):
+        return [{"params": self.trainable_params(), "lr": self.t_lr, "weight_decay": self.t_wd}] if self.co_opt else []
+
     def aux_loss(self):
         if not self.co_opt:
             return None
@@ -69,6 +76,11 @@ class PRO(Scheme):
         return self.w_aux * (mean_pen + range_pen)
 
     def on_step(self, step, steps):
+        v = self.wm.last_transformed_embeddings
+        if v is not None and step % 100 == 0:           # how far the transform's outputs are from collapsing
+            c = (v - v.mean(-1, keepdim=True)).detach().abs().median().item()
+            self.spread.append((step, c))
+            print({"pro_spread": c, "step": step}, flush=True)
         if self.co_opt:
             self.wm.set_tanh_temperature(self.tau0 + min(step / steps, 1.0) * (self.tau1 - self.tau0))
 
@@ -76,7 +88,7 @@ class PRO(Scheme):
         if self.co_opt:
             p = os.path.join(out, "transform_model.pt")
             torch.save(self.wm.transform_model.state_dict(), p)
-            key = {**key, "transform": p}
+            key = {**key, "transform": p, "spread": self.spread[-1][1] if self.spread else None}
         return key
 
     def processor(self):

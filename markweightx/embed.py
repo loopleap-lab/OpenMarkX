@@ -45,8 +45,9 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         for i in range(0, 64 if str(device).startswith("cuda") else 8, 8):
             if not torch.isfinite(model(input_ids=corpus[i:i + 8].to(device)).logits).all():
                 raise RuntimeError(f"base model {base} gives non-finite logits on corpus[{i}:{i + 8}]: check the weights")
-    params = [p for p in model.parameters() if p.requires_grad] + sch.trainable_params()
-    opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
+    lora = [p for p in model.parameters() if p.requires_grad]
+    params = lora + sch.trainable_params()
+    opt = torch.optim.AdamW([{"params": lora}] + sch.param_groups(), lr=lr, weight_decay=0.0)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 50) * 0.5 * (1 + math.cos(math.pi * s / steps)))
     g = torch.Generator().manual_seed(seed)
     cfg = dict(scheme=scheme, base=base, steps=steps, bs=bs, accum=accum, seq_len=seq_len, lr=lr, rank=rank, seed=seed)

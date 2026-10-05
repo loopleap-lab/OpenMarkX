@@ -28,6 +28,11 @@ class Scheme:
         """Extra parameters trained with the student (e.g. PRO's transform)."""
         return []
 
+    def param_groups(self) -> list[dict]:
+        """Optimizer groups for the extra parameters; default: same settings as the LoRA weights."""
+        ps = self.trainable_params()
+        return [{"params": ps}] if ps else []
+
     def aux_loss(self):
         return None
 
