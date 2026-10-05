@@ -163,6 +163,10 @@ def _derive(key: int, n: int) -> bytes:
 _POS = None                                                  # the scheme scored by forked workers
 
 
+def _pos_init():
+    torch.set_num_threads(1)                                 # 16 workers x 16 threads would oversubscribe the CPU
+
+
 def _pos_score(text):
     return _POS.score(text)
 
@@ -249,8 +253,22 @@ class MarkLLMDistill(Scheme):
         import multiprocessing as mp
         global _POS
         _POS = self
-        with mp.get_context("fork").Pool(min(16, os.cpu_count() or 1)) as pool:
+        with mp.get_context("fork").Pool(min(16, os.cpu_count() or 1), initializer=_pos_init) as pool:
             return pool.map(_pos_score, list(texts), chunksize=4)
+
+    def _expedit_cost(self, toks):
+        """Upstream EXPEdit one_run, gathering only the key columns of the tokens in the text (fork change B8): the
+        cost reads y[j, x[i]] only, so remapping token ids to their unique index gives the same value, without
+        copying a k x V slice of the key for each of the n shifts."""
+        import numpy as np
+        from watermark.exp_edit.cython_files.levenshtein import levenshtein
+        if not hasattr(self, "_xi_np"):
+            self._xi_np = self.xi.numpy()
+        uniq, inv = np.unique(toks, return_inverse=True)
+        cols = np.ascontiguousarray(self._xi_np[:, uniq])
+        k, n = len(toks), self.key_n
+        inv = inv.astype(np.int64)
+        return float(min(levenshtein(inv, np.ascontiguousarray(cols[(j + np.arange(k)) % n]), 0.0) for j in range(n)))
 
     def _alignment_cost(self, text):
         """Upstream's test statistic on the true key (the first step of its permutation test)."""
@@ -259,7 +277,7 @@ class MarkLLMDistill(Scheme):
             toks = c.generation_tokenizer.encode(text, return_tensors="pt", add_special_tokens=False).numpy()[0]
             if len(toks) < 2:
                 return 0.0
-            return float(u.one_run(toks, self.xi.numpy())[0])
+            return self._expedit_cost(toks)
         toks = c.generation_tokenizer.encode(text, return_tensors="pt", truncation=True, max_length=2048)[0]
         gen = torch.Generator(); gen.manual_seed(self.its_seed)
         v, _ = u.phi(tokens=toks, n=self.key_n, k=len(toks), generator=gen, key_func=u.transform_key_func,
