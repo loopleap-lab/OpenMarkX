@@ -43,3 +43,10 @@ def summary(wm_stats, null_stats, fpr=0.01):
     return {"tpr_at_1fpr": sum(s > thr for s in wm_stats) / len(wm_stats), "thr": thr,
             "auc": roc_auc_score([1] * len(wm_stats) + [0] * len(ns), list(wm_stats) + ns),
             "median_wm": med(wm_stats), "median_null": med(ns), "n_wm": len(wm_stats), "n_null": len(ns)}
+
+
+def repetition(text: str, n: int = 4) -> float:
+    """Share of repeated word n-grams; near 1 means the model is looping (degenerate text inflates some detectors)."""
+    w = text.split()
+    grams = [tuple(w[i:i + n]) for i in range(len(w) - n + 1)]
+    return 1 - len(set(grams)) / len(grams) if grams else 0.0
