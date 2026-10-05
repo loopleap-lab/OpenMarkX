@@ -186,3 +186,11 @@ class PROCooptCentered100(PROCooptCentered):
     def __init__(self, **params):
         params.setdefault("transform_loss_weight", 100.0)
         super().__init__(**params)
+
+
+@register_scheme
+class PROFull(PROCooptCentered100):
+    """Full PRO as in the paper: co-optimized policy (centered non-vanishing term, lambda = 100) + FPL (beta = 0.5;
+    beta = 5 pulled our LoRA student to the inverted mark)."""
+    name = "pro-full"
+    booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
