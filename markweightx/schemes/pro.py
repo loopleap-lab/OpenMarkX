@@ -194,3 +194,10 @@ class PROFull(PROCooptCentered100):
     beta = 5 pulled our LoRA student to the inverted mark)."""
     name = "pro-full"
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
+
+
+@register_scheme
+class PROFullB01(PROFull):
+    """pro-full with beta = 0.1 (beta 0.5 cut the learned share from 0.97 to 0.15)."""
+    name = "pro-full-b01"
+    booster = {"alpha": 0.1, "lamb": 0.1, "attack": "anti"}
