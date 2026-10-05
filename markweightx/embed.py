@@ -57,8 +57,17 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     booster = getattr(sch, "booster", None)                # PRO's Booster robust training (simulated fine-tune)
 
     def attack_grads(att):
+        """Gradient of the simulated attack: clean-text fine-tuning ("clean"), or, as PRO's FPL, learning the
+        anti-watermarked distribution (base logits with the watermark bias subtracted) on the same text ("anti")."""
         lg = model(input_ids=att).logits[:, :-1].float()
-        l = F.cross_entropy(lg.reshape(-1, lg.shape[-1]), att[:, 1:].reshape(-1))
+        if booster.get("attack", "clean") == "anti":
+            with torch.no_grad(), model.disable_adapter():
+                base_lg = model(input_ids=att).logits[:, :-1].float()
+            with torch.no_grad():
+                anti = sch.anti_logits(att[:, :-1], base_lg)
+            l = kl_teacher_student(anti, lg)
+        else:
+            l = F.cross_entropy(lg.reshape(-1, lg.shape[-1]), att[:, 1:].reshape(-1))
         return torch.autograd.grad(l, lora)
     model.train()
     for step in range(steps):

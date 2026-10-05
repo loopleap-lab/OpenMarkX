@@ -64,6 +64,13 @@ class PRO(Scheme):
         self.wm.last_input_ids = None                      # the batch changes every step; never reuse the cache
         return self.wm.watermark_logits(input_ids, logits)
 
+    def anti_logits(self, input_ids, logits):
+        """The anti-watermarked teacher of PRO's FPL: the same bias, subtracted."""
+        self.wm.last_input_ids = None
+        out = self.wm.watermark_logits(input_ids, logits, anti=True)
+        self.wm.last_input_ids = None                       # don't let the next target reuse these embeddings
+        return out
+
     def trainable_params(self):
         return list(self.wm.transform_model.parameters()) if self.co_opt else []
 
@@ -121,10 +128,13 @@ class PRO(Scheme):
 
 @register_scheme
 class PROCoopt(PRO):
+    """Co-optimized policy (mapping model M trained with the student), with the paper's regularizer weight
+    (lambda = 1, arXiv 2510.23891 Eq. 4). The code default 1e-3 let M collapse in our first runs."""
     name = "pro-coopt"
 
     def __init__(self, **params):
         params.setdefault("co_opt", True)
+        params.setdefault("transform_loss_weight", 1.0)
         super().__init__(**params)
 
 
@@ -134,3 +144,12 @@ class PROBooster(PRO):
     simulates one fine-tuning step on clean text and penalizes how much it would move the model."""
     name = "pro-booster"
     booster = {"alpha": 0.1, "lamb": 1.0}
+
+
+@register_scheme
+class PROFPL(PRO):
+    """PRO + Forgotten Perturbation-aware Learning (arXiv 2510.23891 Eq. 6; code: booster_anti): each step simulates
+    one fine-tuning step toward the anti-watermarked distribution and penalizes how much it moves the model,
+    with the paper's alpha = 0.1 and beta = 5."""
+    name = "pro-fpl"
+    booster = {"alpha": 0.1, "lamb": 5.0, "attack": "anti"}
