@@ -4,6 +4,12 @@ Training signal (as in PRO's train_logit_distill_Co-optimization.py): one semant
 bias = delta * tanh(tau * (T(BERT(context)) - mean))[mapping], with the transform T trained jointly with the student
 (co-optimization): tau anneals 10 -> 1000 and T carries a row/column-mean + range regularizer (weight 1e-3).
 Detection: PRO's detect_batch (mean of the mapped +-1 values over 10-word chunks after a 40-word context).
+
+`pro` keeps the transform frozen at the released weights (transform_model_cbert.pth), which is what the released PRO
+8B checkpoint used (its transform file is byte-identical to that init). `pro-coopt` trains the transform jointly, as
+in train_logit_distill_Co-optimization.py. In our runs (1B at lr 2e-4, 8B at PRO's 1e-5) co-optimization flattens the
+transform: the KL gradient pulls the teacher toward the base, so |v - mean| decays to ~1e-4 within 200 steps and the
+mark becomes unreadable. Kept as a separate scheme for the PRO authors to look at.
 """
 from __future__ import annotations
 
@@ -25,7 +31,7 @@ class PRO(Scheme):
     needs_model_to_detect = False
 
     def __init__(self, gamma=0.5, delta=1.0, chunk_size=10, transform_loss_weight=1e-3, tau_init=10.0, tau_max=1000.0,
-                 co_opt=True, transform_lr=1e-5, transform_wd=0.01, **params):
+                 co_opt=False, transform_lr=1e-5, transform_wd=0.01, **params):
         super().__init__(gamma=gamma, delta=delta, chunk_size=chunk_size, **params)
         self.gamma, self.delta, self.chunk = gamma, delta, chunk_size
         self.w_aux, self.tau0, self.tau1, self.co_opt = transform_loss_weight, tau_init, tau_max, co_opt
@@ -111,3 +117,12 @@ class PRO(Scheme):
 
     def score(self, text):
         return self.score_batch([text])[0]
+
+
+@register_scheme
+class PROCoopt(PRO):
+    name = "pro-coopt"
+
+    def __init__(self, **params):
+        params.setdefault("co_opt", True)
+        super().__init__(**params)
