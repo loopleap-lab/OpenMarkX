@@ -55,6 +55,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     json.dump(cfg, open(f"{out}/embed_args.json", "w"), indent=1)
     log = open(f"{out}/train_log.jsonl", "a"); t0 = time.time(); skipped = 0
     booster = getattr(sch, "booster", None)                # PRO's Booster robust training (simulated fine-tune)
+    attack_loss = []
 
     def attack_grads(att):
         """Gradient of the simulated attack: clean-text fine-tuning ("clean"), or, as PRO's FPL, learning the
@@ -68,6 +69,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
             l = kl_teacher_student(anti, lg)
         else:
             l = F.cross_entropy(lg.reshape(-1, lg.shape[-1]), att[:, 1:].reshape(-1))
+        attack_loss.append(l.item())
         return torch.autograd.grad(l, lora)
     model.train()
     for step in range(steps):
@@ -110,7 +112,8 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
                 del g1, g2
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step(); sched.step(); opt.zero_grad(set_to_none=True)
-        rec = {"step": step + 1, "kl": round(tot, 5), "skipped": skipped, "sec": round(time.time() - t0, 1),
+        rec = {"step": step + 1, "kl": round(tot, 5), "skipped": skipped,
+               **({"attack": round(attack_loss[-2], 5)} if booster and len(attack_loss) >= 2 else {}), "sec": round(time.time() - t0, 1),
                "mem_gb": round(torch.cuda.max_memory_allocated(device) / 2**30, 1) if str(device).startswith("cuda") else 0}
         log.write(json.dumps(rec) + "\n"); log.flush()
         if (step + 1) % log_every == 0 or step == 0:

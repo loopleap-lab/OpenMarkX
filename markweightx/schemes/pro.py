@@ -31,13 +31,14 @@ class PRO(Scheme):
     needs_model_to_detect = False
 
     def __init__(self, gamma=0.5, delta=1.0, chunk_size=10, transform_loss_weight=1e-3, tau_init=10.0, tau_max=1000.0,
-                 co_opt=False, transform_lr=1e-5, transform_wd=0.01, **params):
+                 co_opt=False, transform_lr=1e-5, transform_wd=0.01, centered_range=False, **params):
         super().__init__(gamma=gamma, delta=delta, chunk_size=chunk_size, **params)
         self.gamma, self.delta, self.chunk = gamma, delta, chunk_size
         self.w_aux, self.tau0, self.tau1, self.co_opt = transform_loss_weight, tau_init, tau_max, co_opt
         # PRO's own run trains the transform at its global lr (1e-5); at the LoRA lr (2e-4) the KL objective flattens the
         # transform until v - mean is numerical noise and the mark is unreadable (seen 2026-10-05). Keep PRO's setting.
         self.t_lr, self.t_wd = transform_lr, transform_wd
+        self.centered_range = centered_range
         self.spread = []
 
     def setup(self, model, tokenizer, device, key=None):
@@ -84,7 +85,11 @@ class PRO(Scheme):
         scale = (1 - self.gamma) / self.gamma
         s = torch.where(v > 0, v * scale, v)
         mean_pen = s.mean(1).pow(2).mean() + s.mean(0).pow(2).mean()
-        pen = torch.relu(0.05 - v.abs()); mask = (pen > 0).float()
+        # PRO's code puts the non-vanishing term on raw v. M can then satisfy it by shifting every dimension to +0.05,
+        # which the mean subtraction before tanh removes: the mark vanishes (seen with lambda = 1). centered_range
+        # applies the term to v - mean, which is what reaches the logits.
+        r = v - v.mean(-1, keepdim=True) if self.centered_range else v
+        pen = torch.relu(0.05 - r.abs()); mask = (pen > 0).float()
         range_pen = (pen * mask).sum() / torch.clamp(mask.sum(), min=1.0)
         return self.w_aux * (mean_pen + range_pen)
 
@@ -153,3 +158,20 @@ class PROFPL(PRO):
     with the paper's alpha = 0.1 and beta = 5."""
     name = "pro-fpl"
     booster = {"alpha": 0.1, "lamb": 5.0, "attack": "anti"}
+
+
+@register_scheme
+class PROCooptCentered(PROCoopt):
+    """Co-optimized policy with the non-vanishing term on the centered output (closes the shift loophole)."""
+    name = "pro-coopt-c"
+
+    def __init__(self, **params):
+        params.setdefault("centered_range", True)
+        super().__init__(**params)
+
+
+@register_scheme
+class PROFPLSmall(PRO):
+    """FPL with beta = 0.5: tests whether beta = 5 pulls a LoRA student toward the anti-watermark optimum."""
+    name = "pro-fpl-b05"
+    booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
