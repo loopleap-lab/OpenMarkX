@@ -47,7 +47,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     g = torch.Generator().manual_seed(seed)
     cfg = dict(scheme=scheme, base=base, steps=steps, bs=bs, accum=accum, seq_len=seq_len, lr=lr, rank=rank, seed=seed)
     json.dump(cfg, open(f"{out}/embed_args.json", "w"), indent=1)
-    log = open(f"{out}/train_log.jsonl", "a"); t0 = time.time()
+    log = open(f"{out}/train_log.jsonl", "a"); t0 = time.time(); skipped = 0
     model.train()
     for step in range(steps):
         tot = 0.0
@@ -62,10 +62,17 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
             if aux is not None:
                 loss = loss + aux
             loss = loss / accum
+            if not torch.isfinite(loss):                  # never step on a non-finite loss; say where it came from
+                s_lg = model(input_ids=ids).logits[:, :-1].float()
+                print({"skip_nonfinite": step + 1, "base_finite": bool(torch.isfinite(base_logits).all()),
+                       "target_finite": bool(torch.isfinite(t_logits).all()),
+                       "student_finite": bool(torch.isfinite(s_lg).all())}, flush=True)
+                skipped += 1; del t_logits, base_logits, s_lg
+                continue
             loss.backward(); tot += loss.item(); del t_logits, base_logits
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step(); sched.step(); opt.zero_grad(set_to_none=True)
-        rec = {"step": step + 1, "kl": round(tot, 5), "sec": round(time.time() - t0, 1),
+        rec = {"step": step + 1, "kl": round(tot, 5), "skipped": skipped, "sec": round(time.time() - t0, 1),
                "mem_gb": round(torch.cuda.max_memory_allocated(device) / 2**30, 1)}
         log.write(json.dumps(rec) + "\n"); log.flush()
         if (step + 1) % log_every == 0 or step == 0:

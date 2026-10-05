@@ -22,7 +22,6 @@ from markweightx.models import load_base, load_release, load_tokenizer
 from markweightx.registry import get_scheme
 from markweightx.types import Release
 
-PARTNER = "/mnt/data/jiaq/hf/hub/models--unsloth--Llama-3.2-1B-Instruct/snapshots"
 GRID = [("finetune", dict(steps=200)), ("finetune", dict(steps=800)), ("finetune", dict(steps=2400)),
         ("merge", dict(ratio=0.2)), ("merge", dict(ratio=0.4)), ("merge", dict(ratio=0.6)),
         ("prune", dict(sparsity=0.2)), ("prune", dict(sparsity=0.5)),
@@ -49,7 +48,7 @@ def main():
     prompts = eval_prompts(tok, n=a.n)
     assert prompts == texts["prompts"]
     s_null = texts["scores"]["null"]
-    partner = os.path.join(PARTNER, os.listdir(PARTNER)[0])
+    partner = "llama-3.2-1b-instruct"
 
     det_model = load_base(rel.base, a.device)             # the detector's model (only some schemes use it)
     sch = get_scheme(rel.scheme); sch.setup(det_model, tok, a.device, rel.key)
