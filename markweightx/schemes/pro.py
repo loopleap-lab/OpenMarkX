@@ -126,3 +126,11 @@ class PROCoopt(PRO):
     def __init__(self, **params):
         params.setdefault("co_opt", True)
         super().__init__(**params)
+
+
+@register_scheme
+class PROBooster(PRO):
+    """PRO + Booster robust training (PRO code: train_logit_distill_robust.py, robustness_mode=booster): each step
+    simulates one fine-tuning step on clean text and penalizes how much it would move the model."""
+    name = "pro-booster"
+    booster = {"alpha": 0.1, "lamb": 1.0}

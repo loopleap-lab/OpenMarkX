@@ -37,7 +37,8 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     if sch.kind != "distill_logit":
         raise NotImplementedError(f"{scheme}: recipe {sch.kind} is not implemented yet")
     from peft import LoraConfig, get_peft_model
-    model.gradient_checkpointing_enable(); model.enable_input_require_grads()
+    # non-reentrant checkpointing: Booster takes extra torch.autograd.grad passes, which reentrant checkpoints reject
+    model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False}); model.enable_input_require_grads()
     model = get_peft_model(model, LoraConfig(r=rank, lora_alpha=2 * rank, lora_dropout=0.0, task_type="CAUSAL_LM",
                                              target_modules=LORA_TARGETS.split(",")))
     corpus = torch.load(data or DATA["llama3"])["train"][:, :seq_len]
@@ -53,6 +54,12 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     cfg = dict(scheme=scheme, base=base, steps=steps, bs=bs, accum=accum, seq_len=seq_len, lr=lr, rank=rank, seed=seed)
     json.dump(cfg, open(f"{out}/embed_args.json", "w"), indent=1)
     log = open(f"{out}/train_log.jsonl", "a"); t0 = time.time(); skipped = 0
+    booster = getattr(sch, "booster", None)                # PRO's Booster robust training (simulated fine-tune)
+
+    def attack_grads(att):
+        lg = model(input_ids=att).logits[:, :-1].float()
+        l = F.cross_entropy(lg.reshape(-1, lg.shape[-1]), att[:, 1:].reshape(-1))
+        return torch.autograd.grad(l, lora)
     model.train()
     for step in range(steps):
         tot = 0.0
@@ -74,7 +81,24 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
                        "student_finite": bool(torch.isfinite(s_lg).all())}, flush=True)
                 skipped += 1; del t_logits, base_logits, s_lg
                 continue
+            if booster:                                       # as in PRO's train_logit_distill_robust.py (booster mode):
+                att = corpus[torch.randint(len(corpus), (bs,), generator=g)].to(device)   # clean text = the attack
+                g1 = attack_grads(att)                        # 1. attack gradient
+                gn = torch.sqrt(sum((x.float() ** 2).sum() for x in g1)) + 1e-7
+                with torch.no_grad():                         # 2. take the attack step
+                    for p_, x in zip(lora, g1):
+                        p_.add_(-booster["alpha"] * x / gn)
+                g2 = attack_grads(att)                        # 3. attack gradient after the step
+                with torch.no_grad():                         # 4. undo the step
+                    for p_, x in zip(lora, g1):
+                        p_.add_(booster["alpha"] * x / gn)
             loss.backward(); tot += loss.item(); del t_logits, base_logits
+            if booster:                                       # 5. anti-unlearning term lamb * (g1 - g2)
+                with torch.no_grad():
+                    for p_, x, y in zip(lora, g1, g2):
+                        if p_.grad is not None:
+                            p_.grad.add_(booster["lamb"] * (x - y) / accum)
+                del g1, g2
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step(); sched.step(); opt.zero_grad(set_to_none=True)
         rec = {"step": step + 1, "kl": round(tot, 5), "skipped": skipped, "sec": round(time.time() - t0, 1),
