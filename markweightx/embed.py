@@ -41,6 +41,10 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     model = get_peft_model(model, LoraConfig(r=rank, lora_alpha=2 * rank, lora_dropout=0.0, task_type="CAUSAL_LM",
                                              target_modules=LORA_TARGETS.split(",")))
     corpus = torch.load(data or DATA["llama3"])["train"][:, :seq_len]
+    with torch.no_grad():                                  # catch broken weights before hours of training
+        for i in range(0, 64, 8):
+            if not torch.isfinite(model(input_ids=corpus[i:i + 8].to(device)).logits).all():
+                raise RuntimeError(f"base model {base} gives non-finite logits on corpus[{i}:{i + 8}]: check the weights")
     params = [p for p in model.parameters() if p.requires_grad] + sch.trainable_params()
     opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 50) * 0.5 * (1 + math.cos(math.pi * s / steps)))
