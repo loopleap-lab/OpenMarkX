@@ -27,6 +27,19 @@ WEIGHT_EDITS = ["finetune_steps200", "finetune_steps800", "finetune_steps2400", 
 TEXT_EDITS = [("synonym", 0.3), ("word_deletion", 0.3)]
 
 
+def _group(tok, ids, vals, lead=""):
+    """Decode tokens one by one, but join the pieces of a character that is split across tokens (a lone piece
+    decodes to U+FFFD). A joined group keeps the first piece's mark."""
+    out, i = [], 0
+    while i < len(ids):
+        j = i + 1
+        while "\ufffd" in tok.decode(ids[i:j]) and j < len(ids) and j - i < 4:
+            j += 1
+        out.append({"t": (lead if i == 0 else "") + tok.decode(ids[i:j]), "v": vals[i]})
+        i = j
+    return out
+
+
 def marks(sch, text):
     """Per-token marks from the scheme's own detector."""
     if sch.name == "pro":
@@ -42,12 +55,13 @@ def marks(sch, text):
                 v = ctx.transform_model(ctx.get_embedding(context)).cpu()[0]
             arr = ctx.scale_vector(v, temperature=1000.0)[ctx.mapping]
             ids = ctx.tokenizer.encode(current, add_special_tokens=False)
-            for j, t in enumerate(ids):
-                out.append({"t": (" " if j == 0 else "") + ctx.tokenizer.decode([t]), "v": 1 if arr[t] > 0 else -1})
+            out += _group(ctx.tokenizer, ids, [1 if arr[t] > 0 else -1 for t in ids], lead=" ")
         return out
     if sch.teacher == "KGW":
         d = sch.wm.get_data_for_visualization(text)
-        return [{"t": t, "v": None if h is None else (1 if h == 1 else -1)} for t, h in zip(d.decoded_tokens, d.highlight_values)]
+        ids = sch.tok(text, add_special_tokens=False)["input_ids"]
+        vals = [None if h is None else (1 if h == 1 else -1) for h in d.highlight_values]
+        return _group(sch.tok, ids, vals)
     return None
 
 
