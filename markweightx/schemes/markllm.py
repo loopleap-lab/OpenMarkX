@@ -35,10 +35,10 @@ TEACHERS = {
     "Unbiased":  dict(family="reweight", kind="distill_logit", model_detect=True, p_value=True),
     "SynthID":   dict(family="tournament", kind="distill_logit", stateless=True),
     "EXP":       dict(family="token-sampling", kind="distill_logit", p_value=True, argmax=True),
-    "EXPEdit":   dict(family="token-sampling", kind="distill_sampling", p_value=True),
+    "EXPEdit":   dict(family="token-sampling", kind="distill_logit", positional=True),
     "PF":        dict(family="token-sampling", kind="distill_logit", argmax=True, gamma_p=True),
     "EXPGumbel": dict(family="token-sampling", kind="distill_sampling", p_value=True),
-    "ITSEdit":   dict(family="token-sampling", kind="distill_sampling", p_value=True),
+    "ITSEdit":   dict(family="token-sampling", kind="distill_logit", positional=True),
 }
 
 
@@ -111,6 +111,29 @@ class PFArgmax:
         return out
 
 
+class PositionalArgmax:
+    """EXPEdit / ITSEdit (the KTH family): the key is a sequence of n rows indexed by token position, not by context.
+    The teacher puts all mass on the token upstream's sampler picks with row (position mod n), position = number of
+    tokens before the one being generated (Gu et al.'s KTH distillation with a fixed shift; detection searches all
+    shifts anyway)."""
+
+    def __init__(self, scheme):
+        self.s = scheme
+
+    def __call__(self, input_ids, scores):
+        s = self.s
+        row = input_ids.shape[1] % s.key_n
+        probs = torch.softmax(scores.float(), -1).cpu()[:, : s.V]
+        if s.teacher == "EXPEdit":
+            tok = s.wm.utils.exp_sampling(probs, s.xi[row].expand_as(probs)).view(-1)
+        else:                                                # ITSEdit: inverse transform sampling on a permuted CDF
+            B = probs.shape[0]
+            tok = s.wm.utils.transform_sampling(probs, s.pi.expand(B, -1), s.xi[row].expand(B, 1)).view(-1)
+        out = torch.full_like(scores, -1e4)
+        out[torch.arange(len(tok), device=scores.device), tok.to(scores.device)] = 0.0
+        return out
+
+
 class ExpArgmax:
     """EXP's sampling rule as a processor: the teacher puts all mass on argmax u^(1/p), with u drawn by upstream's
     own seed_rng from the last prefix_length tokens (as Gu et al. distill KTH: cross-entropy to the argmax token)."""
@@ -148,6 +171,7 @@ class MarkLLMDistill(Scheme):
         self.argmax = meta.get("argmax", False)
         self.stateless = meta.get("stateless", False)
         self.gamma_p = meta.get("gamma_p", False)
+        self.positional = meta.get("positional", False)
         self.p_value = meta.get("p_value", False)
         self.needs_model_to_detect = meta.get("model_detect", False)
 
@@ -158,7 +182,13 @@ class MarkLLMDistill(Scheme):
         tc = TransformersConfig(model=model, tokenizer=tokenizer, vocab_size=model.config.vocab_size,   # A1
                                 device=device, max_new_tokens=200, do_sample=True)
         cfg_path = os.path.join(MARKLLM, "config", f"{self.teacher}.json")
-        self.wm = AutoWatermark.load(self.teacher, algorithm_config=cfg_path, transformers_config=tc)
+        if self.teacher == "ITSEdit":                        # A10: AutoWatermark.load passes a config object, which
+            from watermark.its_edit.its_edit import ITSEdit    # ITSEdit's constructor rejects; build it from the path
+            self.wm = ITSEdit(cfg_path, tc)
+        else:
+            self.wm = AutoWatermark.load(self.teacher, algorithm_config=cfg_path, transformers_config=tc)
+        if self.positional:
+            self._positional_key()
         c = self.wm.config
         k = (key or {}).get("key", getattr(c, "key", 42) if hasattr(c, "key") else 42)
         k = self.params.get("key", k)
@@ -175,10 +205,24 @@ class MarkLLMDistill(Scheme):
             c.generation_model = ModelView(model)
         return {"teacher": self.teacher, "key": k, "config": os.path.basename(cfg_path)}
 
+    def _positional_key(self):
+        c = self.wm.config
+        self.V, self.key_n = c.vocab_size, c.pseudo_length
+        if self.teacher == "EXPEdit":                        # upstream builds xi in EXPEditUtils (Mersenne, key)
+            self.xi = self.wm.utils.xi.float()
+        else:                                                # ITSEdit: upstream detection's seed, used for generation too
+            torch.manual_seed(c.key)                         # (upstream generation draws an unseeded key; see notes)
+            seed = int(torch.randint(2**32, (c.sequence_length,))[0])
+            gen = torch.Generator(); gen.manual_seed(seed)
+            self.xi, self.pi = self.wm.utils.transform_key_func(gen, self.key_n, self.V)
+            self.its_seed = seed
+
     def processor(self):
         """The decode-time teacher as a LogitsProcessor (for sampling from the teacher)."""
         if self.stateless:
             return SynthIDStateless(self.wm)
+        if self.positional:
+            return PositionalArgmax(self)
         if self.argmax:
             return PFArgmax(self.wm) if self.teacher == "PF" else ExpArgmax(self.wm)
         return RowWise(self.wm.logits_processor) if self.rowwise else self.wm.logits_processor
@@ -191,9 +235,25 @@ class MarkLLMDistill(Scheme):
             out[:, t] = lp(input_ids[:, : t + 1], logits[:, t].clone())   # A8
         return out
 
+    def _alignment_cost(self, text):
+        """Upstream's test statistic on the true key (the first step of its permutation test)."""
+        c, u = self.wm.config, self.wm.utils
+        if self.teacher == "EXPEdit":
+            toks = c.generation_tokenizer.encode(text, return_tensors="pt", add_special_tokens=False).numpy()[0]
+            if len(toks) < 2:
+                return 0.0
+            return float(u.one_run(toks, self.xi.numpy())[0])
+        toks = c.generation_tokenizer.encode(text, return_tensors="pt", truncation=True, max_length=2048)[0]
+        gen = torch.Generator(); gen.manual_seed(self.its_seed)
+        v, _ = u.phi(tokens=toks, n=self.key_n, k=len(toks), generator=gen, key_func=u.transform_key_func,
+                     vocab_size=self.V, dist=lambda x, y: self.wm.transform_edit_score(x, y, 1), null=False, normalize=True)
+        return float(v)
+
     # ---- detection: upstream detect_watermark -------------------------------------------------------
     def score(self, text):
         n = len(self.tok(text, add_special_tokens=False)["input_ids"])
+        if self.positional:                                  # alignment cost under the true key (lower = marked);
+            return -self._alignment_cost(text), n            # calibrated by the shared empirical null, not n_runs
         if self.gamma_p:                                     # PF: sum of -log r ~ Gamma(k, 1) under the null
             import numpy as np
             from scipy.stats import gamma

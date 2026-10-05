@@ -42,7 +42,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
                                              target_modules=LORA_TARGETS.split(",")))
     corpus = torch.load(data or DATA["llama3"])["train"][:, :seq_len]
     with torch.no_grad():                                  # catch broken weights before hours of training
-        for i in range(0, 64, 8):
+        for i in range(0, 64 if str(device).startswith("cuda") else 8, 8):
             if not torch.isfinite(model(input_ids=corpus[i:i + 8].to(device)).logits).all():
                 raise RuntimeError(f"base model {base} gives non-finite logits on corpus[{i}:{i + 8}]: check the weights")
     params = [p for p in model.parameters() if p.requires_grad] + sch.trainable_params()
@@ -77,7 +77,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step(); sched.step(); opt.zero_grad(set_to_none=True)
         rec = {"step": step + 1, "kl": round(tot, 5), "skipped": skipped, "sec": round(time.time() - t0, 1),
-               "mem_gb": round(torch.cuda.max_memory_allocated(device) / 2**30, 1)}
+               "mem_gb": round(torch.cuda.max_memory_allocated(device) / 2**30, 1) if str(device).startswith("cuda") else 0}
         log.write(json.dumps(rec) + "\n"); log.flush()
         if (step + 1) % log_every == 0 or step == 0:
             print(rec, flush=True)
