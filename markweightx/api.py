@@ -32,10 +32,13 @@ def _value(v: str):
     if v.lower() in ("true", "false"):
         return v.lower() == "true"
     try:
-        f = float(v)
+        return int(v)                                      # exact, however large (a 62-bit secret survives)
+    except ValueError:
+        pass
+    try:
+        return float(v)
     except ValueError:
         return v
-    return int(f) if f.is_integer() and "." not in v and "e-" not in v.lower() else f
 
 
 def scheme_spec(watermark: str) -> tuple[str, dict, str | None]:
@@ -126,13 +129,12 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
     from .keys import STORE, resolve
     for k, v in list(params.items()):                      # a key exported from a store: blob refs become its files
         if isinstance(v, str) and v.startswith("blob:"):
-            if not re.fullmatch(r"blob:[0-9a-f]{64}(\.\w+)?", v):
+            if not re.fullmatch(r"blob:[0-9a-f]{64}(\.[A-Za-z0-9_-]+)?", v):
                 raise ValueError(f"key field {k}: {v!r} is not a blob reference")
             if not os.path.isfile(resolve(v)):
                 raise FileNotFoundError(f"key field {k}: {v} is not in this key store ({STORE}); copy its blobs/ too")
             params[k] = resolve(v)
-        elif isinstance(v, str) and not os.sep in v and not v.endswith((".json", ".pt", ".pth", ".bin", ".npy")):
-            params[k] = _value(v)                          # "0.5" -> 0.5, so the commitment matches embed's
+
     for k, v in params.items():                            # key files are copied in; a missing one fails here
         if isinstance(v, str) and (v.endswith((".json", ".pt", ".pth", ".bin", ".npy")) or os.sep in v):
             if not os.path.isfile(v):
@@ -144,8 +146,10 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
     if os.path.exists(os.path.join(out, "release.json")) and not force:
         raise FileExistsError(f"{out} already holds a release; pass force=True (CLI --force) to replace it")
     scheme_side = resolved_params(sch)
-    clash = {f: v for f, v in params.items()
-             if f in scheme_side and scheme_side[f] != (_value(v) if isinstance(v, str) else v)}
+    for f, v in list(params.items()):                      # scheme parameters only ("0.5" -> 0.5, as embed stores them);
+        if f in scheme_side and isinstance(v, str):        # key material such as a secret is kept exactly as given
+            params[f] = _value(v)
+    clash = {f: v for f, v in params.items() if f in scheme_side and scheme_side[f] != v}
     if clash:                                              # e.g. PRO's gamma: a scheme parameter, not key material
         what = "is a parameter" if len(clash) == 1 else "are parameters"
         raise ValueError(f"{', '.join(clash)} {what} of {name}, not key material: put it in the watermark, e.g. '{name}:"

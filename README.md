@@ -256,7 +256,7 @@ rate with a budget of 200 (`exp/verify_power.py [--null-n 311]`):
 
 | null | sequential | fixed |
 |---|---|---|
-| exact | 86% | 88% |
+| exact | 88% | 88% |
 | empirical, 311 texts | 42% | 55% |
 
 A larger calibration narrows the gap. Prompts disjoint from the calibration's are the clean choice (the bundled C4

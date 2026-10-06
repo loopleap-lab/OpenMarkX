@@ -186,6 +186,11 @@ def test_port_resolves_blob_refs_and_coerces_values(tmp_path, monkeypatch):
     ref = K.put_blob(str(m))
     _, key = mwx.port(str(ck), "pro", {"mapping": ref, "gamma": "0.5"}, "llama-3.2-1b")
     assert key.params["mapping"] == ref and key.params["gamma"] == 0.5   # exported key re-imported verbatim
+    _, g = mwx.port(str(ck), "gaussmark", {"secret": "4611686018427387903"}, "llama-3.2-1b",
+                    out=str(tmp_path / "g"))
+    assert g.params["secret"] == "4611686018427387903"        # key material is kept exactly as given
+    from markweightx.api import _value
+    assert _value("4611686018427387903") == 4611686018427387903 and _value("0.25") == 0.25
     with pytest.raises(ValueError, match="not a blob reference"):
         mwx.port(str(ck), "pro", {"mapping": "blob:../../x.json"}, "llama-3.2-1b", force=True)
     with pytest.raises(FileNotFoundError, match="not in this key store"):
