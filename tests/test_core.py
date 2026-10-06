@@ -83,3 +83,20 @@ def test_sequential_verdict_keeps_its_error_rates_and_power():
     fixed = binom.sf(binom.isf(0.01, 200, 0.01), 200, 0.05)             # the fixed test's power at the same budget
     assert weak >= fixed - 0.15                                         # weak marks are not cleared early
 
+
+
+def test_empirical_null_rate_bound_keeps_false_accusations_below_alpha():
+    """A threshold from 311 null texts has a random true rate (Beta); testing against _null_rate's bound at alpha/2
+    keeps false accusations at or below alpha even over 200 texts (testing against fpr gave ~4.7%)."""
+    import math
+    import numpy as np
+    from scipy.stats import binom
+    from markweightx.api import _null_rate
+    rng = np.random.default_rng(0)
+    N, fpr, alpha, n = 311, 0.01, 0.01, 200
+    idx = math.ceil((1 - fpr) * N) - 1
+    true = rng.beta(N - idx, idx + 1, size=20000)            # the threshold's actual false-flag rate, per calibration
+    k = rng.binomial(n, true)
+    bound = _null_rate(N, fpr, alpha / 2)
+    assert np.mean(binom.sf(k - 1, n, bound) <= alpha / 2) <= alpha
+    assert np.mean(binom.sf(k - 1, n, fpr) <= alpha) > 2 * alpha   # the naive test this replaces

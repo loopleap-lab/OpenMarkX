@@ -9,7 +9,7 @@ from markweightx.sampling import eval_prompts
 from markweightx.models import load_tokenizer
 
 BASE = "llama-3.2-1b"
-prompts = eval_prompts(load_tokenizer(BASE), n=50)
+prompts = eval_prompts(load_tokenizer(BASE), n=500)     # the 311 held-out C4 prompts long enough to use
 
 # Owner: put the watermark into the weights; the key stays in the key store, the release holds only weights.
 release, key = mwx.embed(BASE, "gaussmark")
@@ -18,9 +18,10 @@ print("release:", release.path, " key:", key.commitment[:16])
 
 # Downstream: a user fine-tunes the release and samples from it; they never see the key.
 child = mwx.modify(release, "finetune:steps=200")
-texts = mwx.generate(child, prompts)
+texts = mwx.generate(child, prompts[:50])
 
 # Detector: holds the key, gets texts (and, for GaussMark, white-box access to the base).
 hits = mwx.detect(texts, key, base=BASE)
-print(f"flagged {sum(d.flagged for d in hits)}/{len(hits)} texts at 1% FPR")
-print(mwx.verify_model(child, key, prompts))         # one verdict for the model: binomial test over the flags
+print(f"flagged {sum(bool(d.flagged) for d in hits)}/{len(hits)} texts at 1% FPR")
+# one verdict for the model: accuse as soon as the flags are decisive, else test all 200 texts
+print(mwx.verify_model(child, key, prompts, sequential=True, budget=200))

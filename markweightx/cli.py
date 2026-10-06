@@ -287,8 +287,8 @@ def _run(a):
         d = mwx.verify_model(_release(a.release), _key(a.key), _read_texts(a.prompts), device=a.device, fpr=a.fpr,
                              alpha=a.alpha, budget=a.budget, sequential=a.sequential, p1=a.p1,
                              trust_plugin=a.trust_plugin)
-        print(json.dumps({"flagged_texts": d.statistic, "texts": d.n_queries, "p_value": d.p_value,
-                          "from_this_key": d.flagged}))
+        print(json.dumps({"flagged_texts": d.statistic, "judged_texts": d.n_judged, "generated_texts": d.n_queries,
+                          "p_value": d.p_value, "from_this_key": d.flagged}))
     elif a.cmd in ("bench", "evaluate"):
         from . import bench
         arena = bench.load_arena(a.arena)

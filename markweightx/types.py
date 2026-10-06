@@ -16,6 +16,7 @@ class Detection:
     n_tokens: int
     flagged: bool | None = None   # statistic > threshold, when a threshold is known
     n_queries: int | None = None  # verify_model: how many texts the suspect model was asked for
+    n_judged: int | None = None   # verify_model: how many of them were long enough to judge (statistic = flags among them)
 
     @property
     def n_evidence(self) -> int:

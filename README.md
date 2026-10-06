@@ -2,7 +2,7 @@
 
 Watermarks that live in the weights of an open model. The owner puts the mark into the weights and keeps a key.
 Anyone downstream can fine-tune, merge, prune, quantize or reword. A detector with the key traces text back to
-the model.
+the model after most of these edits; fine-tuning still erases today's marks (see the leaderboard).
 
 ```
 Owner        embed ──▶ release (public weights)  +  key (private, in the key store)
@@ -44,8 +44,7 @@ texts = mwx.generate(child, prompts)                         # ...and write with
 texts = mwx.rewrite(texts, "synonym:ratio=0.3")              # ...and reword
 
 hits = mwx.detect(texts, key)                                # Detector: [Detection(statistic, p_value, n_tokens, flagged)]
-verdict = mwx.verify_model(child, key, prompts[:100])        # one binomial test over the flags
-verdict = mwx.verify_model(child, key, prompts, sequential=True, budget=200)   # accuse as soon as it is clear
+verdict = mwx.verify_model(child, key, prompts, sequential=True, budget=200)   # one verdict for the model
 ```
 
 `examples/quickstart.py` runs this end to end on one GPU in a few minutes.
@@ -248,10 +247,11 @@ are on Llama-3.2-1B.
 `verify_model(..., sequential=True)` asks the suspect model for 20 texts at a time. It accuses the model as soon as
 an always-valid test (flag rate `p1` against `fpr`) is decisive, so a strongly marked model is settled in about 20
 texts; it never clears a model early, so a weakly marked one (after edits) gets the full `budget` and the power of
-the fixed test (`exp/verify_power.py`: at a 5% flag rate 87% vs 88%). With an exact null (GaussMark) false
-accusations stay below `alpha` and the p-value stays valid despite the early stop; with an empirical null they are
-below `alpha` up to the calibration's own error (a 500-text null makes 1% behave like ~1.6%), and verifying on
-prompts disjoint from the calibration's is the clean choice. `n_queries` says how many texts were generated.
+the fixed test (`exp/verify_power.py`: at a 5% flag rate 87% vs 88%). False accusations stay below `alpha` and the
+p-value stays valid despite the early stop. With an empirical null the threshold's own false-flag rate is uncertain
+(a 311-text calibration: 1.3% on average, bounded by 3.5%), so half of `alpha` bounds it and the test runs against
+the bound; a larger calibration gives more power. Prompts disjoint from the calibration's are the clean choice (the
+bundled C4 split has only 311 usable prompts, so the quickstart reuses them; GaussMark's exact null is unaffected). `n_queries` says how many texts were generated.
 
 Not built yet: importing the published checkpoints of other papers (`port` takes the checkpoint and its key files;
 fetching and converting them is per paper, and they are 7B-8B), `TP-*` grants (prompt

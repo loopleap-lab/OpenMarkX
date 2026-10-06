@@ -129,11 +129,16 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
             params[k] = os.path.abspath(v)
     if key_public:
         params["public"] = True
-    k = Key(scheme=name, params=params, base=base, scheme_params=resolved_params(sch), scheme_source=src)
-    store(k)
     out = out or model_dir.rstrip("/") + "-mwx"
     if os.path.exists(os.path.join(out, "release.json")) and not force:
         raise FileExistsError(f"{out} already holds a release; pass force=True (CLI --force) to replace it")
+    scheme_side = resolved_params(sch)
+    clash = {f: v for f, v in params.items() if f in scheme_side and scheme_side[f] != v}
+    if clash:                                              # e.g. PRO's gamma: a scheme parameter, not key material
+        raise ValueError(f"{', '.join(clash)} {'is a' if len(clash) == 1 else 'are'} {name} parameter(s): write them "
+                         f"in the watermark, e.g. '{name}:" + ",".join(f"{f}={v}" for f, v in clash.items()) + "'")
+    k = Key(scheme=name, params=params, base=base, scheme_params=scheme_side, scheme_source=src)
+    store(k)
     from .types import Step
     rel = Release(path=out, base=base, scheme=name, key_commitment=k.commitment,
                   adapter=model_dir if is_adapter else None, weights=None if is_adapter else model_dir,
@@ -342,7 +347,7 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
     out = []
     for i in range(len(texts)):
         if i not in true or not true[i][1]:                # nothing scored: a vacuous answer
-            out.append(Detection(statistic=true[i][0] if i in true else 0.0, p_value=1.0, n_tokens=0, flagged=False))
+            out.append(Detection(statistic=true[i][0] if i in true else 0.0, p_value=1.0, n_tokens=0, flagged=None))
             continue
         s, n = true[i]
         p = (1 + sum(x >= s for x in null[i])) / (n_null + 1)
@@ -357,6 +362,17 @@ def sequential_p(k: int, n: int, fpr: float, p1: float) -> float:
     return min(1.0, math.exp(-llr))
 
 
+def _null_rate(n_null: int, fpr: float, alpha: float) -> float:
+    """The per-text false-flag rate to test against when the threshold comes from an empirical null of n_null texts.
+    That threshold's true rate is Beta(n_null - idx, idx + 1)-distributed (idx: its order statistic), 1.3% on average
+    for 311 texts at fpr 1%; its 1 - alpha quantile bounds it, so a test at the bound keeps false accusations <= alpha
+    + the test's own level."""
+    import math
+    from scipy.stats import beta
+    idx = max(0, math.ceil((1 - fpr) * n_null) - 1)
+    return float(beta.ppf(1 - alpha, n_null - idx, idx + 1))
+
+
 def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01, alpha=0.01,
                  budget: int | None = None, sequential: bool = False, p1: float = 0.2, batch: int = 20,
                  trust_plugin: bool = False) -> Detection:
@@ -368,10 +384,11 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
         texts are generated and the fixed test decides, so weak watermarks (flag rates well below p1) keep the fixed
         test's power. Each part runs at alpha/2 and p_value is twice the deciding part's p, so the verdict is flagged
         exactly when p_value <= alpha, with false accusations <= alpha.
-    Texts too short to be judged are left out of the test (statistic counts flags among the judged); n_queries is how
-    many texts were generated. Exact for schemes with
-    an exact null (GaussMark). With an empirical null the per-text rate is fpr up to the calibration's sampling error
-    (a 500-text null makes alpha = 0.01 behave like ~0.016); prompts disjoint from the calibration's are the clean
+    Texts too short to be judged are left out of the test (statistic counts flags among the judged, n_judged);
+    n_queries is how many texts were generated. With an exact null (GaussMark) each text is flagged at rate fpr. With
+    an empirical null the threshold's true rate is only known up to the calibration's size, so half of alpha bounds
+    that rate (_null_rate: 3.5% for 311 null texts at fpr 1%) and the test runs against the bound with the other half;
+    a larger calibration gives a tighter bound and more power. Prompts disjoint from the calibration's are the clean
     choice."""
     from scipy.stats import binom
     from .models import load_release, load_tokenizer
@@ -392,6 +409,12 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     bound = scheme_for(key, None, _matching_device(key, device, type(sch)), trust_plugin=trust_plugin)
     model, tok = load_release(release, device), load_tokenizer(release.base)
     c = key.calibration
+    rate, level = fpr, alpha                               # the per-text null rate, and the level to test it at
+    if c.get("null") and not getattr(sch, "exact_null", False):
+        rate, level = _null_rate(len(c["null"]), fpr, alpha / 2), alpha / 2
+        if rate >= p1:
+            raise ValueError(f"with a {len(c['null'])}-text null the per-text rate is bounded only by {rate:.3f} >= "
+                             f"p1={p1}: calibrate on more texts, or raise p1")
     size = batch if sequential else max(len(prompts), 1)
     k = n = n_tok = asked = 0                              # asked: texts generated; n: texts judged
     for i in range(0, len(prompts), size):
@@ -400,10 +423,12 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
         dets = [d for d in _detect(bound, texts, null=c.get("null"), fpr=fpr, by_length=c.get("by_length"),
                                    null_len=c.get("n_tokens")) if d.flagged is not None]   # unjudged: not counted
         k += sum(d.flagged for d in dets); n += len(dets); n_tok += sum(d.n_tokens for d in dets)
-        if sequential and n and 2 * sequential_p(k, n, fpr, p1) <= alpha:      # accused early
-            return Detection(statistic=float(k), p_value=2 * sequential_p(k, n, fpr, p1), n_tokens=n_tok,
-                             flagged=True, n_queries=asked)
-    p = float(binom.sf(k - 1, n, fpr)) if n else 1.0
+        if sequential and n and 2 * sequential_p(k, n, rate, p1) <= level:     # accused early
+            return Detection(statistic=float(k), p_value=2 * sequential_p(k, n, rate, p1) * alpha / level,
+                             n_tokens=n_tok, flagged=True, n_queries=asked, n_judged=n)
+    p = float(binom.sf(k - 1, n, rate)) if n else 1.0
     if sequential:
         p = min(1.0, 2 * p)
-    return Detection(statistic=float(k), p_value=p, n_tokens=n_tok, flagged=bool(n) and p <= alpha, n_queries=asked)
+    p = min(1.0, p * alpha / level)                        # reported on the alpha scale: flagged iff p <= alpha
+    return Detection(statistic=float(k), p_value=p, n_tokens=n_tok, flagged=bool(n) and p <= alpha, n_queries=asked,
+                     n_judged=n)
