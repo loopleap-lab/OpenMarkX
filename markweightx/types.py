@@ -61,10 +61,14 @@ class Key:
     scheme: str
     params: dict = field(default_factory=dict)
     calibration: dict = field(default_factory=dict)
+    nonce: str = field(default_factory=lambda: os.urandom(16).hex())
+    base: str | None = None       # the base model the key was made for (the detector's tokenizer)
 
     @property
     def commitment(self) -> str:
-        return hashlib.sha256(_canon({"scheme": self.scheme, "params": self.params}).encode()).hexdigest()
+        """sha256(nonce || scheme || params). The random nonce keeps low-entropy params from being brute-forced from
+        the public commitment; files in params are referenced by content hash ("blob:<sha256>"), not by path."""
+        return hashlib.sha256((self.nonce + _canon({"scheme": self.scheme, "params": self.params})).encode()).hexdigest()
 
     def save(self, path: str) -> str:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)

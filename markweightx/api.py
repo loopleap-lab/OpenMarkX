@@ -97,12 +97,29 @@ def _scheme_for(key: Key, base: str | None, device: str):
     return sch
 
 
-def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device="cpu", fpr=0.01) -> list[Detection]:
+def _detect_device(key: Key, device: str | None) -> str:
+    """The device type must match the one the key's randomness was drawn on (KGW-family green lists differ between
+    CUDA and CPU generators). Keys made before this was recorded were all made on CUDA."""
+    import torch
+    want = key.params.get("rng_device", "cuda" if key.scheme.startswith("markllm-") else "cpu")
+    if device is None:
+        device = "cuda:0" if want == "cuda" else "cpu"
+    if want == "cuda" and not str(device).startswith("cuda"):
+        raise ValueError(f"key {key.commitment[:12]} was made on CUDA; its {key.scheme} detector must run on a CUDA "
+                         f"device (got {device!r}): CPU and CUDA generators draw different green lists")
+    if str(device).startswith("cuda") and not torch.cuda.is_available():
+        raise RuntimeError(f"key {key.commitment[:12]} needs a CUDA device to detect, and none is available")
+    return device
+
+
+def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device: str | None = None,
+           fpr=0.01) -> list[Detection]:
     """Score texts with the key alone (plus the base model for detectors that need one). With a calibrated key,
-    p-values and flags come from the frozen null."""
+    p-values and flags come from the frozen null. The device defaults to the one the key was made on."""
     from .scoring import detect as _detect
     texts = [texts] if isinstance(texts, str) else texts
-    return _detect(_scheme_for(key, base, device), texts, null=key.calibration.get("null"), fpr=fpr)
+    device = _detect_device(key, device)
+    return _detect(_scheme_for(key, base or key.base, device), texts, null=key.calibration.get("null"), fpr=fpr)
 
 
 def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE) -> Detection:
@@ -110,7 +127,7 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     Fisher's method into one p-value for the model."""
     if not key.calibration.get("null"):
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate)")
-    dets = detect(generate(release, prompts, device=device), key, device=device)
+    dets = detect(generate(release, prompts, device=device), key)
     stat = -2 * sum(math.log(d.p_value) for d in dets)
     from scipy.stats import chi2
     p = float(chi2.sf(stat, 2 * len(dets)))

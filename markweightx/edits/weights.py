@@ -29,7 +29,9 @@ def materialize(rel: Release, device: str):
 
 def _child(rel: Release, out: str, op: str, params: dict, **kw) -> Release:
     lin = list(rel.lineage) + [vars(Step(op, params))]
-    return Release(path=out, base=rel.base, scheme=rel.scheme, key=rel.key, key_commitment=rel.key_commitment,
+    # an edited model carries only the commitment; legacy keys stay in the parent's release.json, never copied on
+    key = {} if rel.key_commitment else rel.key
+    return Release(path=out, base=rel.base, scheme=rel.scheme, key=key, key_commitment=rel.key_commitment,
                    lineage=lin, **kw)
 
 

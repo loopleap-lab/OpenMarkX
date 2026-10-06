@@ -48,13 +48,25 @@ class PRO(Scheme):
         import jieba
         jieba.dt.tmp_dir = os.path.join(RUNS, "cache"); os.makedirs(jieba.dt.tmp_dir, exist_ok=True)
         from watermarks.pro.pro_watermark import PROWatermark
+        from ..keys import STORE, new_secret, resolve
         key = dict(key or {})
-        tpath = key.get("transform") or os.path.join(PRO_CODE, "watermarks/pro/transform_model_cbert.pth")
-        mpath = key.get("mapping") or os.path.join(PRO_CODE, f"watermarks/pro/300_mapping_{model.config.vocab_size}.json")
+        if not key:
+            # A new release gets a secret token -> policy-dimension mapping (PRO's code draws one at random when no
+            # mapping file is given); the mapping shipped with the PRO code is public, so it must not be the key.
+            import json
+            import random
+            secret = new_secret()
+            rng = random.Random(secret)
+            os.makedirs(os.path.join(STORE, "tmp"), exist_ok=True)
+            mpath = os.path.join(STORE, "tmp", f"mapping-{secret}.json")
+            json.dump([rng.randrange(300) for _ in range(model.config.vocab_size)], open(mpath, "w"))
+            key = {"mapping": mpath}
+        tpath = resolve(key.get("transform")) or os.path.join(PRO_CODE, "watermarks/pro/transform_model_cbert.pth")
+        mpath = resolve(key.get("mapping")) or os.path.join(PRO_CODE, f"watermarks/pro/300_mapping_{model.config.vocab_size}.json")
         self.wm = PROWatermark(device=device, tokenizer=tokenizer, delta=self.delta, gamma=self.gamma,
                                chunk_size=self.chunk, embedding_model=EMBEDDER, transform_model_path=tpath,
                                mapping_file_path=mpath)
-        if not key.get("transform"):                       # embedding: the transform is trained from this init
+        if self.co_opt and not str(key.get("transform", "")).startswith(("blob:", "/")):   # embedding: train from init
             self.wm.set_tanh_temperature(self.tau0 if self.co_opt else self.tau1)
         else:                                              # a released key: frozen, hard +-1
             self.wm.transform_model.eval(); self.wm.set_tanh_temperature(self.tau1)
@@ -103,8 +115,11 @@ class PRO(Scheme):
             self.wm.set_tanh_temperature(self.tau0 + min(step / steps, 1.0) * (self.tau1 - self.tau0))
 
     def save(self, out, key):
+        """The trained policy is part of the key: write it outside the release (the key store takes it from there)."""
         if self.co_opt:
-            p = os.path.join(out, "transform_model.pt")
+            from ..keys import STORE
+            os.makedirs(os.path.join(STORE, "tmp"), exist_ok=True)
+            p = os.path.join(STORE, "tmp", f"transform-{os.urandom(8).hex()}.pt")
             torch.save(self.wm.transform_model.state_dict(), p)
             key = {**key, "transform": p, "spread": self.spread[-1][1] if self.spread else None}
         return key

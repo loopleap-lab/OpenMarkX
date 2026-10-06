@@ -156,6 +156,26 @@ class ExpArgmax:
         return out
 
 
+# where each upstream config keeps its secret
+KEY_FIELDS = {"hash_key": "int", "key": "int", "salt_key": "int", "keys": "list30"}
+
+
+def keyed_config(teacher: str, secret: int, store_dir: str) -> str:
+    """A private copy of upstream's config/<teacher>.json with every key field derived from `secret`. Upstream ships
+    one public default key per algorithm (e.g. KGW hash_key 15485863); a release must not use it."""
+    import json
+    import random
+    cfg = json.load(open(os.path.join(MARKLLM, "config", f"{teacher}.json")))
+    rng = random.Random(secret)
+    for f, kind in KEY_FIELDS.items():
+        if f in cfg:
+            cfg[f] = [rng.randrange(1, 2**31) for _ in cfg[f]] if kind == "list30" else rng.randrange(1, 2**40)
+    os.makedirs(store_dir, exist_ok=True)
+    path = os.path.join(store_dir, f"{teacher}-{hashlib.sha256(str(secret).encode()).hexdigest()[:16]}.json")
+    json.dump(cfg, open(path, "w"), indent=1)
+    return path
+
+
 def _derive(key: int, n: int) -> bytes:
     return hashlib.shake_256(f"markweightx:{key}".encode()).digest(n)
 
@@ -192,7 +212,15 @@ class MarkLLMDistill(Scheme):
         from watermark.auto_watermark import AutoWatermark
         tc = TransformersConfig(model=model, tokenizer=tokenizer, vocab_size=model.config.vocab_size,   # A1
                                 device=device, max_new_tokens=200, do_sample=True)
-        cfg_path = os.path.join(MARKLLM, "config", f"{self.teacher}.json")
+        key = dict(key or {})
+        if not key:                                            # embedding: a new release gets a new secret
+            from ..keys import new_secret
+            key["secret"] = new_secret()
+        if key.get("secret") is not None:
+            from ..keys import STORE
+            cfg_path = keyed_config(self.teacher, int(key["secret"]), os.path.join(STORE, "configs"))
+        else:                                                  # legacy keys (made before keys were secret)
+            cfg_path = os.path.join(MARKLLM, "config", f"{self.teacher}.json")
         if self.teacher == "ITSEdit":                        # A10: AutoWatermark.load passes a config object, which
             from watermark.its_edit.its_edit import ITSEdit    # ITSEdit's constructor rejects; build it from the path
             self.wm = ITSEdit(cfg_path, tc)
@@ -201,7 +229,7 @@ class MarkLLMDistill(Scheme):
         if self.positional:
             self._positional_key()
         c = self.wm.config
-        k = (key or {}).get("key", getattr(c, "key", 42) if hasattr(c, "key") else 42)
+        k = key.get("secret", key.get("key", getattr(c, "key", 42) if hasattr(c, "key") else 42))
         k = self.params.get("key", k)
         if self.teacher == "Unbiased":                       # A3: a fixed, derivable key
             c.hash_key = _derive(k, 128)
@@ -214,7 +242,12 @@ class MarkLLMDistill(Scheme):
             c.gen_kwargs["temperature"] = 1.0
         if self.needs_model_to_detect:                       # detectors that run a model see the base, in fp32
             c.generation_model = ModelView(model)
-        return {"teacher": self.teacher, "key": k, "config": os.path.basename(cfg_path)}
+        out = {"teacher": self.teacher, "config": os.path.basename(cfg_path)}
+        if key.get("secret") is not None:
+            out["secret"] = int(key["secret"])
+        else:
+            out["key"] = k
+        return out
 
     def _positional_key(self):
         c = self.wm.config

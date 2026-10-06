@@ -129,7 +129,10 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     key = sch.save(out, key)
     from .keys import store
     from .types import Key
-    k = Key(scheme=scheme, params=key)
+    # MarkLLM's KGW-family teachers draw their green lists from a generator on the model's device; CUDA and CPU give
+    # different lists, so the detector must use the device type the key was made on (fork change A2).
+    key = {**key, "rng_device": str(device).split(":")[0]}
+    k = Key(scheme=scheme, params=key, base=base)
     store(k)                                               # the key goes to the key store, not into the release
     rel = Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, adapter=f"{out}/adapter",
                   lineage=[vars(Step("embed", cfg))])
