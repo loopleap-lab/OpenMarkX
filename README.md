@@ -94,6 +94,19 @@ same way after a default changes in the code.
 Not included: `markllm-expgumbel-d`. Upstream builds a (V·prefix)×V noise table, 128 GB at V = 128k, and it
 follows the same Gumbel-max rule as EXP.
 
+## Bring a checkpoint made elsewhere
+
+`port` wraps a watermarked checkpoint that was trained outside MarkWeightX, together with the key material it was
+made with, as a Release and a Key. Nothing is retrained and the weights stay where they are.
+
+```python
+release, key = mwx.port("their_lora/", "pro", {"mapping": "map.json", "transform": "policy.pth"}, "llama-3.2-1b")
+release, key = mwx.port("their_model/", "markllm-kgw-d", {"secret": 123456}, "llama-3.2-1b", key_public=True)
+```
+
+`key_public=True` marks a key that was shipped with the checkpoint, e.g. a paper's released mapping. Anyone can
+detect with such a key, and anyone can also remove or forge the mark, so `detect` warns.
+
 ## What the detector needs (access levels)
 
 | Level | The detector holds | Schemes |
@@ -234,7 +247,8 @@ are on Llama-3.2-1B.
 time): false accusations stay below `alpha` and a watermarked model is usually settled in a few batches;
 `budget` caps the texts asked of the suspect model, and `n_queries` in the verdict says how many were used.
 
-Not built yet: `port` (importing published watermarked checkpoints without retraining), `TP-*` grants (prompt
+Not built yet: importing the published checkpoints of other papers (`port` takes the checkpoint and its key files;
+fetching and converting them is per paper, and they are 7B-8B), `TP-*` grants (prompt
 access), the `sft` and `rl` imprints, the `distill_sampling` recipe, and in `bench` the paraphrase attack (DIPPER)
 and a grant axis.
 

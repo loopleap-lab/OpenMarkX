@@ -15,7 +15,7 @@ from .paths import RUNS
 from .types import Key, Release
 
 STORE = os.environ.get("MWX_KEYS", os.path.join(RUNS, "keys"))
-PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256"}    # key fields that are not secret (shown by `keys show`)
+PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256", "public"}    # key fields that are not secret (shown by `keys show`)
 
 
 def new_secret(bits: int = 40) -> int:

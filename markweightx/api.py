@@ -90,6 +90,50 @@ def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=D
     return rel, load_key(rel)
 
 
+def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None = None, *,
+         key_public: bool = False) -> tuple[Release, Key]:
+    """Import a watermarked checkpoint made elsewhere, without retraining: its weights (a LoRA adapter directory or
+    full weights) plus the key material it was made with, as a Release and a Key in the key store.
+      key: the scheme's key fields, e.g. {"secret": 123} for a markllm-*-d scheme, {"mapping": "map.json",
+           "transform": "policy.pth"} for PRO (files are copied into the key store).
+      key_public: the key shipped with the checkpoint (e.g. a paper's released mapping): anyone can then detect, and
+           also remove or forge the mark; the key records it and detect() warns.
+    The release directory (default: next to the checkpoint, <model_dir>-mwx) gets only release.json; the weights stay
+    where they are. Calibrate the key (mwx.calibrate) before detecting with an empirical null."""
+    import os
+    from .keys import store
+    from .registry import resolved_params
+    name, sparams, src = scheme_spec(watermark)
+    sch = _get(name, src, sparams)
+    model_dir = os.path.abspath(model_dir)
+    if not os.path.isdir(model_dir):
+        raise FileNotFoundError(f"no checkpoint directory {model_dir}")
+    is_adapter = os.path.exists(os.path.join(model_dir, "adapter_config.json"))
+    if not is_adapter and not os.path.exists(os.path.join(model_dir, "config.json")):
+        raise ValueError(f"{model_dir} is neither a LoRA adapter (adapter_config.json) nor a model (config.json)")
+    params = dict(key)
+    for k, v in params.items():                            # key files are copied in; a missing one fails here
+        if isinstance(v, str) and (v.endswith((".json", ".pt", ".pth", ".bin", ".npy")) or os.sep in v):
+            if not os.path.isfile(v):
+                raise FileNotFoundError(f"key field {k}: no file {v}")
+            params[k] = os.path.abspath(v)
+    if key_public:
+        params["public"] = True
+    k = Key(scheme=name, params=params, base=base, scheme_params=resolved_params(sch), scheme_source=src)
+    store(k)
+    out = out or model_dir.rstrip("/") + "-mwx"
+    from .types import Step
+    rel = Release(path=out, base=base, scheme=name, key_commitment=k.commitment,
+                  adapter=model_dir if is_adapter else None, weights=None if is_adapter else model_dir,
+                  lineage=[vars(Step("port", {"from": model_dir, "scheme": name, "key_public": key_public}))]).save()
+    return rel, k
+
+
+def _get(name, src, params):
+    from .registry import get_scheme
+    return get_scheme(name, source=src, **params)
+
+
 def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, device=DEFAULT_DEVICE, seed=1,
               trust_plugin: bool = False) -> Key:
     """Freeze the null for this key: the detector's statistics on the unwatermarked base's continuations."""
@@ -223,6 +267,10 @@ def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device:
     The device defaults to the one the key was made on."""
     from .scoring import detect as _detect
     texts = [texts] if isinstance(texts, str) else texts
+    if key.params.get("public"):
+        import warnings
+        warnings.warn(f"key {key.commitment[:12]} is public (shipped with its checkpoint): anyone can detect with it, "
+                      f"and also remove or forge the mark")
     if null not in ("auto", "wrong_key"):
         raise ValueError(f"null must be 'auto' or 'wrong_key', not {null!r}")
     device = _detect_device(key, device, type(build_scheme(key, trust_plugin=trust_plugin)))

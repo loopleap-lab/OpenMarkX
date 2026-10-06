@@ -3,6 +3,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import pytest
+
 import markweightx as mwx
 from markweightx.api import _spec
 
@@ -53,3 +55,25 @@ def test_unknown_edit_lists_the_options():
 def test_describe_shows_primitives_and_access():
     t = mwx.describe(["pro", "markllm-kgw-d", "markllm-sweet-d"])
     assert "Imprint" in t and "R0_AUX" in t and "R1" in t
+
+
+def test_port_wraps_a_checkpoint_and_its_key(tmp_path, monkeypatch):
+    import json
+    import markweightx.keys as K
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
+    ck = tmp_path / "their_ckpt"; ck.mkdir()
+    (ck / "adapter_config.json").write_text("{}")
+    rel, key = mwx.port(str(ck), "markllm-unigram-d", {"secret": 424242, "rng_device": "cpu"}, "llama-3.2-1b")
+    assert rel.adapter == str(ck) and rel.lineage[0]["op"] == "port"
+    assert mwx.Release.open(rel.path).key_commitment == key.commitment
+    made = mwx.Key(scheme="markllm-unigram-d", params={"secret": 424242, "rng_device": "cpu"}, base="llama-3.2-1b")
+    text = ["The committee met on Tuesday to review the budget and agreed to postpone the vote."]
+    assert mwx.detect(text, key, device="cpu")[0].statistic == mwx.detect(text, made, device="cpu")[0].statistic
+    with pytest.raises(ValueError, match="neither a LoRA adapter"):
+        mwx.port(str(tmp_path), "markllm-unigram-d", {"secret": 1}, "llama-3.2-1b")
+    with pytest.raises(FileNotFoundError, match="key field mapping"):
+        mwx.port(str(ck), "pro", {"mapping": str(tmp_path / "missing.json")}, "llama-3.2-1b")
+    _, pub = mwx.port(str(ck), "markllm-unigram-d", {"secret": 7, "rng_device": "cpu"}, "llama-3.2-1b",
+                      out=str(tmp_path / "pub"), key_public=True)
+    with pytest.warns(UserWarning, match="public"):
+        mwx.detect(text, pub, device="cpu")

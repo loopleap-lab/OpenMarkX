@@ -1,6 +1,7 @@
 """The `markweightx` command line: the five calls for the threat-model roles, plus the researcher's tools.
 
   Owner       markweightx embed --base llama-3.2-1b --watermark gaussmark            -> release dir + key id
+              markweightx port CKPT --watermark pro --key-file key.json --base llama-3.2-1b   (made elsewhere)
               markweightx embed --base llama-3.2-1b --watermark pro --recipe configs/embed.yaml
               markweightx calibrate KEY --base llama-3.2-1b
   Downstream  markweightx modify RELEASE --edit finetune:steps=800 --out DIR
@@ -158,6 +159,13 @@ def main(argv=None):
     KEY_HELP = "key id (or unique prefix) from `markweightx keys list`, or a release dir"
     TEXTS_HELP = ".jsonl ({\"text\": ...} per line) or .txt (one text per line)"
     TRUST_HELP = "run the plugin code a key names (only for keys you or someone you trust made)"
+    p = sub.add_parser("port", help="Owner: import a watermarked checkpoint made elsewhere (no retraining)")
+    p.add_argument("model_dir", help="a LoRA adapter directory or a full model directory")
+    p.add_argument("--watermark", required=True, help="the scheme it was made with (see `markweightx describe`)")
+    p.add_argument("--key-file", required=True, help="JSON with the scheme's key fields, e.g. {\"secret\": 123}")
+    p.add_argument("--base", required=True, help="the base model the checkpoint was made from")
+    p.add_argument("--out", help="release directory (default: <model_dir>-mwx)")
+    p.add_argument("--public", action="store_true", help="the key was shipped with the checkpoint (anyone can use it)")
     p = sub.add_parser("calibrate", help="Owner: freeze the null for a key")
     p.add_argument("key", help=KEY_HELP)
     p.add_argument("--base", help="base model whose texts form the null (default: the key's base)")
@@ -245,6 +253,9 @@ def _run(a):
         if a.steps:
             recipe["steps"] = a.steps
         rel, key = mwx.embed(a.base, a.watermark, a.out, device=a.device, **recipe)
+        print(json.dumps({"release": rel.path, "key": key.commitment}))
+    elif a.cmd == "port":
+        rel, key = mwx.port(a.model_dir, a.watermark, json.load(open(a.key_file)), a.base, a.out, key_public=a.public)
         print(json.dumps({"release": rel.path, "key": key.commitment}))
     elif a.cmd == "calibrate":
         k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, _read_texts(a.prompts) if a.prompts else None,
