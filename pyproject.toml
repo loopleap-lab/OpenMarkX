@@ -22,3 +22,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["markweightx*"]
+
+[tool.setuptools.package-data]
+"markweightx.third_party.pro" = ["*.pth", "LICENSE"]

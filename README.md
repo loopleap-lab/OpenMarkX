@@ -32,7 +32,6 @@ Everything goes under `~/.markweightx` unless set otherwise:
 | `MWX_RUNS` | releases, results, tokenized corpus | `~/.markweightx/runs` |
 | `MWX_KEYS` | the key store (back it up: a lost key cannot be recovered) | `$MWX_RUNS/keys` |
 | `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `~/.markweightx/MarkLLM` |
-| `PRO_CODE_DIR` | the PRO paper code, for the `pro*` schemes | `~/.markweightx/PRO-code` |
 | `HF_HOME` | Hugging Face cache; base models download here on first use | Hugging Face's default |
 
 Base model names (`llama-3.2-1b`, `llama-3.2-1b-instruct`, `llama-3.1-8b`, ...) are fetched from Hugging Face at a
@@ -102,8 +101,8 @@ toolkit and can be benchmarked with `markweightx bench`.
 | `markllm-kgw-d`, `-unigram-d`, `-sweet-d`, `-ewd-d`, `-morphmark-d`, `-dip-d`, `-unbiased-d`, `-synthid-d`, `-exp-d`, `-expedit-d`, `-itsedit-d`, `-pf-d` | 12 decode-time watermarks from MarkLLM, distilled (Gu et al. style) | distill the MarkLLM teacher into the weights (LoRA) | text, key; SWEET, EWD, Unbiased also run the base model |
 | `gaussmark` | GaussMark | a keyed Gaussian perturbation written into one weight matrix | text, key, gradients of the base model |
 
-The `pro*` schemes need the PRO paper code (`PRO_CODE_DIR`); the `markllm-*` schemes need MarkLLM
-(`scripts/install_deps.sh`). Your own method is one file (see "Add your own method").
+The PRO watermark ships with the package (`markweightx/third_party/pro`, the paper's code); its sentence embedder
+downloads from Hugging Face on first use. The `markllm-*` schemes need MarkLLM (`scripts/install_deps.sh`). Your own method is one file (see "Add your own method").
 
 Parameters go after a colon: `gaussmark:sigma=0.02,layer=12`. A misspelled scheme or edit parameter is an error
 that lists the accepted ones. So is an edit value the code would otherwise ignore, such as `quantize:bits=3`. `embed` writes every parameter into the key, defaults included. So a key keeps detecting the

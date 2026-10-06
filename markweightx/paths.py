@@ -4,7 +4,6 @@
   MWX_KEYS       the key store                                                    ($MWX_RUNS/keys)
   MWX_DATA       the tokenized C4 corpus made by exp/prepare_data.py             ($MWX_RUNS/data_llama8b_256.pt)
   MARKLLM_DIR    a checkout of upstream MarkLLM at commit 112fa74               (~/.markweightx/MarkLLM)
-  PRO_CODE_DIR   the PRO paper code                                              (~/.markweightx/PRO-code)
   HF_HOME        the Hugging Face cache that base models are downloaded into   (Hugging Face's default)
 """
 import os
@@ -12,7 +11,6 @@ import os
 HOME = os.path.expanduser(os.environ.get("MWX_HOME", "~/.markweightx"))
 RUNS = os.environ.get("MWX_RUNS", os.path.join(HOME, "runs"))
 MARKLLM = os.environ.get("MARKLLM_DIR", os.path.join(HOME, "MarkLLM"))    # upstream MarkLLM @112fa74, unchanged
-PRO_CODE = os.environ.get("PRO_CODE_DIR", os.path.join(HOME, "PRO-code"))  # PRO paper code, unchanged
 MARKLLM_COMMIT = "112fa74"
 
 # Base model names -> (Hugging Face repo, pinned revision). A pinned revision makes runs comparable across machines;

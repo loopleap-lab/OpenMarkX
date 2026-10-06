@@ -1,24 +1,25 @@
-"""PRO (ours, NeurIPS 2026) as a MarkWeightX scheme. The PRO paper code is imported unchanged from PRO_CODE.
+"""PRO (NeurIPS 2026) as a MarkWeightX scheme. The PRO watermark itself is the paper's code, shipped unchanged in
+markweightx/third_party/pro.
 
-Training signal (as in PRO's train_logit_distill_Co-optimization.py): one semantic bias per sequence,
-bias = delta * tanh(tau * (T(BERT(context)) - mean))[mapping], with the transform T trained jointly with the student
-(co-optimization): tau anneals 10 -> 1000 and T carries a row/column-mean + range regularizer (weight 1e-3).
-Detection: PRO's detect_batch (mean of the mapped +-1 values over 10-word chunks after a 40-word context).
+Signal: one semantic bias per sequence, bias = delta * tanh(tau * (T(BERT(context)) - mean))[mapping], where T is the
+watermark policy and `mapping` (token -> policy dimension) is the secret key. Score: PRO's detect_batch, the mean of
+the mapped +-1 values over 10-word chunks after a 40-word context.
 
-`pro` keeps the transform frozen at the released weights (transform_model_cbert.pth), which is what the released PRO
-8B checkpoint used (its transform file is byte-identical to that init). `pro-coopt` trains the transform jointly, as
-in train_logit_distill_Co-optimization.py. In our runs (1B at lr 2e-4, 8B at PRO's 1e-5) co-optimization flattens the
-transform: the KL gradient pulls the teacher toward the base, so |v - mean| decays to ~1e-4 within 200 steps and the
-mark becomes unreadable. Kept as a separate scheme for the PRO authors to look at.
+  pro             the policy T frozen at its released initial weights (transform_model_cbert.pth)
+  pro-coopt-c100  T co-optimized with the student; its non-vanishing regularizer acts on T's centered output (what
+                  reaches the logits) with weight 100, which keeps T from collapsing during distillation
+  pro-full-b01    pro-coopt-c100 plus forgetting-perturbation training (FPL, beta 0.1)
+The experimental variants are ablations on the way to these settings.
 """
 from __future__ import annotations
 
 import os
-import sys
 
 import torch
 
-from ..paths import PRO_CODE, RUNS
+from ..paths import RUNS
+
+INITIAL_POLICY = os.path.join(os.path.dirname(os.path.dirname(__file__)), "third_party", "pro", "transform_model_cbert.pth")
 from ..registry import register_scheme
 from ..primitives import Access
 from .base import Scheme
@@ -53,11 +54,9 @@ class PRO(Scheme):
 
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)
-        if PRO_CODE not in sys.path:
-            sys.path.insert(0, PRO_CODE)
         import jieba
         jieba.dt.tmp_dir = os.path.join(RUNS, "cache"); os.makedirs(jieba.dt.tmp_dir, exist_ok=True)
-        from watermarks.pro.pro_watermark import PROWatermark
+        from ..third_party.pro import PROWatermark
         from ..keys import STORE, new_secret, resolve
         key = dict(key or {})
         if not key:
@@ -75,8 +74,8 @@ class PRO(Scheme):
             # never fall back to the mapping shipped with the PRO code: it is public, so it cannot be a key
             raise ValueError("this PRO key has no 'mapping': a PRO key must carry its own secret mapping "
                              "(pass key=None to draw a new one)")
-        tpath = resolve(key.get("transform")) or os.path.join(PRO_CODE, "watermarks/pro/transform_model_cbert.pth")
-        mpath = resolve(key.get("mapping")) or os.path.join(PRO_CODE, f"watermarks/pro/300_mapping_{model.config.vocab_size}.json")
+        tpath = resolve(key.get("transform")) or INITIAL_POLICY
+        mpath = resolve(key["mapping"])
         self.wm = PROWatermark(device=device, tokenizer=tokenizer, delta=self.delta, gamma=self.gamma,
                                chunk_size=self.chunk, embedding_model=EMBEDDER, transform_model_path=tpath,
                                mapping_file_path=mpath)
@@ -154,7 +153,7 @@ class PRO(Scheme):
 
     def processor(self):
         """PRO at decoding time (PRO's own PROLogitsProcessor), frozen and hard +-1."""
-        from watermarks.pro.logits_processor import PROLogitsProcessor
+        from ..third_party.pro import PROLogitsProcessor
         self.wm.transform_model.eval(); self.wm.set_tanh_temperature(self.tau1)
         lp = PROLogitsProcessor(self.wm)
 
@@ -179,7 +178,7 @@ class PROCoopt(PRO):
     """Co-optimized policy (mapping model M trained with the student), with the paper's regularizer weight
     (lambda = 1, arXiv 2510.23891 Eq. 4). The code default 1e-3 let M collapse in our first runs."""
     name = "pro-coopt"
-    experimental = True                                # a step in reproducing PRO; see the dev plan
+    experimental = True                                # an ablation (see the module docstring)
 
     def __init__(self, **params):
         params.setdefault("co_opt", True)
@@ -192,7 +191,7 @@ class PROBooster(PRO):
     """PRO + Booster robust training (PRO code: train_logit_distill_robust.py, robustness_mode=booster): each step
     simulates one fine-tuning step on clean text and penalizes how much it would move the model."""
     name = "pro-booster"
-    experimental = True                                # a step in reproducing PRO; see the dev plan
+    experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 1.0}
 
 
@@ -202,7 +201,7 @@ class PROFPL(PRO):
     one fine-tuning step toward the anti-watermarked distribution and penalizes how much it moves the model,
     with the paper's alpha = 0.1 and beta = 5."""
     name = "pro-fpl"
-    experimental = True                                # a step in reproducing PRO; see the dev plan
+    experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 5.0, "attack": "anti"}
 
 
@@ -210,7 +209,7 @@ class PROFPL(PRO):
 class PROCooptCentered(PROCoopt):
     """Co-optimized policy with the non-vanishing term on the centered output (closes the shift loophole)."""
     name = "pro-coopt-c"
-    experimental = True                                # a step in reproducing PRO; see the dev plan
+    experimental = True                                # an ablation (see the module docstring)
 
     def __init__(self, **params):
         params.setdefault("centered_range", True)
@@ -221,7 +220,7 @@ class PROCooptCentered(PROCoopt):
 class PROFPLSmall(PRO):
     """FPL with beta = 0.5: tests whether beta = 5 pulls a LoRA student toward the anti-watermark optimum."""
     name = "pro-fpl-b05"
-    experimental = True                                # a step in reproducing PRO; see the dev plan
+    experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
 
 
@@ -242,7 +241,7 @@ class PROFull(PROCooptCentered100):
     """Full PRO as in the paper: co-optimized policy (centered non-vanishing term, lambda = 100) + FPL (beta = 0.5;
     beta = 5 pulled our LoRA student to the inverted mark)."""
     name = "pro-full"
-    experimental = True                                # a step in reproducing PRO; see the dev plan
+    experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
 
 
