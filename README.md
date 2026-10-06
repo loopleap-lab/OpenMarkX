@@ -11,7 +11,8 @@ Detector     detect(texts, key) ─▶ one Detection per text;  verify_model(rel
 ```
 
 Results of the PRO paper (LLaMA-3-8B, four methods, every model modification): **[LEADERBOARD.md](LEADERBOARD.md)**.
-This repository is the toolkit; it ships no trained watermarked weights.
+This repository is the toolkit; it ships no trained watermarked weights. An interactive walkthrough of the threat model and the API is in
+[docs/index.html](docs/index.html) (the project website; serve `docs/` with GitHub Pages).
 
 ## Install
 
