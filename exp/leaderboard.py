@@ -39,7 +39,8 @@ def main():
                 r = json.loads(l); edits[r["edit"]] = r
         rows.append({"scheme": res["scheme"], "scheme_params": res.get("scheme_params"), "note": res.get("label_note"), "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
                      "auc": res["student"]["auc"], "ceiling": (res.get("teacher_decode") or {}).get("tpr_at_1fpr"),
-                     "ppl": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": edits})
+                     "ppl": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": edits,
+                     "by_length": res.get("by_length")})
     rows.sort(key=lambda r: -r["learned"])
     for r in rows:
         r["main"] = is_main(r["scheme"])
@@ -51,6 +52,15 @@ def main():
     print("\n\\* degenerate text (4-gram repetition > 0.3); the score is inflated by looping, not by the watermark.")
     for k, why in NOT_INCLUDED.items():
         print(f"\nNot included: {k}: {why}.")
+    lengths = [r for r in rows if r["main"] and r.get("by_length")]
+    if lengths:
+        cols = list(lengths[0]["by_length"])
+        print("\n### C9 · shorter texts at the 200-token threshold (false positives should stay near 1%)\n")
+        print("| method | " + " | ".join(f"FPR @{c} tok | TPR @{c} tok" for c in cols) + " |")
+        print("|" + "---|" * (2 * len(cols) + 1))
+        for r in lengths:
+            print(f"| {r['scheme']} | " + " | ".join(f"{100 * r['by_length'][c]['fpr']:.1f}% | {r['by_length'][c]['tpr']:.2f}"
+                                                    for c in cols) + " |")
     print("\n### Ablations: experimental variants and parameter sweeps (not methods you would pick)\n")
     table([r for r in rows if not r["main"]], ppl_base)
 

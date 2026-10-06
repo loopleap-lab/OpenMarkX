@@ -17,8 +17,8 @@
                   to key material in the key store, none containing a value from the key
   C8 determinism  rebinding the same key gives the same key material and the same scores; setup() leaves the
                   model and tokenizer it is given unchanged
-  C9 length       not checked here: needs the real base (planned: false-positive rate per text length in
-                  exp/learnability.py)
+  C9 length       not checked here (needs the real base): exp/learnability.py cuts the texts to 50 and 100 tokens
+                  and reports the false-positive rate at the full-length threshold (leaderboard, C9 table)
   C10 positions   teacher-learned: target_logits() on a whole sequence (what training sees) equals target_logits()
                   on each prefix at its last position (what decoding sees)
 Every check runs against a temporary key store and in its own try/except, so a crash is a FAIL row, not a traceback.
@@ -344,7 +344,7 @@ print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
                 worst = max(worst, (whole[:, t] - step).abs().max().item())
         return worst < 1e-4, f"whole sequence vs each prefix: max |difference| = {worst:.2e}"
     check("C10 positions", c10)
-    rows.append(("C9 length", "SKIP", "needs the real base; not automated yet"))
+    rows.append(("C9 length", "SKIP", "needs the real base: exp/learnability.py reports it (leaderboard C9 table)"))
     return sorted(rows, key=lambda r: int(r[0].split()[0][1:]))
 
 

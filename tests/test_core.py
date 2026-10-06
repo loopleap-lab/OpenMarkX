@@ -36,3 +36,17 @@ def test_release_roundtrip(tmp_path):
     r = Release(path=str(tmp_path / "r"), base="llama-3.2-1b", scheme="pro", key={"delta": 1.0}, adapter="a")
     r.save()
     assert Release.open(r.path) == r
+
+
+def test_length_curve_cuts_texts_and_keeps_the_threshold():
+    from markweightx.models import load_tokenizer
+    from markweightx.scoring import length_curve
+
+    class Count:                                           # statistic = number of tokens: longer looks "marked"
+        def score_batch(self, texts):
+            return [(len(tok(t, add_special_tokens=False)["input_ids"]), 0) for t in texts]
+        score = lambda self, t: self.score_batch([t])[0]
+    tok = load_tokenizer("llama-3.2-1b")
+    long = ["word " * 150] * 4
+    out = length_curve(Count(), tok, long, long, thr=75, lengths=(50, 100))
+    assert out["50"]["fpr"] == 0 and out["100"]["fpr"] == 1 and out["100"]["n"] == 4

@@ -142,7 +142,9 @@ markweightx embed --base llama-3.2-1b --watermark my_mark.py
 | C8 determinism | rebinding the same key gives the same material and scores; `setup` leaves the model and tokenizer unchanged |
 | C10 positions | `target_logits` on a whole sequence (training) equals it on each prefix (decoding) |
 
-C9 (scores across text lengths) needs the real base, so `check` skips it: run `exp/learnability.py` for that.
+C9 (shorter texts) needs the real base, so `check` skips it. `exp/learnability.py` cuts the evaluation texts to
+50 and 100 tokens and reports the false-positive rate at the full-length threshold; the leaderboard shows it as a
+C9 table (`exp/length_check.py` adds it to finished runs).
 `tests/broken/` holds 17 adapters with typical bugs, and `tests/test_check.py` makes sure each one fails.
 
 Rules for plugins:

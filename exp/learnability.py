@@ -85,6 +85,8 @@ def main():
         res["teacher_decode"] = summary(s_teach, s_null); res["ppl_teacher"] = perplexity(judge, tok, prompts, teach)
     res["total_sec"] = round(time.time() - t0)
     print(json.dumps(res, indent=1))
+    from markweightx.scoring import length_curve
+    res["by_length"] = length_curve(sch, tok, stud, base_txt, res["student"]["thr"])   # C9: shorter texts
     json.dump(res, open(f"{out}/result.json", "w"), indent=1)
     json.dump({"prompts": prompts, "student": stud, "teacher": teach, "scores": {"null": s_null, "student": s_stud}},
               open(f"{out}/texts.json", "w"))

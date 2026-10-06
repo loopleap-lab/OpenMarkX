@@ -49,6 +49,21 @@ def summary(wm_stats, null_stats, fpr=0.01):
             "median_wm": med(wm_stats), "median_null": med(ns), "n_wm": len(wm_stats), "n_null": len(ns)}
 
 
+LENGTHS = (50, 100)             # C9: the evaluation texts are 200 tokens; how does the threshold hold on shorter ones?
+
+
+def length_curve(scheme, tok, wm_texts, null_texts, thr, lengths=LENGTHS):
+    """C9: the texts cut to their first L tokens and scored again, at the threshold set on the full-length null. A
+    detector whose null drifts with length shows a false-positive rate far from the one it was calibrated for."""
+    cut = lambda ts, n: [tok.decode(tok(t, add_special_tokens=False)["input_ids"][:n]) for t in ts]
+    out = {}
+    for n in lengths:
+        sn = [s for s, _ in scores(scheme, cut(null_texts, n))]
+        sw = [s for s, _ in scores(scheme, cut(wm_texts, n))]
+        out[str(n)] = {"fpr": sum(s > thr for s in sn) / len(sn), "tpr": sum(s > thr for s in sw) / len(sw), "n": len(sn)}
+    return out
+
+
 def repetition(text: str, n: int = 4) -> float:
     """Share of repeated word n-grams; near 1 means the model is looping (degenerate text inflates some detectors)."""
     w = text.split()
