@@ -6,6 +6,9 @@ requires-python = ">=3.10"
 dependencies = ["torch", "transformers>=4.46", "peft>=0.13", "datasets", "scikit-learn", "scipy", "pyyaml",
                 "bitsandbytes", "jieba", "nltk"]
 
+[project.optional-dependencies]
+test = ["pytest"]
+
 [project.scripts]
 markweightx = "markweightx.cli:main"
 

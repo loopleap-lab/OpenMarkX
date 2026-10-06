@@ -19,7 +19,7 @@ Python 3.10+ and a CUDA GPU for training and sampling (`check` and the tests run
 
 ```bash
 git clone <this repository> && cd MarkWeightX
-pip install -e .                    # the markweightx package and the `markweightx` command
+pip install -e ".[test]"            # the markweightx package, the `markweightx` command (and pytest)
 bash scripts/install_deps.sh        # upstream MarkLLM at a pinned commit, and its requirements
 python exp/prepare_data.py          # once: C4 text for training, prompts and human continuations
 pytest -q tests -m "not slow"       # optional: about a minute on CPU
