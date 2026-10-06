@@ -2,7 +2,7 @@
 
   markweightx bench configs/arena/1b.yaml --dry-run      # what is done, what would run
   markweightx bench configs/arena/1b.yaml                # run the missing steps here, in order
-  markweightx bench configs/arena/1b.yaml --queue lab2   # hand them to exp/scheduler.py, one job per step
+  markweightx bench configs/arena/1b.yaml --queue mybox  # hand them to exp/scheduler.py, one job per step
 
 An arena file names the base and the methods (built-in names with params, or plugin files):
 

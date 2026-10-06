@@ -3,9 +3,11 @@
 import glob
 import json
 import os
+import sys
 import subprocess
 
-R = os.environ.get("MWX_RUNS", "/mnt/data/jiaq/mwx-runs")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from markweightx.paths import RUNS as R  # noqa: E402
 
 
 def row(res):

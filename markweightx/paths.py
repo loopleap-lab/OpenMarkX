@@ -1,35 +1,42 @@
-"""Where things live on this server. Override with environment variables."""
+"""Where things live. Every location can be set by an environment variable; the defaults are under ~/.markweightx.
+
+  MWX_RUNS       releases, results, the key store and the tokenized corpus     (~/.markweightx/runs)
+  MWX_KEYS       the key store                                                    ($MWX_RUNS/keys)
+  MWX_DATA       the tokenized C4 corpus made by exp/prepare_data.py             ($MWX_RUNS/data_llama8b_256.pt)
+  MARKLLM_DIR    a checkout of upstream MarkLLM at commit 112fa74               (~/.markweightx/MarkLLM)
+  PRO_CODE_DIR   the PRO paper code                                              (~/.markweightx/PRO-code)
+  HF_HOME        the Hugging Face cache that base models are downloaded into   (Hugging Face's default)
+"""
 import os
 
-RUNS = os.environ.get("MWX_RUNS", "/mnt/data/jiaq/mwx-runs")
-MARKLLM = os.environ.get("MARKLLM_DIR", "/mnt/data/jiaq/MarkLLM")          # upstream MarkLLM @112fa74, unchanged
-PRO_CODE = os.environ.get("PRO_CODE_DIR", "/home/jiaq/Research/PRO/refs/PRO-code")   # PRO paper code, unchanged
-HF = os.environ.get("MWX_HF", "/mnt/data/jiaq/hf")
+HOME = os.path.expanduser(os.environ.get("MWX_HOME", "~/.markweightx"))
+RUNS = os.environ.get("MWX_RUNS", os.path.join(HOME, "runs"))
+MARKLLM = os.environ.get("MARKLLM_DIR", os.path.join(HOME, "MarkLLM"))    # upstream MarkLLM @112fa74, unchanged
+PRO_CODE = os.environ.get("PRO_CODE_DIR", os.path.join(HOME, "PRO-code"))  # PRO paper code, unchanged
+MARKLLM_COMMIT = "112fa74"
+
+# Base model names -> (Hugging Face repo, pinned revision). A pinned revision makes runs comparable across machines;
+# None takes the repo's current revision.
 BASES = {
-    "llama-3.2-1b": f"{HF}/hub/models--unsloth--Llama-3.2-1B/snapshots/9535bd9b1d1dea6acafbdc4813b728796aeb28da",
-    "llama-3.1-8b-instruct": f"{HF}/hub/models--unsloth--Meta-Llama-3.1-8B-Instruct/snapshots/{{}}",
-    "llama-3.2-1b-instruct": f"{HF}/hub/models--unsloth--Llama-3.2-1B-Instruct/snapshots/5a8abab4a5d6f164389b1079fb721cfab8d7126c",
-    "llama-3.1-8b": next(p for p in (
-        "/mnt/data/hf_cache/hub/models--meta-llama--Llama-3.1-8B/snapshots/d04e592bb4f6aa9cfee91e2e20afa771667e1d4b",   # lab2
-        f"{HF}/hub/models--meta-llama--Llama-3.1-8B/snapshots/d04e592bb4f6aa9cfee91e2e20afa771667e1d4b",            # lab0 copy
-    ) if os.path.isdir(p) or p.startswith(HF)),
+    "llama-3.2-1b": ("unsloth/Llama-3.2-1B", "9535bd9b1d1dea6acafbdc4813b728796aeb28da"),
+    "llama-3.2-1b-instruct": ("unsloth/Llama-3.2-1B-Instruct", "5a8abab4a5d6f164389b1079fb721cfab8d7126c"),
+    "llama-3.1-8b": ("meta-llama/Llama-3.1-8B", "d04e592bb4f6aa9cfee91e2e20afa771667e1d4b"),
+    "llama-3.1-8b-instruct": ("unsloth/Meta-Llama-3.1-8B-Instruct", None),
 }
 # both bases share the Llama-3 tokenizer (128256), so one tokenized corpus serves both
-DATA = {"llama3": os.environ.get("MWX_DATA", f"{RUNS}/data_llama8b_256.pt")}   # made by exp/prepare_data.py
-HUB = {  # where a base comes from when its pinned snapshot is not on disk (downloaded on first use)
-    "llama-3.2-1b": "unsloth/Llama-3.2-1B", "llama-3.2-1b-instruct": "unsloth/Llama-3.2-1B-Instruct",
-    "llama-3.1-8b": "meta-llama/Llama-3.1-8B", "llama-3.1-8b-instruct": "unsloth/Meta-Llama-3.1-8B-Instruct",
-}
+DATA = {"llama3": os.environ.get("MWX_DATA", os.path.join(RUNS, "data_llama8b_256.pt"))}
 
 
 def base_path(name: str) -> str:
-    p = BASES.get(name, name)
-    if p.endswith("/{}"):                                   # snapshot hash not pinned yet: take the one on disk
-        root = p[:-3]
-        snaps = sorted(os.listdir(root)) if os.path.isdir(root) else []
-        p = os.path.join(root, snaps[0]) if snaps else root
-    if name in HUB and not os.path.isdir(p):               # not on this machine: the Hugging Face repo
-        import warnings                                    # (latest revision: results may differ from pinned runs)
-        warnings.warn(f"{name}: pinned snapshot not found under {HF}; using the Hugging Face repo {HUB[name]}")
-        return HUB[name]
-    return p
+    """A local directory for a base model: a known name is fetched at its pinned revision into the Hugging Face cache
+    (once; later calls use the cache), a local directory is used as is, anything else is taken as a repo id."""
+    if os.path.isdir(name):
+        return name
+    if name not in BASES:
+        return name
+    from huggingface_hub import snapshot_download
+    repo, rev = BASES[name]
+    try:
+        return snapshot_download(repo, revision=rev, local_files_only=True)
+    except Exception:                                       # not cached yet (or a partial download): fetch it
+        return snapshot_download(repo, revision=rev)

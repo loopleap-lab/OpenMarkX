@@ -1,6 +1,7 @@
 """A tiny GPU job scheduler for shared lab machines.
 
-  nohup python exp/scheduler.py --host lab2 &      # runs forever; edit RUNS/sched/<host>/queue.json to add jobs
+  nohup python exp/scheduler.py --host mybox &     # runs forever; edit RUNS/sched/<host>/queue.json to add jobs
+Jobs run from the repository root with the scheduler's environment (HF_HOME, MWX_RUNS, ...) and one GPU each.
 
 Rules: at most one of *my* jobs per GPU (other users' jobs are left alone), and a job starts only when the GPU has
 at least `mem_gb` free and every path in `requires` exists. Each job: {"id", "cmd", "mem_gb", "requires": [...]}.
@@ -12,9 +13,13 @@ import getpass
 import json
 import os
 import subprocess
+import sys
 import time
 
-R = os.environ.get("MWX_RUNS", "/mnt/data/jiaq/mwx-runs")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from markweightx.paths import RUNS as R  # noqa: E402
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ME = getpass.getuser()
 
 
@@ -74,7 +79,7 @@ def main():
             if not free:
                 break                                          # keep queue order: wait for a GPU
             g = free[0]["index"]
-            cmd = f'cd /home/jiaq/Research/PRO/MarkWeightX && export HF_HOME=/mnt/data/jiaq/hf CUDA_VISIBLE_DEVICES={g}; ({job["cmd"]}); echo $? > {d}/{jid}.exit'
+            cmd = f'cd {ROOT} && export CUDA_VISIBLE_DEVICES={g}; ({job["cmd"]}); echo $? > {d}/{jid}.exit'
             p = subprocess.Popen(["bash", "-c", cmd], stdout=open(f"{d}/{jid}.log", "a"), stderr=subprocess.STDOUT,
                                  start_new_session=True)
             procs[jid] = p

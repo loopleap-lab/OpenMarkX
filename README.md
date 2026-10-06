@@ -10,23 +10,34 @@ Downstream   modify ─▶ edited release ── generate ─▶ texts ── re
 Detector     detect(texts, key) ─▶ one Detection per text;  verify_model(release, key, prompts) ─▶ one verdict
 ```
 
+Results of the PRO paper (LLaMA-3-8B, four methods, every model modification): **[LEADERBOARD.md](LEADERBOARD.md)**.
+This repository is the toolkit; it ships no trained watermarked weights.
+
 ## Install
 
+Python 3.10+ and a CUDA GPU for training and sampling (`check` and the tests run on CPU).
+
 ```bash
-pip install -e .                    # or: uv pip install -e .  (local only; nothing is published)
-export MWX_RUNS=/path/to/runs       # releases, results and the key store (default: /mnt/data/jiaq/mwx-runs)
-export MWX_HF=/path/to/hf           # where pinned base snapshots are looked up
-python exp/prepare_data.py          # once: C4 text for training, prompts and human continuations ($MWX_DATA)
+git clone <this repository> && cd MarkWeightX
+pip install -e .                    # the markweightx package and the `markweightx` command
+bash scripts/install_deps.sh        # upstream MarkLLM at a pinned commit, and its requirements
+python exp/prepare_data.py          # once: C4 text for training, prompts and human continuations
+pytest -q tests -m "not slow"       # optional: about a minute on CPU
 ```
 
-- **Base models.** Names like `llama-3.2-1b` map to pinned snapshots under `$MWX_HF`. If a snapshot is not on
-  disk, the name falls back to its Hugging Face repo (e.g. `unsloth/Llama-3.2-1B`), which is downloaded on first
-  use. Any local model path also works.
-- **Methods built on other code.** MarkLLM schemes need a checkout of upstream MarkLLM (`MARKLLM_DIR`) with its
-  requirements installed. PRO needs the PRO paper code (`PRO_CODE_DIR`) and its sentence embedder. Both are used
-  unchanged.
-- **Key store.** It lives in `$MWX_KEYS` (default `$MWX_RUNS/keys`). Back it up: a key that is lost cannot be
-  recovered.
+Everything goes under `~/.markweightx` unless set otherwise:
+
+| Variable | What | Default |
+|---|---|---|
+| `MWX_RUNS` | releases, results, tokenized corpus | `~/.markweightx/runs` |
+| `MWX_KEYS` | the key store (back it up: a lost key cannot be recovered) | `$MWX_RUNS/keys` |
+| `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `~/.markweightx/MarkLLM` |
+| `PRO_CODE_DIR` | the PRO paper code, for the `pro*` schemes | `~/.markweightx/PRO-code` |
+| `HF_HOME` | Hugging Face cache; base models download here on first use | Hugging Face's default |
+
+Base model names (`llama-3.2-1b`, `llama-3.2-1b-instruct`, `llama-3.1-8b`, ...) are fetched from Hugging Face at a
+pinned revision (`markweightx/paths.py`); any local model directory or repo id also works. Gated models such as
+`meta-llama/*` need `huggingface-cli login`.
 
 ## Quickstart
 
@@ -77,15 +88,22 @@ Edits are written `op:param=value,...`:
 | `quantize` | `bits=4` (nf4) or `bits=8` (int8) |
 | `synonym`, `word_deletion`, `context_synonym` | `ratio=0.3` (text edits, used with `rewrite`) |
 
-## Methods
+## Supported methods
 
-`markweightx describe` prints this table. A method is a **scheme**, and every scheme is assembled from six
-primitives: Key, Signal, Imprint, Perturb, Probe and Score.
+`markweightx describe` prints the full table. A method is a **scheme**, assembled from six primitives: Key, Signal,
+Imprint, Perturb, Probe and Score. The leaderboard reports the paper's methods; the others are supported by the
+toolkit and can be benchmarked with `markweightx bench`.
 
-| Class | Schemes | How the mark gets in |
-|---|---|---|
-| teacher-learned | `pro`, `pro-coopt-c100`, `pro-full-b01` (ours); `markllm-<x>-d` for 12 MarkLLM watermarks | distill a decode-time teacher's logits into the weights (LoRA) |
-| teacher-free | `gaussmark` | write a keyed perturbation straight into one weight matrix |
+| Scheme | Method | How the mark gets in | Detector needs |
+|---|---|---|---|
+| `pro` | PRO (ours), watermark policy frozen | distill PRO's semantic teacher into the weights (LoRA) | text, key (with its policy) |
+| `pro-coopt-c100` | PRO with the policy co-optimized during distillation | same, policy trained jointly | text, key |
+| `pro-full-b01` | PRO co-optimized, with forgetting-perturbation training (FPL) | same, plus FPL | text, key |
+| `markllm-kgw-d`, `-unigram-d`, `-sweet-d`, `-ewd-d`, `-morphmark-d`, `-dip-d`, `-unbiased-d`, `-synthid-d`, `-exp-d`, `-expedit-d`, `-itsedit-d`, `-pf-d` | 12 decode-time watermarks from MarkLLM, distilled (Gu et al. style) | distill the MarkLLM teacher into the weights (LoRA) | text, key; SWEET, EWD, Unbiased also run the base model |
+| `gaussmark` | GaussMark | a keyed Gaussian perturbation written into one weight matrix | text, key, gradients of the base model |
+
+The `pro*` schemes need the PRO paper code (`PRO_CODE_DIR`); the `markllm-*` schemes need MarkLLM
+(`scripts/install_deps.sh`). Your own method is one file (see "Add your own method").
 
 Parameters go after a colon: `gaussmark:sigma=0.02,layer=12`. A misspelled scheme or edit parameter is an error
 that lists the accepted ones. So is an edit value the code would otherwise ignore, such as `quantize:bits=3`. `embed` writes every parameter into the key, defaults included. So a key keeps detecting the
@@ -139,7 +157,7 @@ scheme, its parameters and the plugin source. The key lives in the key store, `$
 draws its own token mapping. A calibrated key carries a frozen empirical null, so `detect` returns calibrated
 p-values. The calibration also holds nulls for the texts cut to 20, 50 and 100 tokens: a text is judged against the
 null calibrated at the largest length not above its own, because some detectors' false positives grow on short texts
-(C9: PRO reaches 14% at 50 tokens against a 200-token threshold). Keys
+(check C9). Keys
 calibrated before this change warn until calibrated again. A text too short to be judged gets `p_value=None` and
 `flagged=None` (no evidence either way), and `verify_model` does not count it. Schemes with an exact closed-form null (`exact_null = True`, e.g. GaussMark) use it
 directly.
@@ -204,7 +222,7 @@ the rest of that method, and `--queue` queues a failed step again under a new id
 ```bash
 markweightx bench configs/arena/1b.yaml --dry-run     # what is done, what would run
 markweightx bench configs/arena/1b.yaml               # run the missing steps on this machine
-markweightx bench my_arena.yaml --queue lab2          # or hand them to the GPU scheduler
+markweightx bench my_arena.yaml --queue mybox         # or hand them to the GPU scheduler (exp/scheduler.py)
 ```
 
 ```yaml
@@ -228,8 +246,8 @@ The steps are these scripts, which can also be run one at a time:
 | `exp/leaderboard.py` | one row per method; experimental variants and sweeps go under Ablations |
 | `exp/scheduler.py --host NAME` | a GPU queue (`$MWX_RUNS/sched/<host>/queue.json`) that waits for free memory |
 
-The training recipe for teacher-learned schemes is `configs/embed.yaml` (`embed --recipe`). All roadmap numbers
-are on Llama-3.2-1B.
+The training recipe for teacher-learned schemes is `configs/embed.yaml` (`embed --recipe`). The board of your own
+runs is separate from LEADERBOARD.md, which reports the paper.
 
 ## Names in the design appendix vs. the code
 

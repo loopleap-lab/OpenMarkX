@@ -15,7 +15,8 @@ import json
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-R = os.environ.get("MWX_RUNS", "/mnt/data/jiaq/mwx-runs")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from markweightx.paths import RUNS as R  # noqa: E402
 COLS = [("finetune_steps200", "FT 200"), ("finetune_steps800", "FT 800"), ("finetune_steps2400", "FT 2400"),
         ("merge_ratio0.2", "merge .2"), ("merge_ratio0.4", "merge .4"), ("merge_ratio0.6", "merge .6"),
         ("prune_sparsity0.2", "prune 20%"), ("prune_sparsity0.5", "prune 50%"),
