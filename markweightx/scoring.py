@@ -25,7 +25,13 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01) -> list[Det
     ns = sorted(null) if null else None
     thr = threshold(ns, fpr) if ns else None
     out = []
-    for s, n in scores(scheme, texts):
+    empty = [not scheme.tok(t, add_special_tokens=False)["input_ids"] for t in texts]
+    scored = iter(scores(scheme, [t for t, e in zip(texts, empty) if not e]) if not all(empty) else [])
+    for e in empty:
+        s, n = (0.0, 0) if e else next(scored)
+        if not n:                                           # nothing scored: a vacuous answer, as in MarkAgentX
+            out.append(Detection(statistic=s, p_value=1.0, n_tokens=0, flagged=False))
+            continue
         if ns and not getattr(scheme, "exact_null", False):  # a calibrated key: its frozen empirical null
             p, flagged = empirical_p(s, ns), s > thr
         else:                                               # otherwise the scheme's closed form, if it has one

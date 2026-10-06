@@ -9,10 +9,21 @@ from dataclasses import asdict, dataclass, field
 
 @dataclass(frozen=True)
 class Detection:
+    """MarkAgentX's Detection(statistic, p_value, n_evidence) with the evidence counted in tokens, plus the flag.
+    As there, n_tokens == 0 with p_value == 1.0 is a detector that had nothing to look at."""
     statistic: float              # the detector's own score (z, LLR, p-value, ...); higher = more watermarked
     p_value: float | None         # calibrated against the empirical null when one is given, else the detector's own
     n_tokens: int
     flagged: bool | None = None   # statistic > threshold, when a threshold is known
+
+    @property
+    def n_evidence(self) -> int:
+        """MarkAgentX's name for the amount of evidence: here, the tokens scored."""
+        return self.n_tokens
+
+    def to_markagentx(self) -> dict:
+        """The fields of markagentx.base.Detection, in its order (pass as markagentx.base.Detection(**d))."""
+        return {"statistic": self.statistic, "p_value": self.p_value, "n_evidence": self.n_tokens}
 
 
 @dataclass

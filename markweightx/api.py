@@ -207,13 +207,57 @@ def _detect_device(key: Key, device: str | None, cls=None) -> str:
 
 
 def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device: str | None = None,
-           fpr=0.01, grant=None, trust_plugin: bool = False) -> list[Detection]:
+           fpr=0.01, grant=None, trust_plugin: bool = False, null: str = "auto", n_null: int = 200) -> list[Detection]:
     """Score texts with the key alone (plus the base model for detectors that need one). With a calibrated key,
-    p-values and flags come from the frozen null. The device defaults to the one the key was made on."""
+    p-values and flags come from the frozen null; otherwise from the scheme's closed form. null="wrong_key" instead
+    scores each text under n_null wrong keys (MarkAgentX's wrong_key_detect): p = (1 + #{wrong >= S}) / (n_null + 1).
+    The device defaults to the one the key was made on."""
     from .scoring import detect as _detect
     texts = [texts] if isinstance(texts, str) else texts
+    if null not in ("auto", "wrong_key"):
+        raise ValueError(f"null must be 'auto' or 'wrong_key', not {null!r}")
     device = _detect_device(key, device, type(build_scheme(key, trust_plugin=trust_plugin)))
+    if null == "wrong_key":
+        return wrong_key_detect(texts, key, base=base, device=device, fpr=fpr, grant=grant, n_null=n_null,
+                                trust_plugin=trust_plugin)
     return _detect(scheme_for(key, base, device, grant, trust_plugin), texts, null=key.calibration.get("null"), fpr=fpr)
+
+
+def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, device: str | None = None, fpr=0.01,
+                     grant=None, n_null: int = 200, trust_plugin: bool = False) -> list[Detection]:
+    """p-values from wrong keys, as in MarkAgentX: each text's statistic under the true key against its statistics
+    under n_null keys drawn reproducibly (random.Random(0xC0FFEE)), the true key excluded. Needs no calibration and
+    no base texts; costs n_null rebindings of the scheme. Teacher-free (EDIT) schemes have an exact null instead."""
+    import os
+    from .imprint import _drop_if_empty
+    from .keys import seeded_secrets
+    from .primitives import Imprint
+    from .scoring import scores
+    sch = scheme_for(key, base, device or _detect_device(key, None), grant, trust_plugin)
+    if sch.imprint == Imprint.EDIT:
+        raise ValueError(f"{key.scheme} writes its mark into the weights: a wrong key needs another release. Use its "
+                         f"closed-form null (exact_null) or mwx.calibrate instead")
+    true = [s for s, _ in scores(sch, texts)]
+    null = [[] for _ in texts]
+    with seeded_secrets():
+        drawn = 0
+        while drawn < n_null:
+            w = build_scheme(key, trust_plugin=trust_plugin)
+            w.probe = sch.probe
+            material = w.setup(sch.model, sch.tok, device, None)   # the model (or config) scheme_for bound
+            for v in (material or {}).values():           # staged files of a wrong key (e.g. a PRO mapping)
+                if isinstance(v, str) and os.path.isfile(v) and os.sep + "tmp" + os.sep in v:
+                    os.remove(v); _drop_if_empty(os.path.dirname(v))
+            if material == key.params:                     # the true key: excluded
+                continue
+            for i, (s, _) in enumerate(scores(w, texts)):
+                null[i].append(s)
+            drawn += 1
+    out = []
+    for s, ns, (_, n) in zip(true, null, scores(sch, texts)):
+        p = 1.0 if not n else (1 + sum(x >= s for x in ns)) / (n_null + 1)
+        out.append(Detection(statistic=s, p_value=p, n_tokens=n, flagged=bool(n) and p < fpr))
+    return out
 
 
 def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01,

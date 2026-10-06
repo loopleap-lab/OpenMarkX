@@ -5,6 +5,7 @@ Files that are part of a key (PRO's token->dimension mapping, a trained policy) 
 blobs/ and referenced from params as "blob:<sha256>", so a commitment never depends on where a file lives."""
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import secrets
@@ -20,6 +21,20 @@ PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256"}    # key fields that 
 def new_secret(bits: int = 40) -> int:
     """A fresh random secret, small enough for every teacher's seeding arithmetic (seed * token id < 2**64)."""
     return secrets.randbits(bits)
+
+
+@contextlib.contextmanager
+def seeded_secrets(seed: int = 0xC0FFEE):
+    """Inside, new_secret() draws from random.Random(seed): the reproducible wrong keys of a wrong-key null (the
+    seed MarkAgentX's wrong_key_detect uses)."""
+    import random
+    global new_secret
+    rng, real = random.Random(seed), new_secret
+    new_secret = lambda bits=40: rng.getrandbits(bits)    # noqa: E731
+    try:
+        yield
+    finally:
+        new_secret = real
 
 
 def key_path(commitment: str) -> str:

@@ -188,6 +188,10 @@ def main(argv=None):
                    "(default: what the scheme needs); a lower grant is refused")
     p.add_argument("--fpr", type=float, default=0.01, help="false-positive rate for the flag (default 0.01)")
     p.add_argument("--base", help="base model for R1/R2 detectors (default: the key's base)")
+    p.add_argument("--null", choices=["auto", "wrong_key"], default="auto",
+                   help="auto: the key's calibrated null, else the closed form; wrong_key: score under --n-null wrong "
+                        "keys (MarkAgentX's wrong-key null; no calibration needed, slower)")
+    p.add_argument("--n-null", type=int, default=200, help="wrong keys for --null wrong_key (default 200)")
     p.add_argument("--device", help="default: the device the key was made on")
     p.add_argument("--out", help="output .jsonl (default: stdout)")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
@@ -254,7 +258,7 @@ def _run(a):
         grant = getattr(mwx.Access, a.grant) if a.grant else None
         texts = _read_texts(a.texts)
         dets = mwx.detect(texts, _key(a.key), base=a.base, device=a.device, fpr=a.fpr, grant=grant,
-                          trust_plugin=a.trust_plugin)
+                          trust_plugin=a.trust_plugin, null=a.null, n_null=a.n_null)
         _write_jsonl(a.out, [{"text": t[:80], "statistic": d.statistic, "p_value": d.p_value, "n_tokens": d.n_tokens,
                               "flagged": d.flagged} for t, d in zip(texts, dets)])
     elif a.cmd == "verify":

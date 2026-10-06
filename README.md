@@ -104,6 +104,15 @@ follows the same Gumbel-max rule as EXP.
 `detect(..., grant=Access.R1)` (CLI `--grant R1`) caps what a detector may touch. A scheme that needs more is
 refused before any model is loaded.
 
+## With MarkAgentX
+
+`Detection` is MarkAgentX's `Detection(statistic, p_value, n_evidence)` with the evidence counted in tokens:
+`d.n_evidence` and `d.to_markagentx()` give its fields, and as there an empty text answers `p_value = 1.0` with no
+evidence. `detect(..., null="wrong_key")` (CLI `--null wrong_key`) is MarkAgentX's wrong-key null: each text is
+scored under `n_null` keys drawn from `random.Random(0xC0FFEE)`, and `p = (1 + #{wrong keys >= S}) / (n_null + 1)`.
+It needs no calibration but costs `n_null` rebindings of the scheme; teacher-free schemes use their exact closed form
+instead. `tests/test_markagentx.py` checks the field names against a MarkAgentX checkout (`refs/MarkAgentX`).
+
 ## Keys
 
 Keys never ship with a release. `release.json` holds only the key's commitment, which is sha256 over a nonce, the
