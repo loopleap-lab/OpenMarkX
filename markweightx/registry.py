@@ -110,8 +110,8 @@ def scheme_source(cls) -> str | None:
     if mod.startswith("markweightx."):
         return None
     if mod == "__main__":
-        raise ValueError(f"scheme {cls.__name__} is defined in the script being run (or a notebook); a key must be able "
-                         f"to load it again, so put it in its own .py file and pass that file (or import it)")
+        raise ValueError(f"scheme {cls.__name__} is defined in the script being run (or a notebook), which a key cannot "
+                         f"load again: keep it in its own file and pass the file, e.g. mwx.embed(base, 'my_mark.py')")
     if mod.startswith("mwx_plugin_"):
         f = getattr(sys.modules.get(mod), "__file__", None)
         return os.path.abspath(f) if f else None

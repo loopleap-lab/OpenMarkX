@@ -51,6 +51,8 @@ def main():
     tok = load_tokenizer(a.base)
     model = load_release(rel, a.device)
     sch = build_scheme(load_key(rel), trust_plugin=True)
+    from markweightx.api import _detect_device
+    _detect_device(load_key(rel), a.device, type(sch))     # a key made on CUDA is scored on CUDA (and CPU on CPU)
     from markweightx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)       # R1/R2 detectors work through the probe
     sch.setup(model, tok, a.device, load_key(rel).params)
@@ -74,7 +76,9 @@ def main():
     s_null = [s for s, _ in scores(sch, base_txt)]
     s_stud = [s for s, _ in scores(sch, stud)]
     from markweightx.registry import resolved_params
-    res = {"scheme": a.scheme, "scheme_params": resolved_params(sch), "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),
+    # a plugin's row is named by its scheme, and remembers where its code came from (the leaderboard needs both)
+    res = {"scheme": sname if ssrc else a.scheme, "scheme_source": load_key(rel).scheme_source,
+           "scheme_params": resolved_params(sch), "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),
            "student": summary(s_stud, s_null), "ppl_student": perplexity(judge, tok, prompts, stud),
            "ppl_base": perplexity(judge, tok, prompts, base_txt)}
     if getattr(sch, "exact_null", False):                  # the closed-form null, checked on the real base texts

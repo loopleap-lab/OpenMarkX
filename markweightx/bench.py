@@ -10,12 +10,14 @@ An arena file names the base and the methods (built-in names with params, or plu
   methods: [pro-coopt-c100, gaussmark, my_scheme.py]
   steps: [learn, edits, forge]          # optional; default all three
   - {method: markllm-exp-d, steps: [learn]}   # a method entry may narrow the steps
-  learn: {steps: 1500, n: 500}          # optional overrides of exp/learnability.py
+  learn: {steps: 1500}                  # optional overrides of exp/learnability.py (steps, bs, accum, bos)
+  edits: [finetune:steps=800, quantize:bits=4, text:synonym:ratio=0.3]   # optional; default EDIT_GRID
 
 Per method: learn (exp/learnability.py: embed, sample, TPR at 1% FPR, PPL), edits (exp/robustness.py: every weight
-and text edit in EDIT_GRID), forge (exp/spoof.py). Then the leaderboard is rebuilt (exp/leaderboard.py). Finished
-steps are skipped, so a bench can be stopped and run again. The steps run the scripts in exp/, so bench runs from a
-checkout of the repository.
+and text edit in EDIT_GRID, or the arena's own list), forge (exp/spoof.py). Then the leaderboard is rebuilt
+(exp/leaderboard.py). A plugin file must pass `markweightx check` first (CPU, about a minute), as it would to join the
+board by hand. A step counts as done when its output exists, so a bench can be stopped and run again. The steps run
+the scripts in exp/, so bench runs from a checkout of the repository; they trust the plugin keys in your own RUNS.
 """
 from __future__ import annotations
 
@@ -53,12 +55,22 @@ def _rows(d: str) -> set:
     return {json.loads(line)["edit"] for line in open(f)} if os.path.exists(f) else set()
 
 
+def parse_edit(spec: str) -> tuple[str, dict]:
+    """'finetune:steps=800' -> ("finetune", {"steps": 800}); 'text:synonym:ratio=0.3' -> ("text:synonym", {...})."""
+    from .api import _spec
+    if spec.startswith("text:"):
+        op, params = _spec(spec[5:])
+        return "text:" + op, params
+    return _spec(spec)
+
+
 def load_arena(path: str) -> dict:
     import yaml
     a = yaml.safe_load(open(path)) or {}
-    unknown = sorted(set(a) - {"base", "tag", "methods", "steps", "learn"})
+    keys = {"base", "tag", "methods", "steps", "learn", "edits"}
+    unknown = sorted(set(a) - keys)
     if unknown or not a.get("methods"):
-        raise ValueError(f"{path}: needs 'methods' (a list); allowed keys: base, tag, methods, steps, learn"
+        raise ValueError(f"{path}: needs 'methods' (a list); allowed keys: {', '.join(sorted(keys))}"
                          + (f"; unknown: {unknown}" if unknown else ""))
     for m in a["methods"]:
         if isinstance(m, dict) and (set(m) - {"method", "steps"} or "method" not in m):
@@ -67,22 +79,39 @@ def load_arena(path: str) -> dict:
                  - set(STEPS))
     if bad:
         raise ValueError(f"{path}: unknown steps {bad}; allowed: {', '.join(STEPS)}")
-    allowed_learn = {"steps", "n", "bs", "accum", "bos"}
+    allowed_learn = {"steps", "bs", "accum", "bos"}             # not n: every step reads the 500-prompt texts
     if set(a.get("learn", {})) - allowed_learn:
         raise ValueError(f"{path}: learn takes {sorted(allowed_learn)}")
+    grid = [parse_edit(e) for e in a["edits"]] if a.get("edits") else EDIT_GRID
     return {"base": a.get("base", "llama-3.2-1b"), "tag": a.get("tag", "e2"), "methods": list(a["methods"]),
-            "steps": list(a.get("steps", STEPS)), "learn": dict(a.get("learn", {}))}
+            "steps": list(a.get("steps", STEPS)), "learn": dict(a.get("learn", {})), "grid": grid,
+            "custom_grid": bool(a.get("edits"))}
+
+
+def _absolute(m: str) -> str:
+    """A plugin file given relative to where bench is run: the steps run from the repo root."""
+    head, sep, rest = m.partition(":")
+    return os.path.abspath(head) + sep + rest if head.endswith(".py") else m
+
+
+def plugins(arena: dict) -> list[str]:
+    return sorted({_absolute(e["method"] if isinstance(e, dict) else e).partition(":")[0]
+                   for e in arena["methods"] if (e["method"] if isinstance(e, dict) else e).partition(":")[0].endswith(".py")})
 
 
 def plan(arena: dict, python: str = sys.executable) -> list[dict]:
-    """One job per missing step: {"id", "cmd", "requires", "done"}. Commands use --device cuda:0 and are meant to be
-    run with CUDA_VISIBLE_DEVICES set to one GPU (as exp/scheduler.py does)."""
-    jobs = []
+    """One job per step: {"id", "cmd", "requires", "done", "method"}. Commands use --device cuda:0 and are meant to be
+    run with CUDA_VISIBLE_DEVICES set to one GPU (as exp/scheduler.py does). A method listed twice is planned once."""
+    jobs, seen = [], {}
+    grid_arg = (" --grid " + shlex.quote(json.dumps(arena["grid"]))) if arena.get("custom_grid") else ""
     for entry in arena["methods"]:
         m, only = (entry["method"], entry.get("steps")) if isinstance(entry, dict) else (entry, None)
-        if m.endswith(".py"):
-            m = os.path.abspath(m)
+        m = _absolute(m)
         d = result_dir(m, arena["base"], arena["tag"])
+        if d in seen:
+            print(f"note: {m} is the same run as {seen[d]}; planned once", file=sys.stderr)
+            continue
+        seen[d] = m
         name = os.path.basename(d)
         result = f"{d}/result.json"
         rows = _rows(d)
@@ -90,14 +119,31 @@ def plan(arena: dict, python: str = sys.executable) -> list[dict]:
         steps = {
             "learn": (f"{python} exp/learnability.py --scheme {shlex.quote(m)} --base {arena['base']} "
                       f"--tag {arena['tag']} --device cuda:0 {learn}".strip(), [], os.path.exists(result)),
-            "edits": (f"{python} exp/robustness.py --release {shlex.quote(d)} --device cuda:0", [result],
-                      all(edit_tag(op, p) in rows for op, p in EDIT_GRID)),
+            "edits": (f"{python} exp/robustness.py --release {shlex.quote(d)} --device cuda:0{grid_arg}", [result],
+                      all(edit_tag(op, p) in rows for op, p in arena["grid"])),
             "forge": (f"{python} exp/spoof.py --release {shlex.quote(d)} --device cuda:0", [result], FORGE_ROW in rows),
         }
         for s in only or arena["steps"]:
             cmd, req, done = steps[s]
-            jobs.append({"id": f"bench:{s}:{name}", "cmd": cmd, "requires": req, "done": done, "mem_gb": 14})
+            jobs.append({"id": f"bench:{s}:{name}", "cmd": cmd, "requires": req, "done": done, "mem_gb": 14,
+                         "method": name})
     return jobs
+
+
+def check_plugins(arena: dict) -> list[str]:
+    """Run `markweightx check` on every plugin file in the arena; return the files that fail."""
+    from .check import report, run
+    from .api import scheme_spec
+    failed = []
+    for f in plugins(arena):
+        name, _, src = scheme_spec(f)
+        rows = run(name, source=src, base=arena["base"])
+        bad = [r for r in rows if r[1] == "FAIL"]
+        print(f"check {os.path.basename(f)}: {'PASS' if not bad else 'FAIL'}", flush=True)
+        if bad:
+            print(report(bad), flush=True)
+            failed.append(f)
+    return failed
 
 
 def leaderboard_cmd(arena: dict, python: str = sys.executable) -> str:
@@ -109,27 +155,51 @@ def show(jobs: list[dict]) -> str:
 
 
 def run_here(arena: dict, jobs: list[dict]) -> int:
-    """Run the pending steps one after another on this machine's first GPU, then rebuild the leaderboard."""
-    env = dict(os.environ, CUDA_VISIBLE_DEVICES=os.environ.get("CUDA_VISIBLE_DEVICES", "0"))
+    """Run the pending steps one after another on this machine's first GPU, then rebuild the leaderboard. A failed
+    step skips the rest of its method; the exit code is nonzero if any step failed."""
+    env = dict(os.environ, CUDA_VISIBLE_DEVICES=os.environ.get("CUDA_VISIBLE_DEVICES") or "0")
+    failed = set()
     for j in jobs:
         if j["done"]:
             continue
+        if j["method"] in failed:
+            print(f"skip {j['id']}: an earlier step of {j['method']} failed", flush=True)
+            continue
         if not all(os.path.exists(p) for p in j["requires"]):
             print(f"skip {j['id']}: its learn step has not produced {j['requires'][0]}", flush=True)
+            failed.add(j["method"])
             continue
         print(f"== {j['id']}", flush=True)
         r = subprocess.run(j["cmd"], shell=True, cwd=ROOT, env=env)
         if r.returncode != 0:
-            print(f"{j['id']} failed (exit {r.returncode}); later steps of this method are skipped", flush=True)
-    return subprocess.run(leaderboard_cmd(arena), shell=True, cwd=ROOT).returncode
+            print(f"{j['id']} failed (exit {r.returncode}); the rest of {j['method']} is skipped", flush=True)
+            failed.add(j["method"])
+    board = subprocess.run(leaderboard_cmd(arena), shell=True, cwd=ROOT).returncode
+    return 1 if failed else board
 
 
 def queue(jobs: list[dict], host: str) -> list[str]:
-    """Append the pending steps to exp/scheduler.py's queue for `host` (ids already queued are left alone)."""
-    f = f"{RUNS}/sched/{host}/queue.json"
+    """Append the pending steps to exp/scheduler.py's queue for `host`. A step already queued is left alone, unless
+    the scheduler recorded it as failed: then it is queued again under a new id (<id>-retryN)."""
+    d = f"{RUNS}/sched/{host}"
+    f, sf = f"{d}/queue.json", f"{d}/state.json"
     q = json.load(open(f)) if os.path.exists(f) else []
+    state = json.load(open(sf)) if os.path.exists(sf) else {}
     have = {j["id"] for j in q}
-    new = [{k: j[k] for k in ("id", "cmd", "requires", "mem_gb")} for j in jobs if not j["done"] and j["id"] not in have]
-    os.makedirs(os.path.dirname(f), exist_ok=True)
-    json.dump(q + new, open(f, "w"), indent=1)
+    new = []
+    for j in jobs:
+        if j["done"]:
+            continue
+        jid = j["id"]
+        while jid in have and state.get(jid, {}).get("status") == "failed":
+            n = int(jid.rsplit("-retry", 1)[1]) + 1 if "-retry" in jid else 1
+            jid = f"{j['id']}-retry{n}"
+        if jid in have:
+            continue
+        new.append({"id": jid, "cmd": j["cmd"], "requires": j["requires"], "mem_gb": j["mem_gb"]})
+        have.add(jid)
+    os.makedirs(d, exist_ok=True)
+    tmp = f"{f}.tmp{os.getpid()}"
+    json.dump(q + new, open(tmp, "w"), indent=1)
+    os.replace(tmp, f)                                     # the scheduler never reads a half-written queue
     return [j["id"] for j in new]

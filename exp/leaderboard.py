@@ -1,7 +1,9 @@
 """D4 · the leaderboard: one row per method, TPR@1%FPR (empirical null) after each edit, plus quality.
 
-  python exp/leaderboard.py [--tag e2 --base llama-3.2-1b] > leaderboard.md
-Also writes RUNS/<tag>/<base>/leaderboard.json for the demo.
+  python exp/leaderboard.py [--tag e2 --base llama-3.2-1b] [--format latex]
+Prints the board and saves it as RUNS/<tag>/<base>/leaderboard.md (and .json for the demo). --format latex prints the
+main table as a LaTeX tabular, in the layout of the PRO paper's main table. A plugin method (run through
+markweightx bench) is a main-board row like a built-in one.
 Columns: learned (no edit) and the decode-time teacher ceiling; weight edits; text edits; PPL of the student and
 mean 4-gram repetition. A cell is marked * when the edited model's text is degenerate (rep4 > 0.3), because
 looping text inflates some detectors.
@@ -27,6 +29,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="e2")
     ap.add_argument("--base", default="llama-3.2-1b")
+    ap.add_argument("--format", choices=["md", "latex"], default="md")
     a = ap.parse_args()
     root = f"{R}/{a.tag}/{a.base}"
     rows = []
@@ -37,15 +40,46 @@ def main():
         if os.path.exists(rf):
             for l in open(rf):
                 r = json.loads(l); edits[r["edit"]] = r
-        rows.append({"scheme": res["scheme"], "scheme_params": res.get("scheme_params"), "note": res.get("label_note"), "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
+        rows.append({"scheme": res["scheme"], "scheme_source": res.get("scheme_source"), "scheme_params": res.get("scheme_params"), "note": res.get("label_note"), "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
                      "auc": res["student"]["auc"], "ceiling": (res.get("teacher_decode") or {}).get("tpr_at_1fpr"),
                      "ppl": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": edits,
                      "by_length": res.get("by_length")})
     rows.sort(key=lambda r: -r["learned"])
     for r in rows:
-        r["main"] = is_main(r["scheme"])
+        r["main"] = is_main(r)
     json.dump({"base": a.base, "tag": a.tag, "rows": rows, "not_included": NOT_INCLUDED}, open(f"{root}/leaderboard.json", "w"), indent=1)
     ppl_base = rows[0]["ppl_base"] if rows else 0
+    if a.format == "latex":
+        print(latex([r for r in rows if r["main"]], a.base))
+        return
+    import contextlib
+    import io
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        markdown(rows, a.base, ppl_base)
+    open(f"{root}/leaderboard.md", "w").write(buf.getvalue())
+    print(buf.getvalue(), end="")
+
+
+LATEX_COLS = [("none", "Learned"), ("finetune_steps800", "FT"), ("merge_ratio0.4", "Merge"), ("prune_sparsity0.2", "Prune"),
+              ("quantize_bits4", "NF4"), ("text:synonym_ratio0.3", "Syn."), ("attack:spoof_unigram", "Forged$\\downarrow$")]
+
+
+def latex(rows, base):
+    f = lambda x: "--" if x is None else f"{100 * x:.1f}"
+    get = lambda r, k: r["learned"] if k == "none" else (r["edits"].get(k) or {}).get("tpr_at_1fpr")
+    out = [r"\begin{tabular}{l" + "r" * (len(LATEX_COLS) + 1) + "}", r"\toprule",
+           "Method & " + " & ".join(c for _, c in LATEX_COLS) + r" & PPL \\", r"\midrule"]
+    for r in rows:
+        out.append(r["scheme"].replace("_", r"\_") + " & " + " & ".join(f(get(r, k)) for k, _ in LATEX_COLS)
+                   + f" & {r['ppl']:.1f} \\\\")
+    out += [r"\bottomrule", r"\end{tabular}",
+            f"% TPR (%) at 1% FPR on {base}; FT = fine-tune 800 steps, Merge = 40% instruct, Prune = 20%, Syn. = 30% synonyms"]
+    return "\n".join(out)
+
+
+def markdown(rows, base, ppl_base):
+    a = argparse.Namespace(base=base)
     print(f"## Leaderboard · {a.base} · TPR at 1% FPR (empirical null)\n")
     table([r for r in rows if r["main"]], ppl_base)
     print("\nforged ↓: share of texts an attacker forges without Alice's model or key (token counts from her 311 texts, then a biased base model); lower is safer.")
@@ -65,11 +99,16 @@ def main():
     table([r for r in rows if not r["main"]], ppl_base)
 
 
-def is_main(name: str) -> bool:
-    """A leaderboard method is a registered, non-experimental scheme at its default parameters."""
+def is_main(r) -> bool:
+    """A leaderboard method is a registered, non-experimental scheme at its default parameters, or a plugin method
+    (it passed markweightx check to get here). Parameter sweeps (name:k=v) are ablations."""
     from markweightx.registry import SCHEMES
     import markweightx.schemes  # noqa: F401  (registers the built-in schemes)
-    c = SCHEMES.get(name)
+    if ":" in r["scheme"]:
+        return False
+    if r.get("scheme_source"):
+        return True
+    c = SCHEMES.get(r["scheme"])
     return c is not None and not getattr(c, "experimental", False)
 
 

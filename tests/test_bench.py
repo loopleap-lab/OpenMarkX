@@ -41,3 +41,43 @@ def test_plan_skips_finished_steps_and_queues_the_rest(tmp_path, monkeypatch):
 
 def test_learnability_and_bench_agree_on_the_result_dir():
     assert bench.result_dir("gaussmark:sigma=0.02", "llama-3.2-1b").endswith("/e2/llama-3.2-1b/gaussmark_sigma0.02")
+
+
+def test_same_run_twice_is_planned_once_and_relative_plugins_become_absolute(tmp_path, monkeypatch):
+    monkeypatch.setattr(bench, "RUNS", str(tmp_path))
+    plug = tmp_path / "bob" / "bob_mark.py"; plug.parent.mkdir()
+    plug.write_text(open(os.path.join(os.path.dirname(__file__), "..", "examples", "my_scheme.py")).read()
+                    .replace('"my-scheme"', '"bob-mark"'))
+    monkeypatch.chdir(tmp_path)
+    f = tmp_path / "a.yaml"
+    f.write_text("methods: [gaussmark, gaussmark, bob/bob_mark.py:bob-mark]\nsteps: [learn]\n")
+    jobs = bench.plan(bench.load_arena(str(f)), python="python")
+    assert [j["id"] for j in jobs] == ["bench:learn:gaussmark", "bench:learn:bob-mark"]
+    assert str(plug) + ":bob-mark" in jobs[1]["cmd"]
+
+
+def test_run_here_skips_the_rest_of_a_failed_method(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(bench.subprocess, "run", lambda cmd, **k: calls.append(cmd) or
+                        type("R", (), {"returncode": 3 if cmd == "edits" else 0})())
+    jobs = [{"id": "e", "cmd": "edits", "requires": [], "done": False, "method": "m"},
+            {"id": "f", "cmd": "forge", "requires": [], "done": False, "method": "m"}]
+    rc = bench.run_here({"tag": "e2", "base": "b"}, jobs)
+    assert "forge" not in calls and rc == 1
+
+
+def test_a_failed_step_is_queued_again_under_a_new_id(tmp_path, monkeypatch):
+    monkeypatch.setattr(bench, "RUNS", str(tmp_path))
+    d = tmp_path / "sched" / "h"; d.mkdir(parents=True)
+    (d / "queue.json").write_text(json.dumps([{"id": "bench:edits:m", "cmd": "x", "requires": []}]))
+    (d / "state.json").write_text(json.dumps({"bench:edits:m": {"status": "failed"}}))
+    job = {"id": "bench:edits:m", "cmd": "x", "requires": [], "done": False, "mem_gb": 14, "method": "m"}
+    assert bench.queue([job], "h") == ["bench:edits:m-retry1"]
+    assert bench.queue([job], "h") == []                    # the retry is queued and not failed yet
+
+
+def test_learn_n_is_not_an_arena_option(tmp_path):
+    f = tmp_path / "a.yaml"
+    f.write_text("methods: [gaussmark]\nlearn: {n: 100}\n")
+    with pytest.raises(ValueError, match="learn takes"):
+        bench.load_arena(str(f))

@@ -198,10 +198,12 @@ def main(argv=None):
     p.add_argument("--fpr", type=float, default=0.01, help="per-text flag rate under the null (default 0.01)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
-    p = sub.add_parser("bench", help="Researcher: the whole benchmark for an arena file (learn, edits, forge, leaderboard)")
+    p = sub.add_parser("bench", aliases=["evaluate"],
+                       help="Researcher: the whole benchmark for an arena file (learn, edits, forge, leaderboard)")
     p.add_argument("arena", help="arena YAML: base, methods, optional steps (see configs/arena/1b.yaml)")
     p.add_argument("--dry-run", action="store_true", help="show what is done and what would run")
     p.add_argument("--queue", metavar="HOST", help="append the pending steps to exp/scheduler.py's queue for HOST")
+    p.add_argument("--no-check", action="store_true", help="skip `markweightx check` on plugin files")
     p = sub.add_parser("describe", help="Researcher: the scheme x primitive matrix")
     p.add_argument("names", nargs="*", help="scheme names or plugin .py files (default: every registered method)")
     p = sub.add_parser("check", help="Researcher: the adapter checks a scheme must pass")
@@ -259,13 +261,19 @@ def _run(a):
         d = mwx.verify_model(_release(a.release), _key(a.key), _read_texts(a.prompts), device=a.device, fpr=a.fpr,
                              trust_plugin=a.trust_plugin)
         print(json.dumps({"flagged_texts": d.statistic, "p_value": d.p_value, "from_this_key": d.flagged}))
-    elif a.cmd == "bench":
+    elif a.cmd in ("bench", "evaluate"):
         from . import bench
         arena = bench.load_arena(a.arena)
         jobs = bench.plan(arena)
         print(bench.show(jobs))
         if a.dry_run:
             return
+        if not a.no_check and any(not j["done"] for j in jobs) and bench.plugins(arena):
+            import contextlib
+            with open(os.devnull, "w") as null, contextlib.redirect_stderr(null):
+                failed = bench.check_plugins(arena)
+            if failed:
+                raise SystemExit(f"fix the failing checks first (or pass --no-check): {', '.join(failed)}")
         if a.queue:
             new = bench.queue(jobs, a.queue)
             print(f"queued {len(new)} step(s) for {a.queue}; rebuild the board afterwards with: "
@@ -292,6 +300,8 @@ def _run(a):
         if os.path.exists(out) and not a.force:
             raise SystemExit(f"{out} exists: pass --force to overwrite, or --out another file")
         cls = "".join(w.capitalize() for w in a.name.replace("_", "-").split("-"))
+        if os.path.dirname(out):
+            os.makedirs(os.path.dirname(out), exist_ok=True)
         open(out, "w").write(TEMPLATE.format(name=a.name, cls=cls, file=out))
         print(f"wrote {out}: edit it, then run `markweightx check --adapter {out}`")
     elif a.cmd == "keys":

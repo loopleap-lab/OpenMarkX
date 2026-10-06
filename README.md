@@ -156,14 +156,18 @@ Rules for plugins:
 - **Unique names.** A plugin cannot reuse a built-in scheme's name.
 - **Trust.** A key from someone else can name any code. `detect`, `verify_model` and `calibrate` run plugin code
   only if your process already imported that exact file, or with `trust_plugin=True`. From the shell, a new
-  process has imported nothing, so owners pass `--trust-plugin` for keys made with their own plugin.
+  process has imported nothing, so owners pass `--trust-plugin` for keys made with their own plugin. `bench` and
+  the `exp/` scripts trust the keys under your own `$MWX_RUNS`, and `bench` imports the plugin files an arena names
+  (also with `--dry-run`).
 - **Key material goes through `save(key_dir, key)`.** `key_dir` is a private directory in the key store; the
   scheme never sees the release directory.
 
 ## Experiments and the leaderboard
 
-One command runs the benchmark for a list of methods: learn, every edit, forgery, then the leaderboard. Finished
-steps are skipped, so it can be stopped and run again.
+One command runs the benchmark for a list of methods: learn, every edit, forgery, then the leaderboard
+(`markweightx evaluate` is the same command, the appendix's name). A plugin file must pass `markweightx check`
+first. A step counts as done once its output exists, so a bench can be stopped and run again; a failed step skips
+the rest of that method, and `--queue` queues a failed step again under a new id.
 
 ```bash
 markweightx bench configs/arena/1b.yaml --dry-run     # what is done, what would run
@@ -175,7 +179,12 @@ markweightx bench my_arena.yaml --queue lab2          # or hand them to the GPU 
 # my_arena.yaml
 base: llama-3.2-1b
 methods: [pro-coopt-c100, my_mark.py]                 # built-in names (with :params) or plugin files
+edits: [finetune:steps=800, quantize:bits=4, text:synonym:ratio=0.3]   # optional; default: the full grid
 ```
+
+The board is printed and saved as `$MWX_RUNS/e2/<base>/leaderboard.md`; `exp/leaderboard.py --format latex` prints
+the main table as LaTeX. A plugin method gets a main-board row; parameter sweeps (`name:k=v`) and experimental
+variants go under Ablations.
 
 The steps are these scripts, which can also be run one at a time:
 
@@ -204,7 +213,8 @@ are on Llama-3.2-1B.
 | CLI `verify` | `markweightx verify` → `mwx.verify_model` |
 
 Not built yet: `port` (importing published watermarked checkpoints without retraining), `TP-*` grants (prompt
-access), the `sft` and `rl` imprints, and the `distill_sampling` recipe.
+access), the `sft` and `rl` imprints, the `distill_sampling` recipe, and in `bench` the paraphrase attack (DIPPER)
+and a grant axis.
 
 ## Layout
 

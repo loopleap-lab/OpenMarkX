@@ -47,10 +47,6 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     src = scheme_source or _src_of(type(sch))             # where a detector will find a plugin scheme again
     from .registry import resolved_params
     scheme_params = resolved_params(sch)                   # defaults included: the key must not follow later defaults
-    if src is None and not type(sch).__module__.startswith("markweightx."):
-        import warnings
-        warnings.warn(f"{scheme} is defined in an interactive session: a detector will not find it again from the "
-                      "key. Put the scheme in a .py file (or an importable module).")
     # small weight edits must not be rounded to bf16: Imprint.EDIT schemes get an fp32 model
     model = load_base(base, device, dtype=torch.float32 if sch.imprint == Imprint.EDIT else torch.bfloat16)
     key = sch.setup(model, tok, device, key)

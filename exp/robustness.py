@@ -33,6 +33,7 @@ def main():
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--n", type=int, default=500)
     ap.add_argument("--only", default="", help="comma-separated edit names to run")
+    ap.add_argument("--grid", help='JSON list of [op, params] pairs instead of EDIT_GRID (markweightx bench passes it)')
     a = ap.parse_args()
     rel = Release.open(a.release)
     out_rows = f"{a.release}/robustness.jsonl"
@@ -46,6 +47,8 @@ def main():
     big = "8b" in rel.base
 
     sch = build_scheme(load_key(rel), trust_plugin=True)
+    from markweightx.api import _detect_device
+    _detect_device(load_key(rel), a.device, type(sch))     # a key made on CUDA is scored on CUDA (and CPU on CPU)
     from markweightx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)
     # detectors that run a language model get the base; the others only need its config. On 8B the base used to
@@ -72,7 +75,7 @@ def main():
     if "none" not in done:
         record("none", texts["student"])
     only = set(filter(None, a.only.split(",")))
-    for op, p in GRID:
+    for op, p in (json.loads(a.grid) if a.grid else GRID):
         t = tag(op, p)
         if t in done or (only and op not in only and t not in only):
             continue
