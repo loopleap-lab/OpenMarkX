@@ -40,14 +40,17 @@ def main():
         if os.path.exists(rf):
             for l in open(rf):
                 r = json.loads(l); edits[r["edit"]] = r
-        rows.append({"scheme": res["scheme"], "scheme_source": res.get("scheme_source"), "scheme_params": res.get("scheme_params"), "note": res.get("label_note"), "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
+        rows.append({"scheme": res["scheme"], "scheme_source": res.get("scheme_source"), "sweep": res.get("sweep"),
+                     "experimental": res.get("experimental"), "scheme_params": res.get("scheme_params"), "note": res.get("label_note"), "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
                      "auc": res["student"]["auc"], "ceiling": (res.get("teacher_decode") or {}).get("tpr_at_1fpr"),
                      "ppl": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": edits,
                      "by_length": res.get("by_length")})
     rows.sort(key=lambda r: -r["learned"])
     for r in rows:
         r["main"] = is_main(r)
-    json.dump({"base": a.base, "tag": a.tag, "rows": rows, "not_included": NOT_INCLUDED}, open(f"{root}/leaderboard.json", "w"), indent=1)
+    from markweightx.files import write_json
+    write_json(f"{root}/leaderboard.json", {"base": a.base, "tag": a.tag, "rows": rows, "not_included": NOT_INCLUDED},
+               indent=1)
     ppl_base = rows[0]["ppl_base"] if rows else 0
     if a.format == "latex":
         print(latex([r for r in rows if r["main"]], a.base))
@@ -86,15 +89,22 @@ def markdown(rows, base, ppl_base):
     print("\n\\* degenerate text (4-gram repetition > 0.3); the score is inflated by looping, not by the watermark.")
     for k, why in NOT_INCLUDED.items():
         print(f"\nNot included: {k}: {why}.")
-    lengths = [r for r in rows if r["main"] and r.get("by_length")]
-    if lengths:
-        cols = list(lengths[0]["by_length"])
-        print("\n### C9 · shorter texts at the 200-token threshold (false positives should stay near 1%)\n")
-        print("| method | " + " | ".join(f"FPR @{c} tok | TPR @{c} tok" for c in cols) + " |")
+    main = [r for r in rows if r["main"]]
+    if any(r.get("by_length") for r in main):
+        cols = list(next(r for r in main if r.get("by_length"))["by_length"])
+        print("\n### C9 · texts cut short, scored at the 200-token threshold (false positives should not exceed ~1%)\n")
+        print("| method | " + " | ".join(f"FPR @{c} tok | TPR @{c} tok (recalibrated)" for c in cols) + " |")
         print("|" + "---|" * (2 * len(cols) + 1))
-        for r in lengths:
-            print(f"| {r['scheme']} | " + " | ".join(f"{100 * r['by_length'][c]['fpr']:.1f}% | {r['by_length'][c]['tpr']:.2f}"
-                                                    for c in cols) + " |")
+        for r in main:
+            bl = r.get("by_length") or {}
+            cell = lambda c: ("– | –" if c not in bl else
+                              f"{'**' if bl[c]['fpr'] > 0.02 else ''}{100 * bl[c]['fpr']:.1f}%{'**' if bl[c]['fpr'] > 0.02 else ''}"
+                              f" | {bl[c]['tpr_recal']:.2f}" if "tpr_recal" in bl[c] else " | –")
+            print(f"| {r['scheme']} | " + " | ".join(cell(c) for c in cols) + " |")
+        n = next(r for r in main if r.get("by_length"))["by_length"][cols[0]]["n"]
+        print(f"\n{n} texts per cell (1% = {max(1, round(n / 100))} texts); **bold**: more than 2% false positives. "
+              "The TPR column uses the 1% threshold of the cut null (what mwx.calibrate now does per length); "
+              "– : not measured yet (exp/length_check.py).")
     print("\n### Ablations: experimental variants and parameter sweeps (not methods you would pick)\n")
     table([r for r in rows if not r["main"]], ppl_base)
 
@@ -104,7 +114,7 @@ def is_main(r) -> bool:
     (it passed markweightx check to get here). Parameter sweeps (name:k=v) are ablations."""
     from markweightx.registry import SCHEMES
     import markweightx.schemes  # noqa: F401  (registers the built-in schemes)
-    if ":" in r["scheme"]:
+    if ":" in r["scheme"] or r.get("sweep") or r.get("experimental"):
         return False
     if r.get("scheme_source"):
         return True

@@ -30,8 +30,14 @@ def main():
     key = load_key(rel)
     sch = scheme_for(key, rel.base, _matching_device(key, a.device, type(build_scheme(key, trust_plugin=True))),
                      trust_plugin=True)
+    from markweightx.scoring import scores
+    again = [s for s, _ in scores(sch, base[:20])]          # this binding must reproduce the run's own scores
+    if any(abs(x - y) > 1e-3 * max(1.0, abs(y)) for x, y in zip(again, tx["scores"]["null"][:20])):
+        raise SystemExit(f"{a.release}: rescoring the base texts does not reproduce texts.json "
+                         f"({again[:3]} vs {tx['scores']['null'][:3]}); not writing by_length")
     res["by_length"] = length_curve(sch, load_tokenizer(rel.base), tx["student"], base, res["student"]["thr"])
-    json.dump(res, open(f"{a.release}/result.json", "w"), indent=1)
+    from markweightx.files import write_json
+    write_json(f"{a.release}/result.json", res, indent=1)
     print(json.dumps({"release": a.release, "by_length": res["by_length"]}), flush=True)
 
 

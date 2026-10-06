@@ -83,6 +83,22 @@ def load_arena(path: str) -> dict:
     if set(a.get("learn", {})) - allowed_learn:
         raise ValueError(f"{path}: learn takes {sorted(allowed_learn)}")
     grid = [parse_edit(e) for e in a["edits"]] if a.get("edits") else EDIT_GRID
+    if a.get("edits"):                                      # fail here, not on a GPU after the learn step
+        import inspect
+        from .edits.text import rewrite
+        from .edits.weights import RANGES, check_params
+        from .registry import EDITS
+        from . import edits  # noqa: F401  (registers the weight edits)
+        texts = ("word_deletion", "synonym", "context_synonym")
+        for op, params in grid:
+            if op.startswith("text:"):
+                if op[5:] not in texts:
+                    raise ValueError(f"{path}: unknown text edit {op[5:]!r}; available: {', '.join(texts)}")
+                check_params(rewrite, op[5:], params, {}, skip=("texts", "kind", "device"))
+            elif op not in EDITS:
+                raise ValueError(f"{path}: unknown edit {op!r}; available: {', '.join(sorted(EDITS))}, text:<kind>")
+            else:
+                check_params(EDITS[op], op, params, RANGES)
     return {"base": a.get("base", "llama-3.2-1b"), "tag": a.get("tag", "e2"), "methods": list(a["methods"]),
             "steps": list(a.get("steps", STEPS)), "learn": dict(a.get("learn", {})), "grid": grid,
             "custom_grid": bool(a.get("edits"))}
@@ -95,8 +111,15 @@ def _absolute(m: str) -> str:
 
 
 def plugins(arena: dict) -> list[str]:
-    return sorted({_absolute(e["method"] if isinstance(e, dict) else e).partition(":")[0]
-                   for e in arena["methods"] if (e["method"] if isinstance(e, dict) else e).partition(":")[0].endswith(".py")})
+    """The plugin specs in an arena (file.py or file.py:name, params dropped), absolute."""
+    out = set()
+    for e in arena["methods"]:
+        m = _absolute(e["method"] if isinstance(e, dict) else e)
+        head, _, rest = m.partition(":")
+        if head.endswith(".py"):
+            name = rest.split(":")[0] if rest and "=" not in rest.split(":")[0] else ""
+            out.add(head + (":" + name if name else ""))
+    return sorted(out)
 
 
 def plan(arena: dict, python: str = sys.executable) -> list[dict]:
@@ -109,6 +132,8 @@ def plan(arena: dict, python: str = sys.executable) -> list[dict]:
         m = _absolute(m)
         d = result_dir(m, arena["base"], arena["tag"])
         if d in seen:
+            if seen[d].partition(":")[0] != m.partition(":")[0] and m.partition(":")[0].endswith(".py"):
+                raise ValueError(f"{m} and {seen[d]} register the same scheme name from different files: rename one")
             print(f"note: {m} is the same run as {seen[d]}; planned once", file=sys.stderr)
             continue
         seen[d] = m
@@ -136,7 +161,7 @@ def check_plugins(arena: dict) -> list[str]:
     from .api import scheme_spec
     failed = []
     for f in plugins(arena):
-        name, _, src = scheme_spec(f)
+        name, _, src = scheme_spec(f)                       # file.py, or file.py:name for a file with several
         rows = run(name, source=src, base=arena["base"])
         bad = [r for r in rows if r[1] == "FAIL"]
         print(f"check {os.path.basename(f)}: {'PASS' if not bad else 'FAIL'}", flush=True)
@@ -184,7 +209,14 @@ def queue(jobs: list[dict], host: str) -> list[str]:
     d = f"{RUNS}/sched/{host}"
     f, sf = f"{d}/queue.json", f"{d}/state.json"
     q = json.load(open(f)) if os.path.exists(f) else []
-    state = json.load(open(sf)) if os.path.exists(sf) else {}
+    state = {}
+    for _ in range(5):                                      # the scheduler rewrites state.json while it runs
+        try:
+            state = json.load(open(sf)) if os.path.exists(sf) else {}
+            break
+        except json.JSONDecodeError:
+            import time
+            time.sleep(1)
     have = {j["id"] for j in q}
     new = []
     for j in jobs:

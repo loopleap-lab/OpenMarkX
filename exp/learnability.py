@@ -78,6 +78,7 @@ def main():
     from markweightx.registry import resolved_params
     # a plugin's row is named by its scheme, and remembers where its code came from (the leaderboard needs both)
     res = {"scheme": sname if ssrc else a.scheme, "scheme_source": load_key(rel).scheme_source,
+           "sweep": bool(sparams), "experimental": bool(getattr(sch, "experimental", False)),
            "scheme_params": resolved_params(sch), "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),
            "student": summary(s_stud, s_null), "ppl_student": perplexity(judge, tok, prompts, stud),
            "ppl_base": perplexity(judge, tok, prompts, base_txt)}
@@ -91,7 +92,8 @@ def main():
     print(json.dumps(res, indent=1))
     from markweightx.scoring import length_curve
     res["by_length"] = length_curve(sch, tok, stud, base_txt, res["student"]["thr"])   # C9: shorter texts
-    json.dump(res, open(f"{out}/result.json", "w"), indent=1)
+    from markweightx.files import write_json
+    write_json(f"{out}/result.json", res, indent=1)
     json.dump({"prompts": prompts, "student": stud, "teacher": teach, "scores": {"null": s_null, "student": s_stud}},
               open(f"{out}/texts.json", "w"))
 

@@ -119,7 +119,10 @@ Keys never ship with a release. `release.json` holds only the key's commitment, 
 scheme, its parameters and the plugin source. The key lives in the key store, `$MWX_KEYS` (default
 `$MWX_RUNS/keys`). Each key carries its own fresh secret: MarkLLM's public default hash keys are replaced, and PRO
 draws its own token mapping. A calibrated key carries a frozen empirical null, so `detect` returns calibrated
-p-values. Schemes with an exact closed-form null (`exact_null = True`, e.g. GaussMark) use it directly.
+p-values. The null also holds nulls for the texts cut to 50 and 100 tokens: a short text is judged against the null
+of its length, because some detectors' false positives grow on short texts (C9: PRO reaches 14% at 50 tokens
+against a 200-token threshold). Schemes with an exact closed-form null (`exact_null = True`, e.g. GaussMark) use it
+directly.
 
 ```bash
 markweightx keys list

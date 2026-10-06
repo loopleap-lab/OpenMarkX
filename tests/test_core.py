@@ -50,3 +50,13 @@ def test_length_curve_cuts_texts_and_keeps_the_threshold():
     long = ["word " * 150] * 4
     out = length_curve(Count(), tok, long, long, thr=75, lengths=(50, 100))
     assert out["50"]["fpr"] == 0 and out["100"]["fpr"] == 1 and out["100"]["n"] == 4
+
+
+def test_short_texts_use_the_null_calibrated_at_their_length():
+    from markweightx.scoring import _null_for
+    full, n50, n100 = [3.0], [5.0], [4.0]
+    by = {"50": n50, "100": n100}
+    assert _null_for(220, full, by, 200) is full
+    assert _null_for(199, full, by, 200) is n100 and _null_for(120, full, by, 200) is n100
+    assert _null_for(60, full, by, 200) is n50 and _null_for(20, full, by, 200) is n50
+    assert _null_for(20, full, None, None) is full          # an old calibration: one null for every length

@@ -103,7 +103,14 @@ def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, d
     texts = _gen(model, tok, prompts, adapter=False, seed=seed)
     del model
     sch = scheme_for(key, base, det_device, trust_plugin=trust_plugin)
-    key.calibration = {"base": base, "null": sorted(s for s, _ in scores(sch, texts)), "n": len(texts)}
+    from .scoring import LENGTHS, cut
+    lens = sorted(len(tok(t, add_special_tokens=False)["input_ids"]) for t in texts)
+    key.calibration = {"base": base, "null": sorted(s for s, _ in scores(sch, texts)), "n": len(texts),
+                       "n_tokens": lens[len(lens) // 2],   # the null holds for texts of about this length
+                       # C9: a detector's null can drift with length (PRO: 14% false positives at 50 tokens against a
+                       # 200-token threshold), so short texts are judged against the null of texts cut as short
+                       "by_length": {str(n): sorted(s for s, _ in scores(sch, cut(tok, texts, n))) for n in LENGTHS
+                                     if n < lens[len(lens) // 2]}}
     store(key)
     return key
 
@@ -220,7 +227,8 @@ def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device:
     if null == "wrong_key":
         return wrong_key_detect(texts, key, base=base, device=device, fpr=fpr, grant=grant, n_null=n_null,
                                 trust_plugin=trust_plugin)
-    return _detect(scheme_for(key, base, device, grant, trust_plugin), texts, null=key.calibration.get("null"), fpr=fpr)
+    return _detect(scheme_for(key, base, device, grant, trust_plugin), texts, null=key.calibration.get("null"), fpr=fpr,
+                   by_length=key.calibration.get("by_length"), null_len=key.calibration.get("n_tokens"))
 
 
 def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, device: str | None = None, fpr=0.01,
