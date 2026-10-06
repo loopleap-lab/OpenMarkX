@@ -3,311 +3,308 @@
 <title>MarkWeightX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap">
 <style>
-/* Layout: a single centered column (1120px) of full-width bands; the hero pairs the thesis with a marked text, the
-   leaderboard is the one dense, interactive band. Ink blue + watermark green; tokens marked green/red as in a detector. */
+/* Layout: one centered column (1200px), monospace throughout as in the reference site. Centered hero, then the
+   motivation: where the watermark is added, and a use case; left-aligned section heads with one cyan word; rounded translucent cards. */
 :root {
-  --bg: #f4f6f8;
-  --surface: #ffffff;
-  --ink: #142231;
-  --muted: #566476;
-  --line: #d9dfe6;
-  --accent: #0c6b78;
-  --accent-soft: #dcEEF0;
-  --mark: #1c7a46;
-  --mark-soft: #d8efe1;
-  --nomark: #a3402b;
-  --nomark-soft: #f5e0d9;
-  --code-bg: #0f1923;
-  --code-ink: #d6e0ea;
-  --code-dim: #7d8b9a;
-  --code-hi: #7fd3a6;
-  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --bg: #f8fafc;
+  --surface: rgba(255, 255, 255, .72);
+  --solid: #ffffff;
+  --ink: #020617;
+  --muted: #475569;
+  --faint: #94a3b8;
+  --line: #e2e8f0;
+  --accent: #06b6d4;
+  --accent-ink: #0e7490;
+  --accent-soft: #ecfeff;
+  --rose: #f43f5e;
+  --good: #059669;
+  --good-soft: #ecfdf5;
+  --mid: #d97706;
+  --mid-soft: #fffbeb;
+  --bad: #e11d48;
+  --bad-soft: #fff1f2;
+  --code-bg: #0f172a;
+  --code-ink: #e2e8f0;
+  --code-dim: #64748b;
+  --code-hi: #67e8f9;
+  --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0e151c; --surface: #151e27; --ink: #e3e9ef; --muted: #98a6b4; --line: #26323f;
-    --accent: #4bb8c6; --accent-soft: #143238; --mark: #5ccf8d; --mark-soft: #163a27; --nomark: #ef8a6c; --nomark-soft: #3b211a;
-    --code-bg: #0a0f14; color-scheme: dark;
+    --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
+    --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --rose: #fb7185;
+    --good: #34d399; --good-soft: #022c22; --mid: #fbbf24; --mid-soft: #2a1d05; --bad: #fb7185; --bad-soft: #2a0a12;
+    --code-bg: #0b1222; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0e151c; --surface: #151e27; --ink: #e3e9ef; --muted: #98a6b4; --line: #26323f;
-  --accent: #4bb8c6; --accent-soft: #143238; --mark: #5ccf8d; --mark-soft: #163a27; --nomark: #ef8a6c; --nomark-soft: #3b211a;
-  --code-bg: #0a0f14; color-scheme: dark;
+  --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
+  --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --rose: #fb7185;
+  --good: #34d399; --good-soft: #022c22; --mid: #fbbf24; --mid-soft: #2a1d05; --bad: #fb7185; --bad-soft: #2a0a12;
+  --code-bg: #0b1222; color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.6; }
-a { color: var(--accent); }
-h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; margin: 0; text-wrap: balance; }
-code, pre, .mono { font-family: var(--font-mono); }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.65; }
+a { color: var(--accent-ink); }
+h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; }
-section.band { padding-block: 72px; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
-.eyebrow { font-family: var(--font-mono); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
-.band-head { display: grid; gap: 10px; margin-bottom: 32px; max-width: 62ch; }
-.band-head h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 700; }
-.band-head p { margin: 0; color: var(--muted); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: 24px; }
+.hl { color: var(--accent); }
+section.band { padding-block: 80px; scroll-margin-top: 72px; }
+section.band + section.band { border-top: 1px solid var(--line); }
+.head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+.head h2 { font-size: clamp(26px, 3.2vw, 36px); font-weight: 700; letter-spacing: -.02em; }
+.head p { margin: 8px 0 0; color: var(--muted); font-size: 14px; max-width: 72ch; }
+.card { background: var(--surface); border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); border-radius: 24px; padding: 28px; backdrop-filter: blur(6px); min-width: 0; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 6px; font: 500 15px/1 var(--font); text-decoration: none; color: var(--ink); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); background: color-mix(in srgb, var(--solid) 60%, transparent); cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #ffffff; border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.sm { padding: 7px 12px; font-size: 13px; }
+.btn svg { width: 17px; height: 17px; flex: none; }
 
 /* nav */
-.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
-.nav .wrap { display: flex; align-items: center; gap: 24px; padding-block: 12px; flex-wrap: wrap; }
-.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--ink); text-decoration: none; }
-.brand-mark { width: 26px; height: 26px; }
-.nav-links { display: flex; gap: 18px; flex-wrap: wrap; margin-left: auto; align-items: center; }
-.nav-links a { color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.nav .wrap { display: flex; align-items: center; gap: 36px; padding-block: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: var(--ink); text-decoration: none; }
+.brand svg { width: 34px; height: 34px; }
+.nav-links { display: flex; gap: 26px; flex-wrap: wrap; font-size: 14px; }
+.nav-links a { color: var(--muted); text-decoration: none; }
 .nav-links a:hover { color: var(--ink); }
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 15px; text-decoration: none; border: 1px solid transparent; cursor: pointer; font-family: var(--font-body); }
-.btn.primary { background: var(--ink); color: var(--bg); }
-.btn.primary:hover { background: var(--accent); }
-.btn.ghost { border-color: var(--line); color: var(--ink); background: var(--surface); }
-.btn.ghost:hover { border-color: var(--accent); }
-.btn.sm { padding: 6px 12px; font-size: 14px; }
+.nav-end { margin-left: auto; display: flex; gap: 10px; }
 
 /* hero */
-.hero { padding-block: 64px 56px; }
-.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 48px; align-items: center; }
-@media (max-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); } }
-.hero h1 { font-size: clamp(40px, 6vw, 60px); font-weight: 800; letter-spacing: -.02em; }
-.hero h1 em { font-style: normal; color: var(--mark); }
-.hero .lede { font-size: 19px; color: var(--muted); max-width: 54ch; margin: 18px 0 26px; }
-.ctas { display: flex; gap: 10px; flex-wrap: wrap; }
-.venue { margin-top: 22px; font-size: 14px; color: var(--muted); }
-.venue b { color: var(--ink); font-weight: 600; }
-.specimen { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 14px; min-width: 0; }
-.specimen-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
-.specimen-text { font-size: 18px; line-height: 2; margin: 0; }
-.tk { border-radius: 3px; padding: 1px 2px; }
-.tk.g { background: var(--mark-soft); color: var(--mark); }
-.tk.r { background: var(--nomark-soft); color: var(--nomark); }
-.verdict { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border-radius: 10px; background: var(--mark-soft); color: var(--mark); }
-.verdict b { font-family: var(--font-display); font-size: 20px; }
-.verdict span { font-family: var(--font-mono); font-size: 14px; }
-.specimen-note { font-size: 13px; color: var(--muted); margin: 0; }
+.hero { position: relative; overflow: hidden; padding-block: 72px 64px; text-align: center; }
+.hero-in { position: relative; display: grid; justify-items: center; gap: 22px; }
+.pill { display: inline-flex; gap: 10px; align-items: center; padding: 7px 16px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); background: var(--surface); font-size: 13px; color: var(--muted); text-decoration: none; }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.pill b { color: var(--accent-ink); font-weight: 500; }
+.hero h1 { font-size: clamp(44px, 8vw, 84px); font-weight: 800; letter-spacing: -.04em; }
+.hero .sub { font-size: clamp(18px, 2.4vw, 26px); font-weight: 500; color: var(--muted); max-width: 30ch; line-height: 1.5; }
+.hero .desc { font-size: 15px; color: var(--muted); max-width: 78ch; margin: 0; }
+.hero .desc b { color: var(--ink); font-weight: 700; }
+.ctas { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
 
-/* facts strip */
-.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
-.fact { padding: 22px 24px; display: grid; gap: 4px; border-left: 1px solid var(--line); }
-.fact:first-child { border-left: none; }
-.fact b { font-family: var(--font-display); font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.fact span { font-size: 15px; color: var(--muted); }
-@media (max-width: 760px) { .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fact:nth-child(3) { border-left: none; } .fact:nth-child(n+3) { border-top: 1px solid var(--line); } }
+/* motivation */
+.flows { display: grid; gap: 14px; }
+.flow { display: grid; grid-template-columns: 17em minmax(0, 1fr); gap: 16px; align-items: center; }
+.flow-l { font-size: 13px; font-weight: 700; color: var(--ink); }
+.fsteps { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fs { display: grid; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--solid); font-size: 13px; }
+.fs small { font-size: 11px; color: var(--faint); }
+.fs.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.fs.ok { border-color: color-mix(in srgb, var(--good) 40%, transparent); background: var(--good-soft); color: var(--good); }
+.fs.no { border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: var(--bad-soft); color: var(--bad); }
+.ar, .car { color: var(--faint); font-size: 18px; }
+@media (max-width: 760px) { .flow { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+.case-h { font-size: 18px; margin: 36px 0 14px; }
+.case { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: stretch; }
+.car { align-self: center; }
+.cs { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 6px; align-content: start; border-top: 3px solid var(--c); min-width: 0; }
+.cs .who { font-size: 11px; color: var(--c); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.cs b { font-size: 15px; }
+.cs p { margin: 0; font-size: 13px; color: var(--muted); }
+.cs code { font-size: 12px; color: var(--accent-ink); }
+.cs.own { --c: var(--accent); } .cs.edit { --c: var(--mid); } .cs.use { --c: #6366f1; } .cs.det { --c: var(--good); }
+@media (max-width: 960px) { .case { grid-template-columns: minmax(0, 1fr); } .car { transform: rotate(90deg); justify-self: center; } }
 
-/* roles */
-.roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-@media (max-width: 860px) { .roles { grid-template-columns: minmax(0, 1fr); } }
-.role { display: grid; gap: 12px; align-content: start; min-width: 0; }
-.role h3 { font-size: 22px; display: flex; align-items: center; gap: 10px; }
-.role .tag { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; }
-.role.own .tag { background: var(--accent-soft); color: var(--accent); }
-.role.down .tag { background: var(--nomark-soft); color: var(--nomark); }
-.role.det .tag { background: var(--mark-soft); color: var(--mark); }
-.role p { margin: 0; color: var(--muted); }
-pre.code { margin: 0; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; font-size: 14px; line-height: 1.6; overflow-x: auto; }
+/* overview */
+.roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .roles { grid-template-columns: minmax(0, 1fr); } }
+.role { display: grid; gap: 12px; align-content: start; }
+.role h3 { font-size: 18px; display: flex; gap: 10px; align-items: baseline; }
+.role h3 small { font-size: 12px; font-weight: 500; color: var(--accent-ink); background: var(--accent-soft); padding: 2px 8px; border-radius: 6px; }
+.role p { margin: 0; color: var(--muted); font-size: 14px; }
+pre.code { margin: 0; background: var(--code-bg); color: var(--code-ink); border-radius: 12px; padding: 16px 18px; font: 13px/1.7 var(--font); overflow-x: auto; }
 pre.code .c { color: var(--code-dim); }
 pre.code .k { color: var(--code-hi); }
 
 /* methods */
-.methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
-.method { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
-.method h3 { font-size: 19px; }
-.method p { margin: 0; font-size: 15px; color: var(--muted); }
-.chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { font-family: var(--font-mono); font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); }
-.chip.ours { background: var(--mark-soft); color: var(--mark); border-color: transparent; }
-.method.yours { grid-column: 1 / -1; border-style: dashed; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 24px; }
-.method.yours .names { grid-column: 2; grid-row: 1 / span 3; font-size: 15px; background: var(--bg); padding: 10px 14px; border-radius: 8px; }
-@media (max-width: 700px) { .method.yours { grid-template-columns: minmax(0, 1fr); } .method.yours .names { grid-column: auto; grid-row: auto; } }
-.names { font-family: var(--font-mono); font-size: 13px; color: var(--ink); overflow-wrap: anywhere; }
+.mgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .mgrid { grid-template-columns: minmax(0, 1fr); } }
+.m { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.m-top { display: flex; gap: 12px; align-items: center; }
+.m-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 14px; flex: none; }
+.m h3 { font-size: 15px; }
+.m .k { font-size: 12px; color: var(--faint); overflow-wrap: anywhere; }
+.m p { margin: 0; font-size: 13px; color: var(--muted); }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+.tag.ours { border-color: transparent; background: var(--accent-soft); color: var(--accent-ink); }
 
 /* leaderboard */
-.board { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 18px; min-width: 0; }
-.controls { display: flex; gap: 12px 24px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
-.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
-.seg button { border: none; background: none; color: var(--muted); padding: 6px 12px; border-radius: 7px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 15%, transparent); }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 10px; border: 1px solid var(--line); background: color-mix(in srgb, var(--solid) 50%, transparent); }
+.seg button { border: none; background: none; font: 400 12px/1 var(--font); color: var(--muted); padding: 8px 12px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--solid); color: var(--ink); box-shadow: 0 1px 2px rgba(2, 6, 23, .12); }
 .tablewrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
-th, td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
-th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-th.pro, td.pro { background: color-mix(in srgb, var(--mark-soft) 55%, transparent); }
-td.best { font-weight: 700; color: var(--mark); }
-td.cat { color: var(--muted); font-size: 14px; }
-.board-foot { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 20px; align-items: start; }
-@media (max-width: 860px) { .board-foot { grid-template-columns: minmax(0, 1fr); } }
-.chartbox { display: grid; gap: 8px; min-width: 0; }
-.chartbox svg { width: 100%; height: auto; display: block; }
-.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: var(--muted); }
-.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
-.side { display: grid; gap: 14px; }
-.mini { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 8px; }
-.mini h3 { font-size: 16px; font-family: var(--font-body); font-weight: 600; }
-.mini table { font-size: 14px; }
-.mini th, .mini td { padding: 6px 8px; }
-.note { font-size: 14px; color: var(--muted); margin: 0; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: bottom; }
+th small { display: block; text-transform: none; letter-spacing: 0; color: var(--faint); font-size: 11px; }
+td { padding: 12px; text-align: right; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); white-space: nowrap; }
+th.l, td.l { text-align: left; }
+tr.ours td { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); }
+.rank { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 700; color: var(--muted); }
+.rank.r1 { background: var(--good-soft); color: var(--good); }
+.mname { display: flex; gap: 10px; align-items: center; font-weight: 500; }
+.mname .dot { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 10px; font-weight: 800; color: #ffffff; }
+.v { font-weight: 700; }
+.v.tg { color: var(--good); } .v.tm { color: var(--mid); } .v.tb { color: var(--bad); }
+.foot-note { font-size: 12px; color: var(--faint); margin: 14px 0 0; }
+.lb2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr); gap: 18px; margin-top: 18px; }
+@media (max-width: 920px) { .lb2 { grid-template-columns: minmax(0, 1fr); } }
+.chart-card { display: grid; gap: 10px; }
+.chart-card h3, .mini h3 { font-size: 14px; font-weight: 700; }
+.chart-card svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.minis { display: grid; gap: 18px; align-content: start; }
+.mini { display: grid; gap: 10px; }
+.mini table { font-size: 13px; }
+.mini td, .mini th { padding: 7px 8px; }
 
 /* quickstart */
-.qs { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 32px; align-items: start; }
-@media (max-width: 860px) { .qs { grid-template-columns: minmax(0, 1fr); } }
-.steps { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; counter-reset: s; }
-.steps li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; counter-increment: s; }
-.steps li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
+.qs { display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); gap: 28px; align-items: start; }
+@media (max-width: 900px) { .qs { grid-template-columns: minmax(0, 1fr); } }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; counter-increment: s; font-size: 14px; }
+.steps li::before { content: counter(s); width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; font-size: 13px; }
 .steps b { display: block; }
-.steps span { color: var(--muted); font-size: 15px; }
-.codecard { display: grid; gap: 10px; min-width: 0; }
+.steps span { color: var(--muted); font-size: 13px; }
+.codecard { display: grid; gap: 12px; min-width: 0; }
 .codebar { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
 
-/* demo + cite */
-.demo-cta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; background: var(--ink); color: var(--bg); border-radius: 16px; padding: 32px; }
-.demo-cta h2 { font-size: clamp(24px, 3.4vw, 34px); color: var(--bg); }
-.demo-cta p { margin: 8px 0 0; color: color-mix(in srgb, var(--bg) 75%, var(--ink)); }
-.demo-cta .btn { background: var(--bg); color: var(--ink); }
-@media (max-width: 700px) { .demo-cta { grid-template-columns: minmax(0, 1fr); } }
-.cite { display: grid; gap: 10px; }
-footer { border-top: 1px solid var(--line); padding-block: 32px; color: var(--muted); font-size: 14px; }
-footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+/* demo, cite, footer */
+.demo { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; }
+.demo h2 { font-size: clamp(22px, 2.6vw, 28px); }
+.demo p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+@media (max-width: 700px) { .demo { grid-template-columns: minmax(0, 1fr); } }
+.cite { max-width: 900px; margin: 0 auto; display: grid; gap: 12px; }
+.cite pre { background: color-mix(in srgb, var(--solid) 70%, transparent); color: var(--muted); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font: 12px/1.7 var(--font); overflow-x: auto; margin: 0; }
+footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size: 13px; color: var(--muted); }
+.fgrid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, .7fr)); gap: 32px; }
+@media (max-width: 760px) { .fgrid { grid-template-columns: minmax(0, 1fr); } }
+.fgrid h4 { margin: 0 0 12px; font-size: 13px; color: var(--ink); }
+.fgrid ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fgrid a { color: var(--muted); text-decoration: none; }
+.fgrid a:hover { color: var(--ink); }
+.fbottom { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 </style>
 
 <nav class="nav" aria-label="Site">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="MarkWeightX home">
-      <svg class="brand-mark" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="6" fill="var(--ink)"/><path d="M6 8 L9.5 18 L13 11 L16.5 18 L20 8" fill="none" stroke="var(--mark)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      MarkWeightX
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Mark<span class="hl">WeightX</span></span>
     </a>
-    <div class="nav-links">
-      <a href="#how">Overview</a><a href="#methods">Methods</a><a href="#leaderboard">Leaderboard</a><a href="#quickstart">Quickstart</a><a href="demo.html">Demo</a><a href="#cite">Cite</a>
-      <a class="btn sm ghost" href="https://arxiv.org/abs/2510.23891">Paper</a>
-      <a class="btn sm primary js-repo" href="#quickstart">Code</a>
-    </div>
+    <div class="nav-links"><a href="#motivation">Motivation</a><a href="#quickstart">Quickstart</a><a href="#methods">Methods</a><a href="#leaderboard">Leaderboard</a><a href="demo.html">Demo</a><a href="#cite">Cite</a></div>
+    <div class="nav-end"><a class="btn sm" href="https://arxiv.org/abs/2510.23891">Paper</a><a class="btn sm js-repo" href="#quickstart">Code</a></div>
   </div>
 </nav>
 
 <header class="hero" id="top">
-  <div class="wrap">
-    <div>
-      <h1>MarkWeightX</h1>
-      <p class="lede">A toolkit for watermarking open-weight language models. The watermark is trained into the model weights, and the toolkit evaluates whether it can still be detected after fine-tuning, merging, pruning, quantization and paraphrasing. It includes PRO, the baselines from the PRO paper, MarkLLM watermarks, and a benchmark for new methods.</p>
-      <div class="ctas">
-        <a class="btn primary" href="#quickstart">Get started</a>
-        <a class="btn ghost" href="#leaderboard">Leaderboard</a>
-        <a class="btn ghost" href="demo.html">Interactive demo</a>
-        <a class="btn ghost" href="https://arxiv.org/abs/2510.23891">Paper</a>
-      </div>
-      <p class="venue"><b>PRO: Enabling Precise and Robust Text Watermark for Open-Source LLMs</b> · NeurIPS 2026</p>
+  <div class="wrap hero-in">
+    <a class="pill" href="https://arxiv.org/abs/2510.23891"><i></i><b>NeurIPS 2026</b><span>PRO: Precise and Robust Text Watermark for Open-Source LLMs</span></a>
+    <h1>Mark<span class="hl">WeightX</span></h1>
+    <div class="sub">A Toolkit for Watermarking Open-Weight Language Models</div>
+    <p class="desc">Once a model's weights are public, anyone can run it with their own decoding, so a decoding-time watermark can simply be left out. MarkWeightX trains the watermark <b>into the weights</b> and tests whether it survives what users do to released models: <b>fine-tuning</b>, <b>merging</b>, <b>pruning</b>, <b>quantization</b> and <b>paraphrasing</b>.</p>
+    <div class="ctas">
+      <a class="btn primary" href="#quickstart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>Get Started</a>
+      <a class="btn" href="#leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>Leaderboard</a>
+      <a class="btn" href="demo.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg>Demo</a>
+      <a class="btn" href="https://arxiv.org/abs/2510.23891"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6"/></svg>Paper</a>
     </div>
-    <figure class="specimen" aria-label="A text checked by the detector, with each token marked">
-      <div class="specimen-head"><span>mwx.detect(texts, key)</span><span>key 4f2a…c91e</span></div>
-      <p class="specimen-text" id="specimen"></p>
-      <div class="verdict"><b>Watermark detected</b><span id="specCount"></span></div>
-      <p class="specimen-note">Illustration of token-level detection: green tokens match the watermark key, red tokens do not.</p>
-    </figure>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="facts" aria-label="Key figures">
-    <div class="fact"><b>0.92</b><span>TPR at 1% FPR, PRO on LLaMA-3-8B</span></div>
-    <div class="fact"><b>16</b><span>supported watermark schemes</span></div>
-    <div class="fact"><b>4</b><span>weight modifications, plus paraphrasing</span></div>
-    <div class="fact"><b>10</b><span>tests for new methods</span></div>
+<section class="band" id="motivation">
+  <div class="wrap">
+    <div class="head"><div><h2><span class="hl">Motivation</span></h2><p>A closed model's provider controls decoding and can add the watermark there. Releasing the weights hands decoding to the user, who can drop that step. The watermark therefore has to be learned into the weights, so that any decoding produces watermarked text.</p></div></div>
+    <div class="card flows" aria-label="Where the watermark is added">
+      <div class="flow"><span class="flow-l">Closed-source LLM</span>
+        <div class="fsteps"><span class="fs">Model</span><span class="ar">→</span><span class="fs on">Decoding + watermark<small>run by the provider</small></span><span class="ar">→</span><span class="fs ok">Watermarked text</span></div></div>
+      <div class="flow"><span class="flow-l">Open weights, decoding-time watermark</span>
+        <div class="fsteps"><span class="fs">Released weights</span><span class="ar">→</span><span class="fs no">User's own decoding<small>watermark step left out</small></span><span class="ar">→</span><span class="fs no">Unmarked text</span></div></div>
+      <div class="flow"><span class="flow-l">Open weights, watermark in the weights</span>
+        <div class="fsteps"><span class="fs on">Weights carry the mark<small>PRO, Gu et al., GaussMark, ...</small></span><span class="ar">→</span><span class="fs">Any decoding</span><span class="ar">→</span><span class="fs ok">Watermarked text</span></div></div>
+    </div>
+    <h3 class="case-h">A use case</h3>
+    <div class="case" aria-label="Use case: a released model is edited, used, and its text traced">
+      <div class="cs own"><span class="who">Alice · model owner</span><b>Releases a model</b><p>Trains the watermark into Llama weights, uploads them to Hugging Face, keeps the key.</p><code>mwx.embed</code></div>
+      <span class="car">→</span>
+      <div class="cs edit"><span class="who">Dana · developer</span><b>Edits and re-uploads</b><p>Fine-tunes it on her data, merges it with another model, quantizes it to 4 bits, uploads it under a new name.</p><code>mwx.modify</code></div>
+      <span class="car">→</span>
+      <div class="cs use"><span class="who">Charlie · end user</span><b>Writes with it</b><p>Runs Dana's copy locally, generates an essay, rewords a few sentences, submits it.</p><code>mwx.generate · rewrite</code></div>
+      <span class="car">→</span>
+      <div class="cs det"><span class="who">Reviewer · detector</span><b>Traces the text</b><p>Has only the essay and Alice's key, and finds that it came from Alice's model.</p><code>mwx.detect</code></div>
+    </div>
+    <p class="foot-note">What MarkWeightX measures: after Dana's edits and Charlie's rewording, how often the text is still traced, and how often a human text is wrongly flagged.</p>
   </div>
-</div>
+</section>
 
 <section class="band" id="how">
   <div class="wrap">
-    <div class="band-head">
-      <h2>Overview</h2>
-      <p>For a closed model, the provider adds the watermark at decoding time on its own servers. An open-weight model is run by its users, so the watermark has to be part of the weights. MarkWeightX models three parties: the owner who releases the model, users who modify it, and a detector who holds the key.</p>
-    </div>
+    <div class="head"><div><h2>API</h2><p>Each party in the use case has its calls. The owner embeds the watermark and keeps the key, users modify and generate, and the detector tests texts or a whole model.</p></div></div>
     <div class="roles">
-      <div class="role own">
-        <h3>Owner <span class="tag">embed</span></h3>
-        <p>Trains the watermark into the model and releases the weights. The key is kept separately.</p>
+      <div class="card role"><h3>Owner <small>embed</small></h3><p>Trains the watermark into the model and releases the weights. The key is kept separately.</p>
         <pre class="code"><span class="k">rel, key</span> = mwx.embed(<span class="c">"llama-3-8b"</span>, <span class="c">"pro"</span>)
-key = mwx.calibrate(key, <span class="c">"llama-3-8b"</span>)</pre>
-      </div>
-      <div class="role down">
-        <h3>Downstream <span class="tag">modify</span></h3>
-        <p>May fine-tune, merge, prune or quantize the model, and paraphrase its outputs.</p>
+key = mwx.calibrate(key, <span class="c">"llama-3-8b"</span>)</pre></div>
+      <div class="card role"><h3>User <small>modify</small></h3><p>May fine-tune, merge, prune or quantize the model, and paraphrase its outputs.</p>
         <pre class="code">edited = mwx.modify(rel, <span class="c">"quantize:bits=4"</span>)
 texts  = mwx.generate(edited, prompts)
-texts  = mwx.rewrite(texts, <span class="c">"synonym:ratio=0.3"</span>)</pre>
-      </div>
-      <div class="role det">
-        <h3>Detector <span class="tag">detect</span></h3>
-        <p>Tests single texts with the key, or tests a suspect model from its outputs.</p>
+texts  = mwx.rewrite(texts, <span class="c">"synonym:ratio=0.3"</span>)</pre></div>
+      <div class="card role"><h3>Detector <small>detect</small></h3><p>Tests single texts with the key, or tests a suspect model from its outputs.</p>
         <pre class="code">mwx.detect(texts, key)
 mwx.verify_model(edited, key, prompts,
-                 sequential=<span class="k">True</span>)</pre>
-      </div>
+                 sequential=<span class="k">True</span>)</pre></div>
     </div>
   </div>
 </section>
 
 <section class="band" id="methods">
   <div class="wrap">
-    <div class="band-head">
-      <h2>Supported methods</h2>
-      <p>Each method is implemented as a scheme with a key, a training signal, a way of writing it into the weights, and a detector. The leaderboard below reports the methods evaluated in the PRO paper; the others can be evaluated with the same benchmark.</p>
-    </div>
-    <div class="methods">
-      <div class="method"><h3>PRO</h3><p>A semantic watermark policy co-trained with the model, with perturbation-aware training against weight edits.</p><div class="chips"><span class="chip ours">ours · NeurIPS 2026</span><span class="chip">distilled</span><span class="chip">text + key</span></div><div class="names">pro · pro-coopt-c100 · pro-full-b01</div></div>
-      <div class="method"><h3>Distilled KGW / KTH</h3><p>Decode-time watermarks learned into the weights by distillation, as in Gu et al., the paper's main baselines.</p><div class="chips"><span class="chip">distilled</span><span class="chip">text + key</span></div><div class="names">markllm-kgw-d · markllm-exp-d</div></div>
-      <div class="method"><h3>MarkLLM watermarks</h3><p>Twelve decode-time watermarks from MarkLLM, each distilled the same way, used unchanged from upstream.</p><div class="chips"><span class="chip">distilled</span><span class="chip">text + key</span><span class="chip">some: base model</span></div><div class="names">unigram · sweet · ewd · morphmark · dip · unbiased · synthid · expedit · itsedit · pf</div></div>
-      <div class="method"><h3>GaussMark</h3><p>A keyed Gaussian perturbation written straight into one weight matrix, detected with gradients of the base model.</p><div class="chips"><span class="chip">weight edit</span><span class="chip">text + key + base gradients</span></div><div class="names">gaussmark</div></div>
-      <div class="method yours"><h3>Your method</h3><p>A new method is a single Python file created from a template. <code>markweightx check</code> runs ten tests on CPU and <code>markweightx bench</code> evaluates it.</p><div class="chips"><span class="chip">plugin</span><span class="chip">any access level</span></div><div class="names">markweightx new-scheme my-mark</div></div>
-    </div>
+    <div class="head"><div><h2>Supported <span class="hl">Methods</span></h2><p>Each method is a scheme with a key, a training signal, a way of writing it into the weights, and a detector. The leaderboard reports the methods evaluated in the PRO paper; the others can be evaluated with the same benchmark.</p></div></div>
+    <div class="mgrid" id="mgrid"></div>
   </div>
 </section>
 
 <section class="band" id="leaderboard">
   <div class="wrap">
-    <div class="band-head">
-      <h2>Leaderboard</h2>
-      <p>Results from the PRO paper on LLaMA-3-8B, with 5,000 watermarked and 5,000 unwatermarked texts per setting. PPL is the median perplexity under LLaMA-2-13B; the unwatermarked model has a PPL of 3.6.</p>
+    <div class="head">
+      <div><h2>Robustness <span class="hl">Leaderboard</span></h2><p>Ranked by detection after the selected modification (LLaMA-3-8B, 5,000 watermarked and 5,000 unwatermarked texts per setting, from the PRO paper). PPL is the median perplexity under LLaMA-2-13B; the unwatermarked model has 3.6.</p></div>
+      <a class="btn sm js-repo-file" data-file="LEADERBOARD.md" href="#quickstart">Full tables</a>
     </div>
-    <div class="board">
-      <div class="controls">
-        <div class="seg" role="group" aria-label="Modification" id="catSeg"></div>
-        <div class="seg" role="group" aria-label="Metric" id="metSeg"></div>
-      </div>
+    <div class="card">
+      <div class="controls"><div class="seg" role="group" aria-label="Modification" id="catSeg"></div><div class="seg" role="group" aria-label="Metric" id="metSeg"></div></div>
       <div class="tablewrap"><table id="lbTable"></table></div>
-      <div class="board-foot">
-        <div class="chartbox">
-          <svg id="chart" viewBox="0 0 560 280" role="img" aria-label="TPR at 1% FPR as the modification grows"></svg>
-          <div class="legend" id="legend"></div>
-          <p class="note" id="chartNote"></p>
-        </div>
-        <div class="side">
-          <div class="mini"><h3>Paraphrasing (DIPPER), AUC</h3><div class="tablewrap"><table id="dipper"></table></div></div>
-          <div class="mini"><h3>Downstream accuracy</h3><div class="tablewrap"><table id="downstream"></table></div></div>
-        </div>
+      <p class="foot-note" id="lbNote"></p>
+    </div>
+    <div class="lb2">
+      <div class="card chart-card"><h3 id="chartTitle"></h3><svg id="chart" viewBox="0 0 640 300" role="img" aria-label="TPR at 1% FPR as the modification grows"></svg><div class="legend" id="legend"></div></div>
+      <div class="minis">
+        <div class="card mini"><h3>Paraphrasing · AUC under DIPPER</h3><div class="tablewrap"><table id="dipper"></table></div></div>
+        <div class="card mini"><h3>Downstream accuracy</h3><div class="tablewrap"><table id="downstream"></table></div></div>
       </div>
-      <p class="note">Full tables with all settings: <a class="js-repo-file" data-file="LEADERBOARD.md" href="#quickstart">LEADERBOARD.md</a>. Run the same kind of benchmark for any method with <code>markweightx bench</code>.</p>
     </div>
   </div>
 </section>
 
 <section class="band" id="quickstart">
   <div class="wrap">
-    <div class="band-head">
-      <h2>Quickstart</h2>
-      <p>Requires Python 3.10+ and a CUDA GPU for training and generation; the tests run on CPU. The repository does not include trained watermarked models.</p>
-    </div>
+    <div class="head"><div><h2><span class="hl">Quickstart</span></h2><p>Requires Python 3.10+ and a CUDA GPU for training and generation; the tests run on CPU. The repository does not include trained watermarked models.</p></div></div>
     <div class="qs">
       <ol class="steps">
-        <li><div><b>Install</b><span>The package, the <code>markweightx</code> command, and MarkLLM at a pinned commit.</span></div></li>
+        <li><div><b>Install</b><span>The package, the markweightx command, and MarkLLM at a pinned commit.</span></div></li>
         <li><div><b>Prepare data</b><span>Tokenize the C4 training text and evaluation prompts.</span></div></li>
         <li><div><b>Embed, modify, detect</b><span>From Python or from the command line.</span></div></li>
-        <li><div><b>Add a method</b><span>Create a scheme file, run the tests, run the benchmark.</span></div></li>
+        <li><div><b>Add a method</b><span>Create a scheme file, run the ten tests, run the benchmark.</span></div></li>
       </ol>
       <div class="codecard">
-        <div class="codebar"><div class="seg" role="group" aria-label="Code example" id="codeSeg"></div><button class="btn sm ghost" type="button" id="copyBtn">Copy</button></div>
+        <div class="codebar"><div class="seg" role="group" aria-label="Code example" id="codeSeg"></div><button class="btn sm" type="button" id="copyBtn">Copy</button></div>
         <pre class="code" id="codeBox"></pre>
       </div>
     </div>
@@ -316,18 +313,14 @@ mwx.verify_model(edited, key, prompts,
 
 <section class="band" id="demo">
   <div class="wrap">
-    <div class="demo-cta">
-      <div><h2>Interactive demo</h2><p>A step-by-step example: release a watermarked model, modify it, paraphrase its output, and run detection, using the results reported in the paper.</p></div>
-      <a class="btn" href="demo.html">Open the demo</a>
-    </div>
+    <div class="card demo"><div><h2>Interactive <span class="hl">Demo</span></h2><p>A step-by-step example in the browser: release a watermarked model, modify it, paraphrase its output, and run detection, with the results reported in the paper.</p></div><a class="btn primary" href="demo.html">Open the demo</a></div>
   </div>
 </section>
 
 <section class="band" id="cite">
   <div class="wrap cite">
-    <div class="band-head"><h2>Citation</h2></div>
-    <div class="codebar"><span class="note">If you use MarkWeightX or PRO, please cite:</span><button class="btn sm ghost" type="button" id="citeBtn">Copy</button></div>
-    <pre class="code" id="bib">@inproceedings{xue2026pro,
+    <div class="codebar"><div><h2 style="font-size:20px">Citation</h2><p class="foot-note" style="margin:6px 0 0">If you use MarkWeightX or PRO in your research, please cite:</p></div><button class="btn sm" type="button" id="citeBtn">Copy</button></div>
+    <pre id="bib">@inproceedings{xue2026pro,
   title     = {PRO: Enabling Precise and Robust Text Watermark for Open-Source LLMs},
   author    = {Xue, Jiaqi and Zhao, Yifei and Al Ghanim, Mansour and Gao, Shangqian and
                Sun, Ruimin and Lou, Qian and Zheng, Mengxin},
@@ -339,8 +332,13 @@ mwx.verify_model(edited, key, prompts,
 
 <footer>
   <div class="wrap">
-    <span>MarkWeightX · Apache-2.0 · the PRO watermark is the paper's code; MarkLLM is used unchanged from upstream.</span>
-    <span><a href="https://arxiv.org/abs/2510.23891">arXiv 2510.23891</a> · <a href="demo.html">Demo</a> · <a href="#leaderboard">Leaderboard</a></span>
+    <div class="fgrid">
+      <div><a class="brand" href="#top"><svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Mark<span class="hl">WeightX</span></span></a>
+        <p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight language models, with the benchmark of the PRO paper.</p></div>
+      <div><h4>Resources</h4><ul><li><a href="#quickstart">Quickstart</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="demo.html">Demo</a></li><li><a class="js-repo-file" data-file="README.md" href="#quickstart">Documentation</a></li></ul></div>
+      <div><h4>Research</h4><ul><li><a href="https://arxiv.org/abs/2510.23891">arXiv paper</a></li><li><a href="#cite">Citation</a></li><li><a href="https://github.com/THU-BPM/MarkLLM">MarkLLM</a></li></ul></div>
+    </div>
+    <div class="fbottom"><span>© 2026 MarkWeightX</span><span>Apache-2.0</span></div>
   </div>
 </footer>
 
@@ -349,81 +347,95 @@ mwx.verify_model(edited, key, prompts,
   const REPO = "";   // the public repository URL, once it exists (e.g. https://github.com/<org>/MarkWeightX)
   const LB = {"rows":[{"cat":"Unaltered","setting":"","kth":[0.54,0.78,5.0],"kgw":[0.83,0.96,4.9],"glo":[0.84,0.94,6.2],"pro":[0.92,0.99,4.2]},{"cat":"Quantization, 8 bits","setting":"GPTQ","kth":[0.42,0.66,5.2],"kgw":[0.79,0.92,5.0],"glo":[0.84,0.95,6.3],"pro":[0.86,0.97,4.3]},{"cat":"Quantization, 8 bits","setting":"INT8","kth":[0.45,0.69,5.1],"kgw":[0.73,0.91,5.0],"glo":[0.84,0.94,6.4],"pro":[0.77,0.93,4.4]},{"cat":"Quantization, 4 bits","setting":"HQQ","kth":[0.29,0.54,6.1],"kgw":[0.83,0.95,5.5],"glo":[0.77,0.91,7.9],"pro":[0.91,0.98,4.8]},{"cat":"Quantization, 4 bits","setting":"GPTQ","kth":[0.36,0.64,5.5],"kgw":[0.74,0.91,5.1],"glo":[0.81,0.94,7.3],"pro":[0.79,0.94,5.1]},{"cat":"Pruning, Wanda","setting":"\u03c1 = 0.2","kth":[0.47,0.73,8.6],"kgw":[0.84,0.96,7.5],"glo":[0.9,0.97,9.9],"pro":[0.92,0.99,7.0]},{"cat":"Pruning, Wanda","setting":"\u03c1 = 0.5","kth":[0.35,0.64,8.4],"kgw":[0.66,0.86,6.9],"glo":[0.8,0.93,8.9],"pro":[0.84,0.96,6.2]},{"cat":"Pruning, SparseGPT","setting":"\u03c1 = 0.2","kth":[0.55,0.78,7.7],"kgw":[0.82,0.95,8.1],"glo":[0.84,0.95,9.0],"pro":[0.91,0.98,7.1]},{"cat":"Pruning, SparseGPT","setting":"\u03c1 = 0.5","kth":[0.5,0.76,8.1],"kgw":[0.74,0.91,7.8],"glo":[0.78,0.93,9.6],"pro":[0.89,0.97,8.0]},{"cat":"Merging, SLERP","setting":"t = 0.1","kth":[0.15,0.36,5.2],"kgw":[0.53,0.76,4.3],"glo":[0.59,0.82,6.1],"pro":[0.78,0.92,4.2]},{"cat":"Merging, SLERP","setting":"t = 0.3","kth":[0.08,0.21,5.1],"kgw":[0.39,0.65,4.0],"glo":[0.37,0.62,5.3],"pro":[0.6,0.83,4.1]},{"cat":"Merging, SLERP","setting":"t = 0.5","kth":[0.02,0.09,4.8],"kgw":[0.12,0.3,3.8],"glo":[0.14,0.34,4.6],"pro":[0.28,0.57,4.0]},{"cat":"Merging, SLERP","setting":"t = 0.7","kth":[0.02,0.06,4.3],"kgw":[0.05,0.15,3.7],"glo":[0.06,0.19,4.2],"pro":[0.12,0.31,3.9]},{"cat":"Merging, SLERP","setting":"t = 0.9","kth":[0.01,0.06,4.1],"kgw":[0.03,0.11,3.6],"glo":[0.03,0.11,4.0],"pro":[0.06,0.17,3.8]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 300","kth":[0.08,0.21,5.1],"kgw":[0.2,0.48,4.1],"glo":[0.22,0.45,5.5],"pro":[0.43,0.7,4.1]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 600","kth":[0.05,0.17,4.9],"kgw":[0.16,0.38,3.7],"glo":[0.19,0.41,5.2],"pro":[0.26,0.51,3.9]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 900","kth":[0.03,0.09,4.8],"kgw":[0.11,0.3,3.6],"glo":[0.13,0.31,5.2],"pro":[0.22,0.46,3.7]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 1200","kth":[0.02,0.09,4.7],"kgw":[0.09,0.25,3.5],"glo":[0.1,0.25,5.0],"pro":[0.18,0.4,3.6]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 1500","kth":[0.02,0.02,4.5],"kgw":[0.08,0.23,3.5],"glo":[0.08,0.22,5.1],"pro":[0.17,0.37,3.6]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 300","kth":[0.11,0.27,7.3],"kgw":[0.4,0.63,6.9],"glo":[0.41,0.65,7.4],"pro":[0.43,0.71,7.0]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 600","kth":[0.08,0.22,5.7],"kgw":[0.24,0.45,4.9],"glo":[0.23,0.48,7.0],"pro":[0.31,0.56,5.4]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 900","kth":[0.06,0.16,4.8],"kgw":[0.14,0.32,5.0],"glo":[0.16,0.34,6.8],"pro":[0.25,0.5,5.1]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 1200","kth":[0.03,0.11,4.7],"kgw":[0.12,0.29,4.3],"glo":[0.12,0.31,6.3],"pro":[0.18,0.4,4.8]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 1500","kth":[0.02,0.07,4.6],"kgw":[0.1,0.26,4.2],"glo":[0.12,0.3,5.9],"pro":[0.17,0.39,4.0]}],"dipper":[["Gu \u00b7 KTH","0.82","0.79"],["Gu \u00b7 KGW","0.86","0.84"],["Gloaguen \u00b7 KGW","0.80","0.74"],["PRO","0.90","0.87"]],"downstream":[["Base","0.7607","0.5708","0.2963","0.7583"],["Gu \u00b7 KGW","0.7583","0.5683","0.2877","0.7582"],["PRO","0.7594","0.5705","0.2920","0.7582"]]};
   const $ = (id) => document.getElementById(id);
-  // in-page links scroll here instead of navigating, so hosts that reload on a hash change keep the page as is
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // in-page links scroll here instead of navigating (hosts that reload on a hash change keep the page as is)
   document.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
     const t = document.getElementById(a.getAttribute("href").slice(1));
     if (!t) return;
     e.preventDefault();
     t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }));
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
-  // repository links: shown only once REPO is set
-  document.querySelectorAll(".js-repo").forEach((a) => { if (REPO) { a.href = REPO; } else { a.textContent = "Quickstart"; } });
+  document.querySelectorAll(".js-repo").forEach((a) => { if (REPO) a.href = REPO; else a.textContent = "Quickstart"; });
   document.querySelectorAll(".js-repo-file").forEach((a) => { if (REPO) a.href = REPO + "/blob/main/" + a.dataset.file; });
-
-  // hero specimen: an illustration of a detector's token marks
-  const SPEC = [["The", 1], [" committee", 1], [" met", 0], [" on", 1], [" Tuesday", 1], [" to", 1], [" review", 1], [" the", 0], [" budget", 1], [" for", 1], [" next", 1], [" year", 1], [",", 1], [" and", 0], [" agreed", 1], [" to", 1], [" postpone", 1], [" the", 1], [" final", 1], [" vote", 0], [" until", 1], [" the", 1], [" auditors", 1], [" deliver", 1], [" their", 1], [" report", 0], [".", 1]];
-  $("specCount").textContent = `${SPEC.filter((x) => x[1]).length} of ${SPEC.length} tokens match`;
-  $("specimen").innerHTML = SPEC.map(([t, g]) => { const m = t.match(/^(\s*)(.*)$/); return esc(m[1]) + `<span class="tk ${g ? "g" : "r"}">${esc(m[2])}</span>`; }).join("");
-
   function seg(el, items, cur, on) {
     el.innerHTML = items.map(([k, lab]) => `<button type="button" data-k="${esc(k)}" aria-pressed="${k === cur}">${esc(lab)}</button>`).join("");
     el.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => on(b.dataset.k)));
   }
-  // leaderboard (its own function: without data it shows a note and the rest of the page still runs)
-  (function board() {
-  const METHODS = [["kth", "Gu et al. · KTH"], ["kgw", "Gu et al. · KGW"], ["glo", "Gloaguen et al. · KGW"], ["pro", "PRO"]];
-  const METRICS = [["t1", "TPR @ 1%", 1, true], ["t5", "TPR @ 5%", 0, true], ["ppl", "PPL", 2, false]];
-  if (!LB || !LB.rows) {                                 // the build injects the paper's tables; never crash without them
-    $("lbTable").innerHTML = '<tbody><tr><td>The leaderboard data is missing from this build: see LEADERBOARD.md.</td></tr></tbody>';
-    return;
-  }
-  const CATS = [...new Set(LB.rows.map((r) => r.cat))];
-  const S = { cat: "Merging, SLERP", met: "t1" };
-  try { const v = localStorage.getItem("mwx-lb"); if (v) Object.assign(S, JSON.parse(v)); } catch (e) {}
-  if (!CATS.includes(S.cat)) S.cat = "Merging, SLERP";
-  const save = () => { try { localStorage.setItem("mwx-lb", JSON.stringify(S)); } catch (e) {} };
-  const shortCat = (c) => c.replace("Quantization, ", "Quantize ").replace("Pruning, ", "").replace("Merging, SLERP", "SLERP merge").replace("Fine-tuning, OpenMathInstruct", "Fine-tune · math").replace("Fine-tuning, OpenCodeInstruct", "Fine-tune · code");
-  function table() {
-    const m = METRICS.find((x) => x[0] === S.met), idx = m[2], higher = m[3];
-    const rows = LB.rows.filter((r) => r.cat === S.cat || r.cat === "Unaltered");
-    let h = `<thead><tr><th>Setting</th><th></th>` + METHODS.map(([k, n]) => `<th class="${k === "pro" ? "pro" : ""}">${esc(n)}</th>`).join("") + `</tr></thead><tbody>`;
-    rows.forEach((r) => {
-      const vals = METHODS.map(([k]) => r[k][idx]);
-      const best = higher ? Math.max(...vals) : Math.min(...vals);
-      h += `<tr><td class="cat">${esc(r.cat === "Unaltered" ? "Unaltered" : shortCat(r.cat))}</td><td>${esc(r.setting || "—")}</td>` +
-        METHODS.map(([k], i) => `<td class="${k === "pro" ? "pro " : ""}${vals[i] === best ? "best" : ""}">${idx === 2 ? vals[i].toFixed(1) : vals[i].toFixed(2)}</td>`).join("") + `</tr>`;
-    });
-    $("lbTable").innerHTML = h + "</tbody>";
-  }
-  const COLORS = { kth: "var(--muted)", kgw: "var(--nomark)", glo: "var(--accent)", pro: "var(--mark)" };
-  function chart() {
-    const rows = [LB.rows.find((r) => r.cat === "Unaltered"), ...LB.rows.filter((r) => r.cat === S.cat)];
-    const svg = $("chart"), W = 560, H = 280, L = 52, R = 18, T = 16, B = 46;
-    const X = (i) => L + (rows.length === 1 ? 0 : i * (W - L - R) / (rows.length - 1)), Y = (v) => T + (1 - v) * (H - T - B);
-    let g = "";
-    [0, .25, .5, .75, 1].forEach((v) => { g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${v.toFixed(2)}</text>`; });
-    rows.forEach((r, i) => { g += `<text x="${X(i)}" y="${H - B + 18}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="IBM Plex Mono, monospace">${esc(i === 0 ? "none" : r.setting.replace(/^[a-zρ]+ = /i, ""))}</text>`; });
-    g += `<text x="${(L + W - R) / 2}" y="${H - 8}" text-anchor="middle" font-size="12" fill="var(--muted)">${esc(shortCat(S.cat))}${S.cat.startsWith("Fine") ? " · steps" : S.cat.startsWith("Merg") ? " · t" : S.cat.startsWith("Prun") ? " · sparsity" : ""}</text>`;
-    METHODS.forEach(([k]) => {
-      const pts = rows.map((r, i) => [X(i), Y(r[k][1])]);
-      g += `<polyline points="${pts.map((p) => p.join(",")).join(" ")}" fill="none" stroke="${COLORS[k]}" stroke-width="${k === "pro" ? 3 : 2}"/>`;
-      pts.forEach((p) => { g += `<circle cx="${p[0]}" cy="${p[1]}" r="${k === "pro" ? 4 : 3}" fill="${COLORS[k]}"/>`; });
-    });
-    svg.innerHTML = g;
-    $("legend").innerHTML = METHODS.map(([k, n]) => `<span><i style="background:${COLORS[k]}"></i>${esc(n)}</span>`).join("");
-    $("chartNote").textContent = "TPR at 1% FPR from the unaltered model through each setting.";
-  }
-  function render() { seg($("catSeg"), CATS.filter((c) => c !== "Unaltered").map((c) => [c, shortCat(c)]), S.cat, (k) => { S.cat = k; save(); render(); }); seg($("metSeg"), METRICS.map((m) => [m[0], m[1]]), S.met, (k) => { S.met = k; save(); render(); }); table(); chart(); }
-  render();
-  const mini = (el, head, rows, bestCol) => {
-    el.innerHTML = `<thead><tr>${head.map((x, i) => `<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>` +
-      rows.map((r) => `<tr>${r.map((x, i) => `<td class="${r[0] === "PRO" && i > 0 ? "best" : ""}">${esc(x)}</td>`).join("")}</tr>`).join("") + "</tbody>";
-  };
-  mini($("dipper"), ["Method", "DIPPER1", "DIPPER2"], LB.dipper);
-  mini($("downstream"), ["Model", "Hella.", "ARC-C", "AGI-M", "GSM8K"], LB.downstream);
 
+  // methods
+  const MET = [
+    ["PRO", "pro · pro-coopt-c100 · pro-full-b01", "A semantic watermark policy trained with the model, with perturbation-aware training against weight edits.", ["ours", "distilled", "text + key"], "var(--accent)", "PR"],
+    ["KGW (Gu et al.)", "markllm-kgw-d", "The KGW green-list watermark distilled into the weights; the main baseline of the paper.", ["distilled", "text + key"], "#6366f1", "KG"],
+    ["KTH (Gu et al.)", "markllm-exp-d", "The exponential-sampling watermark distilled into the weights.", ["distilled", "text + key"], "#8b5cf6", "KT"],
+    ["Unigram", "markllm-unigram-d", "A fixed green list over the vocabulary, the same for every context.", ["distilled", "text + key"], "#0ea5e9", "UG"],
+    ["SWEET · EWD", "markllm-sweet-d · markllm-ewd-d", "KGW variants that weight tokens by entropy; the detector runs the base model.", ["distilled", "text + key + base model"], "#14b8a6", "SE"],
+    ["MorphMark · DIP · Unbiased", "markllm-morphmark-d · -dip-d · -unbiased-d", "Further decode-time watermarks from MarkLLM, distilled the same way.", ["distilled", "text + key"], "#f59e0b", "MD"],
+    ["SynthID · EXPEdit · ITSEdit · PF", "markllm-synthid-d · -expedit-d · -itsedit-d · -pf-d", "Sampling-based watermarks from MarkLLM, distilled the same way.", ["distilled", "text + key"], "#ec4899", "SY"],
+    ["GaussMark", "gaussmark", "A keyed Gaussian perturbation written into one weight matrix, detected with gradients of the base model.", ["weight edit", "text + key + gradients"], "#64748b", "GM"],
+    ["Your method", "markweightx new-scheme my-mark", "One Python file from a template; ten tests on CPU, then the same benchmark.", ["plugin"], "var(--rose)", "+"],
+  ];
+  $("mgrid").innerHTML = MET.map(([n, k, d, tags, c, ab]) => `<div class="m"><div class="m-top"><div class="m-ico" style="background:color-mix(in srgb, ${c} 15%, transparent);color:${c}">${esc(ab)}</div><div><h3>${esc(n)}</h3><div class="k">${esc(k)}</div></div></div><p>${esc(d)}</p><div class="tags">${tags.map((t) => `<span class="tag${t === "ours" ? " ours" : ""}">${esc(t === "ours" ? "ours · NeurIPS 2026" : t)}</span>`).join("")}</div></div>`).join("");
+
+  // leaderboard: rows are methods ranked by the selected modification
+  (function board() {
+    if (!LB || !LB.rows) { $("lbTable").innerHTML = "<tbody><tr><td class=\"l\">The leaderboard data is missing from this build: see LEADERBOARD.md.</td></tr></tbody>"; return; }
+    const MS = [["pro", "PRO", "#06b6d4", "PR"], ["glo", "Gloaguen et al. · KGW", "#14b8a6", "GL"], ["kgw", "Gu et al. · KGW", "#6366f1", "KG"], ["kth", "Gu et al. · KTH", "#8b5cf6", "KT"]];
+    const METRICS = [["t1", "TPR @ 1% FPR", 1, true], ["t5", "TPR @ 5% FPR", 0, true], ["ppl", "PPL", 2, false]];
+    const CATS = [...new Set(LB.rows.map((r) => r.cat))];
+    const short = (c) => ({ "Unaltered": "Unaltered", "Quantization, 8 bits": "Quantize 8-bit", "Quantization, 4 bits": "Quantize 4-bit", "Pruning, Wanda": "Prune · Wanda", "Pruning, SparseGPT": "Prune · SparseGPT", "Merging, SLERP": "Merge · SLERP", "Fine-tuning, OpenMathInstruct": "Fine-tune · Math", "Fine-tuning, OpenCodeInstruct": "Fine-tune · Code" }[c] || c);
+    const S = { cat: "Merging, SLERP", met: "t1" };
+    try { const v = JSON.parse(localStorage.getItem("mwx-lb2") || "null"); if (v && CATS.includes(v.cat)) Object.assign(S, v); } catch (e) {}
+    const save = () => { try { localStorage.setItem("mwx-lb2", JSON.stringify(S)); } catch (e) {} };
+    const tone = (v, ppl) => "t" + (ppl ? (v <= 4.5 ? "g" : v <= 6 ? "m" : "b") : (v >= .8 ? "g" : v >= .4 ? "m" : "b"));
+    function table() {
+      const m = METRICS.find((x) => x[0] === S.met), idx = m[2], ppl = !m[3];
+      const settings = LB.rows.filter((r) => r.cat === S.cat);
+      const key = settings[Math.floor((settings.length - 1) / 2)];   // rank by the middle setting
+      const ranked = MS.slice().sort((a, b) => ppl ? key[a[0]][idx] - key[b[0]][idx] : key[b[0]][idx] - key[a[0]][idx]);
+      const fmt = (v) => ppl ? v.toFixed(1) : (100 * v).toFixed(0) + "%";
+      const base = LB.rows.find((r) => r.cat === "Unaltered");
+      let h = `<thead><tr><th class="l">Rank</th><th class="l">Method</th>` + (S.cat === "Unaltered" ? "" : `<th>Unaltered</th>`) +
+        settings.map((r) => `<th>${esc(r.setting || "—")}${r === key && settings.length > 1 ? "<small>ranked by</small>" : ""}</th>`).join("") + `</tr></thead><tbody>`;
+      ranked.forEach((mm, i) => {
+        h += `<tr class="${mm[0] === "pro" ? "ours" : ""}"><td class="l"><span class="rank ${i === 0 ? "r1" : ""}">${i + 1}</span></td>` +
+          `<td class="l"><span class="mname"><span class="dot" style="background:${mm[2]}">${mm[3]}</span>${esc(mm[1])}</span></td>` +
+          (S.cat === "Unaltered" ? "" : `<td><span class="v ${tone(base[mm[0]][idx], ppl)}">${fmt(base[mm[0]][idx])}</span></td>`) +
+          settings.map((r) => `<td><span class="v ${tone(r[mm[0]][idx], ppl)}">${fmt(r[mm[0]][idx])}</span></td>`).join("") + `</tr>`;
+      });
+      $("lbTable").innerHTML = h + "</tbody>";
+      $("lbNote").textContent = `${short(S.cat)} · ${m[1]} (${ppl ? "lower" : "higher"} is better) · ranked by ${key.setting || "the unaltered model"}`;
+    }
+    function chart() {
+      const rows = [LB.rows.find((r) => r.cat === "Unaltered"), ...LB.rows.filter((r) => r.cat === S.cat && r.cat !== "Unaltered")];
+      const W = 640, H = 300, L = 54, R = 20, T = 18, B = 50;
+      const X = (i) => L + (rows.length < 2 ? (W - L - R) / 2 : i * (W - L - R) / (rows.length - 1)), Y = (v) => T + (1 - v) * (H - T - B);
+      let g = `<defs><linearGradient id="gz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--good)" stop-opacity=".10"/><stop offset="1" stop-color="var(--bad)" stop-opacity=".08"/></linearGradient></defs>`;
+      g += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="url(#gz)" rx="8"/>`;
+      [0, .25, .5, .75, 1].forEach((v) => { g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 10}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace">${(100 * v).toFixed(0)}%</text>`; });
+      rows.forEach((r, i) => { g += `<text x="${X(i)}" y="${H - B + 20}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace">${esc(i === 0 ? "none" : (r.setting || "").replace(/^[a-zρ]+ = /i, ""))}</text>`; });
+      g += `<text x="${(L + W - R) / 2}" y="${H - 10}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace">${esc(short(S.cat))}</text>`;
+      MS.slice().reverse().forEach(([k, , c]) => {
+        const pts = rows.map((r, i) => [X(i), Y(r[k][1])]);
+        g += `<polyline points="${pts.map((p) => p.join(",")).join(" ")}" fill="none" stroke="${c}" stroke-width="${k === "pro" ? 3 : 2}" stroke-linejoin="round"/>`;
+        pts.forEach((p) => { g += `<circle cx="${p[0]}" cy="${p[1]}" r="${k === "pro" ? 4.5 : 3.5}" fill="${c}" stroke="var(--solid)" stroke-width="1.5"/>`; });
+      });
+      $("chart").innerHTML = g;
+      $("chartTitle").textContent = `TPR @ 1% FPR · ${short(S.cat)}`;
+      $("legend").innerHTML = MS.map(([, n, c]) => `<span><i style="background:${c}"></i>${esc(n)}</span>`).join("");
+    }
+    function render() {
+      seg($("catSeg"), CATS.map((c) => [c, short(c)]), S.cat, (k) => { S.cat = k; save(); render(); });
+      seg($("metSeg"), METRICS.map((m) => [m[0], m[1]]), S.met, (k) => { S.met = k; save(); render(); });
+      table(); chart();
+    }
+    render();
+    const mini = (el, head, rows) => {
+      el.innerHTML = `<thead><tr>${head.map((x, i) => `<th class="${i ? "" : "l"}">${esc(x)}</th>`).join("")}</tr></thead><tbody>` +
+        rows.map((r) => `<tr class="${r[0] === "PRO" ? "ours" : ""}">${r.map((x, i) => `<td class="${i ? "" : "l"}">${i && r[0] === "PRO" ? `<span class="v tg">${esc(x)}</span>` : esc(x)}</td>`).join("")}</tr>`).join("") + "</tbody>";
+    };
+    mini($("dipper"), ["Method", "DIPPER-1", "DIPPER-2"], LB.dipper);
+    mini($("downstream"), ["Model", "Hella.", "ARC-C", "AGI-M", "GSM8K"], LB.downstream);
   })();
 
   // quickstart code
@@ -436,15 +448,15 @@ python exp/prepare_data.py          <span class="c"># once: C4 prompts and train
 pytest -q tests -m "not slow"       <span class="c"># optional, about a minute on CPU</span>`,
     python: `<span class="k">import</span> markweightx <span class="k">as</span> mwx
 
-<span class="c"># owner: mark the weights, keep the key</span>
+<span class="c"># owner: train the watermark into the weights, keep the key</span>
 release, key = mwx.embed(<span class="c">"llama-3.2-1b"</span>, <span class="c">"pro"</span>)
 key = mwx.calibrate(key, <span class="c">"llama-3.2-1b"</span>)
 
-<span class="c"># downstream: edit the weights, write, reword</span>
+<span class="c"># user: modify the weights and generate</span>
 child = mwx.modify(release, <span class="c">"finetune:steps=200"</span>)
 texts = mwx.generate(child, prompts)
 
-<span class="c"># detector: each text, then the whole model</span>
+<span class="c"># detector: single texts, then the whole model</span>
 hits = mwx.detect(texts, key)
 mwx.verify_model(child, key, prompts, sequential=<span class="k">True</span>, budget=200)`,
     cli: `markweightx embed --base llama-3.2-1b --watermark pro
@@ -453,23 +465,22 @@ markweightx generate edited/ --prompts prompts.jsonl --out texts.jsonl
 markweightx detect texts.jsonl --key KEY
 markweightx verify edited/ --key KEY --prompts prompts.jsonl --sequential`,
     plugin: `markweightx new-scheme my-mark          <span class="c"># one file: key, signal, score</span>
-markweightx check --adapter my_mark.py  <span class="c"># ten checks, minutes on CPU</span>
+markweightx check --adapter my_mark.py  <span class="c"># ten tests, minutes on CPU</span>
 
 <span class="c"># arena.yaml</span>
 base: llama-3.2-1b
 methods: [pro, markllm-kgw-d, my_mark.py]
 
-markweightx bench arena.yaml            <span class="c"># learn, every edit, forgery, leaderboard</span>`,
+markweightx bench arena.yaml            <span class="c"># train, modify, detect, leaderboard</span>`,
   };
-  const TABS = [["install", "Install"], ["python", "Python"], ["cli", "Shell"], ["plugin", "Your method"]];
+  const TABS = [["install", "Install"], ["python", "Python"], ["cli", "Shell"], ["plugin", "New method"]];
   let tab = "install";
   function renderCode() { seg($("codeSeg"), TABS, tab, (k) => { tab = k; renderCode(); }); $("codeBox").innerHTML = CODE[tab]; }
   renderCode();
   function copy(btn, el) {
-    const text = el.innerText;
     const done = () => { const t = btn.textContent; btn.textContent = "Copied"; setTimeout(() => (btn.textContent = t), 1400); };
-    const select = () => { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; };
-    try { navigator.clipboard.writeText(text).then(done, select); } catch (e) { select(); }
+    const select = () => { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Press Ctrl+C"; };
+    try { navigator.clipboard.writeText(el.innerText).then(done, select); } catch (e) { select(); }
   }
   $("copyBtn").addEventListener("click", () => copy($("copyBtn"), $("codeBox")));
   $("citeBtn").addEventListener("click", () => copy($("citeBtn"), $("bib")));
