@@ -26,7 +26,8 @@ def tiny(tmp_path, monkeypatch):
     torch.manual_seed(0)
     cfg = LlamaConfig(vocab_size=128256, hidden_size=64, intermediate_size=128, num_hidden_layers=2,
                       num_attention_heads=4, num_key_value_heads=4)
-    return LlamaForCausalLM(cfg).float().eval(), load_tokenizer("llama-3.2-1b"), tmp_path
+    # init exactly representable in bf16, like a real checkpoint
+    return LlamaForCausalLM(cfg).to(torch.bfloat16).float().eval(), load_tokenizer("llama-3.2-1b"), tmp_path
 
 
 def make(tiny, secret=1234, sigma=0.05):
@@ -42,10 +43,36 @@ def make(tiny, secret=1234, sigma=0.05):
 
 def test_delta_reproducible_and_key_pins_params(tiny):
     s1, k1, _ = make(tiny, secret=7)
-    d1 = torch.load(k1["delta"])
     s2, k2, _ = make(tiny, secret=7)
-    assert torch.equal(d1, torch.load(k2["delta"]))
+    assert k1["delta_sha256"] == k2["delta_sha256"] and k1["base_sha256"] == k2["base_sha256"]
     assert k1["sigma"] == 0.05 and k1["layer"] == 1 and k1["matrix"] == "mlp.up_proj"
+    assert make(tiny, secret=8)[1]["delta_sha256"] != k1["delta_sha256"]
+
+
+def test_wrong_base_is_refused(tiny):
+    model, tok, tmp = tiny
+    sch, key, _ = make(tiny, secret=5)
+    with torch.no_grad():
+        dict(model.named_parameters())[sch.param].add_(0.1)  # a different "snapshot"
+    det = get_scheme("gaussmark"); det.setup(model, tok, "cpu", key); det.probe = TinyProbe(model, tok)
+    with pytest.raises(ValueError, match="base differs"):
+        det.score("some text to score")
+
+
+def test_null_is_standard_normal_over_secrets(tiny):
+    """For a fixed text, psi over many secrets must be N(0,1): KS test."""
+    from scipy.stats import kstest
+    model, tok, _ = tiny
+    det = get_scheme("gaussmark", sigma=0.01, layer=1); det.setup(model, tok, "cpu", {"secret": 1})
+    probe = TinyProbe(model, tok)
+    g = probe.grad_seq_logprob("The quick brown fox jumps over the lazy dog near the river", det.param)[det.param]
+    base = dict(model.named_parameters())[det.param].detach().float()
+    psi = []
+    for secret in range(200):
+        det.secret = secret
+        d = det._realize(base, torch.bfloat16)
+        psi.append(((d * g).sum() / (d.norm() / d.numel() ** 0.5 * g.norm())).item())
+    assert kstest(psi, "norm").pvalue > 0.01
 
 
 def test_null_is_standard_normal_and_marked_text_scores_high(tiny):

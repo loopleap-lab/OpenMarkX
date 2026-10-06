@@ -59,7 +59,8 @@ def main():
         base_txt = json.load(open(base_cache))
     else:
         # null texts must come from the unwatermarked base: for an Imprint.EDIT release the model IS the edited one
-        base_txt = generate(load_base(a.base, a.device) if rel.weights else model, tok, prompts, adapter=False, seed=1)
+        judge0 = load_base(a.base, a.device) if rel.weights else model
+        base_txt = generate(judge0, tok, prompts, adapter=False, seed=1)
         json.dump(base_txt, open(base_cache, "w"))
     stud = generate(model, tok, prompts, adapter=True, seed=0)
     teach = generate(model, tok, prompts, adapter=False, seed=2, logits_processor=sch.processor()) \
@@ -72,6 +73,9 @@ def main():
     res = {"scheme": a.scheme, "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),
            "student": summary(s_stud, s_null), "ppl_student": perplexity(judge, tok, prompts, stud),
            "ppl_base": perplexity(judge, tok, prompts, base_txt)}
+    if getattr(sch, "exact_null", False):                  # the closed-form null, checked on the real base texts
+        res["closed_form"] = {"tpr_p01": sum(sch.pvalue(x, 0) < 0.01 for x in s_stud) / len(s_stud),
+                              "fpr_p01_on_base": sum(sch.pvalue(x, 0) < 0.01 for x in s_null) / len(s_null)}
     if teach is not None:
         s_teach = [s for s, _ in scores(sch, teach)]
         res["teacher_decode"] = summary(s_teach, s_null); res["ppl_teacher"] = perplexity(judge, tok, prompts, teach)
