@@ -11,3 +11,10 @@ markweightx = "markweightx.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["slow: runs markweightx check end to end (minutes)"]
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["markweightx*"]
