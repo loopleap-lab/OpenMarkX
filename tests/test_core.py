@@ -60,3 +60,23 @@ def test_short_texts_use_the_null_calibrated_at_their_length():
     assert _null_for(199, full, by, 200) is n100 and _null_for(120, full, by, 200) is n100
     assert _null_for(60, full, by, 200) is n50 and _null_for(20, full, by, 200) is n50
     assert _null_for(20, full, None, None) is full          # an old calibration: one null for every length
+
+
+def test_sprt_keeps_its_error_rates():
+    import random
+    from markweightx.api import sprt
+    rng = random.Random(0)
+
+    def run(rate, budget=400):
+        k = n = 0
+        while n < budget:
+            k += sum(rng.random() < rate for _ in range(20)); n += 20
+            d = sprt(k, n, 0.01, 0.2, 0.01, 0.05)
+            if d is not None:
+                return d, n
+        return False, n
+    null = [run(0.01) for _ in range(2000)]
+    marked = [run(0.3) for _ in range(500)]
+    assert sum(d for d, _ in null) / len(null) <= 0.01           # false accusations
+    assert sum(d for d, _ in marked) / len(marked) >= 0.95       # watermarked models found ...
+    assert sum(n for _, n in marked) / len(marked) <= 60         # ... in about three batches

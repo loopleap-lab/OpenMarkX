@@ -268,20 +268,55 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
     return out
 
 
-def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01,
-                 trust_plugin: bool = False) -> Detection:
-    """Model-level verdict: sample the suspect model on the prompts and count the texts flagged at `fpr`. Under the
-    null each text is flagged with probability fpr, so the model's p-value is the binomial tail P(Binom(n, fpr) >= k).
-    Exact for schemes with an exact null (GaussMark); with an empirical null the per-text rate is only fpr up to the
-    calibration's sampling error and its prompt distribution, so use the calibration prompts and a large n.
-    Needs a calibrated key, unless the scheme has a closed-form p-value."""
+def sprt(k: int, n: int, fpr: float, p1: float, alpha: float, beta: float) -> bool | None:
+    """Wald's SPRT after k flags in n texts: True (watermarked: rate p1), False (not: rate fpr), None (keep going)."""
+    import math
+    llr = k * math.log(p1 / fpr) + (n - k) * math.log((1 - p1) / (1 - fpr))
+    if llr >= math.log((1 - beta) / alpha):
+        return True
+    if llr <= math.log(beta / (1 - alpha)):
+        return False
+    return None
+
+
+def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01, alpha=0.01,
+                 budget: int | None = None, sequential: bool = False, p1: float = 0.2, beta: float = 0.05,
+                 batch: int = 20, trust_plugin: bool = False) -> Detection:
+    """Model-level verdict on a suspect model: sample it on the prompts, flag each text at `fpr`, and test the flag
+    rate. Under the null each text is flagged with probability fpr.
+      fixed (default): all prompts (at most `budget`); p = P(Binom(n, fpr) >= k), flagged when p < alpha.
+      sequential=True: Wald's SPRT of flag rate fpr against p1, `batch` texts at a time; it stops as soon as the
+        evidence crosses a bound, so a watermarked model is usually settled in a few batches. Type-I error <= alpha
+        and type-II <= beta (at rate p1) hold despite the early stop; `budget` caps the texts, and a test that hits
+        the cap without crossing a bound is reported as not flagged. p_value is the binomial tail of what was seen.
+    The verdict's n_queries is how many texts were generated. Exact for schemes with an exact null (GaussMark); with
+    an empirical null the per-text rate is fpr up to the calibration's sampling error, so use the calibration
+    prompts. Needs a calibrated key, unless the scheme has a closed-form p-value."""
     from scipy.stats import binom
+    from .models import load_release, load_tokenizer
+    from .sampling import generate as _gen
+    from .scoring import detect as _detect
+    if not 0 < fpr < p1 < 1:
+        raise ValueError(f"need 0 < fpr < p1 < 1 (got fpr={fpr}, p1={p1})")
     sch = build_scheme(key, trust_plugin=trust_plugin)       # refuse an untrusted plugin before any sampling
     if not key.calibration.get("null") and sch.pvalue(0.0, 1) is None:
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")
     device = device or _auto_device()
-    dets = detect(generate(release, prompts, device=device), key, fpr=fpr, trust_plugin=trust_plugin,
-                  device=_matching_device(key, device, type(sch)))
-    k, n = sum(bool(d.flagged) for d in dets), len(dets)
-    p = float(binom.sf(k - 1, n, fpr))
-    return Detection(statistic=float(k), p_value=p, n_tokens=sum(d.n_tokens for d in dets), flagged=p < fpr)
+    prompts = prompts[:budget] if budget else prompts
+    bound = scheme_for(key, None, _matching_device(key, device, type(sch)), trust_plugin=trust_plugin)
+    model, tok = load_release(release, device), load_tokenizer(release.base)
+    c = key.calibration
+    size = batch if sequential else max(len(prompts), 1)
+    k = n = n_tok = 0
+    decided = None
+    for i in range(0, len(prompts), size):
+        texts = _gen(model, tok, prompts[i:i + size], seed=i)
+        dets = _detect(bound, texts, null=c.get("null"), fpr=fpr, by_length=c.get("by_length"), null_len=c.get("n_tokens"))
+        k += sum(bool(d.flagged) for d in dets); n += len(dets); n_tok += sum(d.n_tokens for d in dets)
+        if sequential:
+            decided = sprt(k, n, fpr, p1, alpha, beta)
+            if decided is not None:
+                break
+    p = float(binom.sf(k - 1, n, fpr)) if n else 1.0
+    flagged = decided if sequential else p < alpha
+    return Detection(statistic=float(k), p_value=p, n_tokens=n_tok, flagged=bool(flagged), n_queries=n)

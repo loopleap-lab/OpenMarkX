@@ -45,6 +45,7 @@ texts = mwx.rewrite(texts, "synonym:ratio=0.3")              # ...and reword
 
 hits = mwx.detect(texts, key)                                # Detector: [Detection(statistic, p_value, n_tokens, flagged)]
 verdict = mwx.verify_model(child, key, prompts)              # one binomial test over the flags
+verdict = mwx.verify_model(child, key, prompts, sequential=True, budget=200)   # stop once decisive (SPRT)
 ```
 
 `examples/quickstart.py` runs this end to end on one GPU in a few minutes.
@@ -59,6 +60,7 @@ markweightx generate edited/ --prompts prompts.jsonl --out texts.jsonl
 markweightx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
 markweightx detect texts.jsonl --key KEY
 markweightx verify edited/ --key KEY --prompts prompts.jsonl            # one verdict for the model
+markweightx verify edited/ --key KEY --prompts prompts.jsonl --sequential --budget 200   # as few texts as needed
 markweightx --help                                                       # every command, with examples
 ```
 
@@ -223,6 +225,10 @@ are on Llama-3.2-1B.
 | `harness.evaluate(arena.yaml)` | `markweightx bench arena.yaml` (runs `exp/learnability.py`, `robustness.py`, `spoof.py`, `leaderboard.py`) |
 | `Scheme.keygen / signal / recipe / detector` | `Scheme.setup` (key) / `target_logits` (Signal) / `configs/embed.yaml` / `score`, `pvalue` |
 | CLI `verify` | `markweightx verify` → `mwx.verify_model` |
+
+`verify_model(..., sequential=True)` runs Wald's SPRT on the per-text flag rate (fpr against `p1`, 20 texts at a
+time): false accusations stay below `alpha` and a watermarked model is usually settled in a few batches;
+`budget` caps the texts asked of the suspect model, and `n_queries` in the verdict says how many were used.
 
 Not built yet: `port` (importing published watermarked checkpoints without retraining), `TP-*` grants (prompt
 access), the `sft` and `rl` imprints, the `distill_sampling` recipe, and in `bench` the paraphrase attack (DIPPER)

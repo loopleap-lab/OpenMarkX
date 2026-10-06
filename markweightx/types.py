@@ -15,6 +15,7 @@ class Detection:
     p_value: float | None         # calibrated against the empirical null when one is given, else the detector's own
     n_tokens: int
     flagged: bool | None = None   # statistic > threshold, when a threshold is known
+    n_queries: int | None = None  # verify_model: how many texts the suspect model was asked for
 
     @property
     def n_evidence(self) -> int:
