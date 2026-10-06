@@ -5,5 +5,8 @@ description = "An ecosystem for watermarking open-weight LLMs: learn a text wate
 requires-python = ">=3.10"
 dependencies = ["torch", "transformers>=4.46", "peft>=0.13", "datasets", "scikit-learn", "pyyaml"]
 
+[project.scripts]
+markweightx = "markweightx.cli:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

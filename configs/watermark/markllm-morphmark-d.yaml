@@ -1,0 +1,6 @@
+name: markllm-morphmark-d
+class: teacher-learned
+access: R0
+imprint: distill
+teacher: MorphMark
+params: {}

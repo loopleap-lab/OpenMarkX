@@ -1,0 +1,9 @@
+name: gaussmark
+class: teacher-free
+access: R2
+imprint: edit
+teacher: null
+params:
+  sigma: 0.01
+  layer: 14
+  matrix: mlp.up_proj

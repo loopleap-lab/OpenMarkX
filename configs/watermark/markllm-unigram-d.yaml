@@ -1,0 +1,6 @@
+name: markllm-unigram-d
+class: teacher-learned
+access: R0
+imprint: distill
+teacher: Unigram
+params: {}

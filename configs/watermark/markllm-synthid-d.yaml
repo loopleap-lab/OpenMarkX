@@ -1,0 +1,6 @@
+name: markllm-synthid-d
+class: teacher-learned
+access: R0
+imprint: distill
+teacher: SynthID
+params: {}

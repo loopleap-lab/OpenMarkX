@@ -1,0 +1,202 @@
+"""The `markweightx` command line: the five calls for the threat-model roles, plus the researcher's tools.
+
+  Owner       markweightx embed --base llama-3.2-1b --watermark gaussmark            -> release dir + key id
+              markweightx calibrate KEY --base llama-3.2-1b
+  Downstream  markweightx modify RELEASE --edit finetune:steps=800 --out DIR
+              markweightx generate RELEASE --prompts prompts.jsonl --out texts.jsonl
+              markweightx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
+  Detector    markweightx detect texts.jsonl --key KEY [--grant R0|R0_AUX|R1|R2] [--fpr 0.01]
+              markweightx verify RELEASE --key KEY --prompts prompts.jsonl
+  Researcher  markweightx describe [NAME ...]          markweightx check --adapter NAME|file.py
+              markweightx new-scheme NAME [--out my_scheme.py]
+              markweightx keys list|show KEY
+Text files are .jsonl ({"text": ...} per line) or plain text (one text per line). KEY is a key id (commitment, or
+a unique prefix) from the key store, or the path of a release (its key is found by commitment).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+
+
+def _read_texts(path: str) -> list[str]:
+    out = []
+    for line in open(path):
+        line = line.rstrip("\n")
+        if not line.strip():
+            continue
+        if path.endswith(".jsonl"):
+            d = json.loads(line)
+            out.append(d["text"] if isinstance(d, dict) else str(d))
+        else:
+            out.append(line)
+    return out
+
+
+def _write_jsonl(path: str | None, rows):
+    f = open(path, "w") if path else sys.stdout
+    for r in rows:
+        f.write(json.dumps(r) + "\n")
+    if path:
+        f.close()
+
+
+def _key(ref: str):
+    from .keys import STORE, load_key
+    from .types import Key
+    if os.path.isdir(ref) and os.path.exists(os.path.join(ref, "release.json")):
+        return load_key(ref)
+    if os.path.isfile(ref):
+        return Key.open(ref)
+    hits = [f for f in os.listdir(STORE) if f.endswith(".json") and f.startswith(ref)] if os.path.isdir(STORE) else []
+    if len(hits) != 1:
+        raise SystemExit(f"key {ref!r}: {'no match' if not hits else 'ambiguous prefix'} in {STORE}")
+    return Key.open(os.path.join(STORE, hits[0]))
+
+
+def _release(path: str):
+    from .types import Release
+    return Release.open(path)
+
+
+TEMPLATE = '''"""{name}: a MarkWeightX scheme in one file. Check it with `markweightx check --adapter {file}`."""
+import torch
+
+import markweightx as mwx
+
+
+@mwx.register_scheme
+class {cls}(mwx.Scheme):
+    name = "{name}"
+    imprint = mwx.Imprint.DISTILL      # DISTILL: learn target_logits into the weights; EDIT: write weights directly
+    access = mwx.Access.R0             # what the detector needs besides the text: R0, R0_AUX, R1 or R2
+
+    def __init__(self, delta: float = 2.0, **params):
+        super().__init__(delta=delta, **params)
+        self.delta = delta
+
+    def setup(self, model, tokenizer, device, key=None):
+        """Key: draw a secret for a new release, or read it from an existing key. Return the key material."""
+        super().setup(model, tokenizer, device, key)
+        key = dict(key or {{}})
+        if "secret" not in key:
+            key["secret"] = mwx.keys.new_secret()
+        g = torch.Generator().manual_seed(int(key["secret"]))
+        self.green = torch.rand(model.config.vocab_size, generator=g) < 0.5
+        return {{"secret": int(key["secret"])}}
+
+    def target_logits(self, input_ids, logits):
+        """Signal: the teacher's logits for every position (here: a fixed green list, +delta)."""
+        return logits + self.delta * self.green.to(logits.device, logits.dtype)
+
+    def score(self, text):
+        """Score: a statistic (higher = more marked) and the number of tokens scored."""
+        ids = self.tok(text, add_special_tokens=False)["input_ids"]
+        n = max(len(ids), 1)
+        g = sum(bool(self.green[i]) for i in ids)
+        return (g - 0.5 * n) / (0.25 * n) ** 0.5, len(ids)
+
+    def pvalue(self, statistic, n_tokens):
+        """Optional closed-form null; return None to use the key's calibrated empirical null."""
+        import math
+        return 0.5 * math.erfc(statistic / math.sqrt(2))
+'''
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="markweightx", description="Watermarks learned into open-weight LLMs.")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("embed", help="Owner: learn a watermark into a base model")
+    p.add_argument("--base", required=True); p.add_argument("--watermark", default="pro")
+    p.add_argument("--out"); p.add_argument("--steps", type=int); p.add_argument("--device")
+    p = sub.add_parser("calibrate", help="Owner: freeze the null for a key")
+    p.add_argument("key"); p.add_argument("--base"); p.add_argument("--n", type=int, default=500); p.add_argument("--device")
+    p = sub.add_parser("modify", help="Downstream: edit the weights of a release")
+    p.add_argument("release"); p.add_argument("--edit", required=True); p.add_argument("--out"); p.add_argument("--device")
+    p = sub.add_parser("generate", help="Downstream: sample texts from a release")
+    p.add_argument("release"); p.add_argument("--prompts", required=True); p.add_argument("--out"); p.add_argument("--device")
+    p = sub.add_parser("rewrite", help="Downstream: reword texts")
+    p.add_argument("texts"); p.add_argument("--edit", required=True); p.add_argument("--out")
+    p = sub.add_parser("detect", help="Detector: score texts with a key")
+    p.add_argument("texts"); p.add_argument("--key", required=True); p.add_argument("--grant")
+    p.add_argument("--fpr", type=float, default=0.01); p.add_argument("--device"); p.add_argument("--out")
+    p = sub.add_parser("verify", help="Detector: model-level verdict on a suspect release")
+    p.add_argument("release"); p.add_argument("--key", required=True); p.add_argument("--prompts", required=True)
+    p.add_argument("--fpr", type=float, default=0.01); p.add_argument("--device")
+    p = sub.add_parser("describe", help="Researcher: the scheme x primitive matrix")
+    p.add_argument("names", nargs="*")
+    p = sub.add_parser("check", help="Researcher: the adapter checks a scheme must pass")
+    p.add_argument("--adapter", required=True, help="a registered scheme name, or a .py file defining one")
+    p.add_argument("--name", help="scheme name inside the file (default: the file's only new scheme)")
+    p = sub.add_parser("new-scheme", help="Researcher: write a one-file scheme template")
+    p.add_argument("name"); p.add_argument("--out")
+    p = sub.add_parser("keys", help="the key store")
+    p.add_argument("action", choices=["list", "show"]); p.add_argument("key", nargs="?")
+    a = ap.parse_args(argv)
+
+    import markweightx as mwx
+    if a.cmd == "embed":
+        rel, key = mwx.embed(a.base, a.watermark, a.out, device=a.device, **({"steps": a.steps} if a.steps else {}))
+        print(json.dumps({"release": rel.path, "key": key.commitment}))
+    elif a.cmd == "calibrate":
+        k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, n=a.n, device=a.device)
+        print(json.dumps({"key": k.commitment, "null_n": k.calibration["n"]}))
+    elif a.cmd == "modify":
+        r = mwx.modify(_release(a.release), a.edit, a.out, device=a.device)
+        print(json.dumps({"release": r.path}))
+    elif a.cmd == "generate":
+        texts = mwx.generate(_release(a.release), _read_texts(a.prompts), device=a.device)
+        _write_jsonl(a.out, [{"text": t} for t in texts])
+    elif a.cmd == "rewrite":
+        _write_jsonl(a.out, [{"text": t} for t in mwx.rewrite(_read_texts(a.texts), a.edit)])
+    elif a.cmd == "detect":
+        grant = getattr(mwx.Access, a.grant) if a.grant else None
+        texts = _read_texts(a.texts)
+        dets = mwx.detect(texts, _key(a.key), device=a.device, fpr=a.fpr, grant=grant)
+        _write_jsonl(a.out, [{"text": t[:80], "statistic": d.statistic, "p_value": d.p_value, "n_tokens": d.n_tokens,
+                              "flagged": d.flagged} for t, d in zip(texts, dets)])
+    elif a.cmd == "verify":
+        d = mwx.verify_model(_release(a.release), _key(a.key), _read_texts(a.prompts), device=a.device, fpr=a.fpr)
+        print(json.dumps({"flagged_texts": d.statistic, "p_value": d.p_value, "from_this_key": d.flagged}))
+    elif a.cmd == "describe":
+        print(mwx.describe(a.names or None))
+    elif a.cmd == "check":
+        from .check import report, run
+        from .registry import SCHEMES, load_plugin
+        name, source = a.adapter, None
+        if a.adapter.endswith(".py"):
+            before = set(SCHEMES); load_plugin(os.path.abspath(a.adapter)); new = sorted(set(SCHEMES) - before)
+            if a.name:
+                name = a.name
+            elif len(new) == 1:
+                name = new[0]
+            else:
+                raise SystemExit(f"{a.adapter} registers {new or 'no scheme'}: pass --name")
+            source = os.path.abspath(a.adapter)
+        rows = run(name, source=source)
+        print(report(rows))
+        sys.exit(1 if any(s == "FAIL" for _, s, _ in rows) else 0)
+    elif a.cmd == "new-scheme":
+        out = a.out or a.name.replace("-", "_") + ".py"
+        cls = "".join(w.capitalize() for w in a.name.replace("_", "-").split("-"))
+        open(out, "w").write(TEMPLATE.format(name=a.name, cls=cls, file=out))
+        print(f"wrote {out}: edit it, then run `markweightx check --adapter {out}`")
+    elif a.cmd == "keys":
+        from .keys import STORE
+        from .types import Key
+        if a.action == "list":
+            for f in sorted(os.listdir(STORE)) if os.path.isdir(STORE) else []:
+                if f.endswith(".json"):
+                    k = Key.open(os.path.join(STORE, f))
+                    print(f"{f[:12]}  {k.scheme:<22} base={k.base}  calibrated={bool(k.calibration.get('null'))}")
+        else:
+            k = _key(a.key)
+            safe = {kk: ("<secret>" if kk == "secret" else v) for kk, v in k.params.items()}
+            print(json.dumps({"commitment": k.commitment, "scheme": k.scheme, "base": k.base, "params": safe,
+                              "scheme_params": k.scheme_params, "calibrated_n": k.calibration.get("n")}, indent=1))
+
+
+if __name__ == "__main__":
+    main()

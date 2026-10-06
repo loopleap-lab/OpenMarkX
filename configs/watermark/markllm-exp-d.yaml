@@ -1,0 +1,6 @@
+name: markllm-exp-d
+class: teacher-learned
+access: R0
+imprint: distill
+teacher: EXP
+params: {}

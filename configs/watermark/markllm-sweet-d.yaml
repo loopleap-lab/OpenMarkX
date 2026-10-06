@@ -1,0 +1,6 @@
+name: markllm-sweet-d
+class: teacher-learned
+access: R1
+imprint: distill
+teacher: SWEET
+params: {}

@@ -1,0 +1,6 @@
+name: markllm-dip-d
+class: teacher-learned
+access: R0
+imprint: distill
+teacher: DIP
+params: {}
