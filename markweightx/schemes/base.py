@@ -17,6 +17,7 @@ class Scheme:
     teacher: str | None = None    # upstream teacher name, when the scheme distills one
     experimental = False          # hyperparameter variants and unfinished schemes: hidden from describe()
     probe = None                  # a primitives.Probe, set by the SDK before detection (R1/R2 schemes use it)
+    rng_bound = True              # randomness drawn on the model's device: detect on the device type the key was made on
     exact_null = False            # True: pvalue() is exact, so it is used even when the key carries an empirical null
 
     @property
@@ -52,8 +53,9 @@ class Scheme:
     def on_step(self, step: int, steps: int):
         pass
 
-    def save(self, out: str, key: dict) -> dict:
-        """Persist anything the detector needs (e.g. a trained transform); returns the updated key."""
+    def save(self, key_dir: str, key: dict) -> dict:
+        """Persist key material the detector needs (e.g. a trained transform) as files in key_dir, a private
+        directory in the key store (never the release), and return the key with their paths."""
         return key
 
     # ---- detection ---------------------------------------------------------------------------
@@ -72,7 +74,7 @@ class Scheme:
     def imprint_edit(self, model, tokenizer, out: str) -> str | None:
         """Write the mark into `model`'s weights directly and save the edited model under `out/weights`; return
         that directory (None = the release is the base itself). Key material (e.g. the perturbation) must be
-        returned through save() as a file outside `out`, so it lands in the key store, never in the release."""
+        written by save() into its private key_dir, so it lands in the key store, never in the release."""
         raise NotImplementedError(f"{self.name}: imprint=EDIT schemes must implement imprint_edit()")
 
 

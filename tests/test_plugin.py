@@ -41,6 +41,8 @@ def test_plugin_scheme_round_trip(tmp_path, monkeypatch):
                   scheme_source=scheme_source(type(sch)))
     K.store(key)
     SCHEMES.pop("bob-toy")                                  # a fresh detector process has never imported Bob's file
+    from markweightx.registry import LOADED
+    LOADED.clear()
     k2 = mwx.Key.open(K.key_path(key.commitment))
     from markweightx.registry import UntrustedPlugin
     with pytest.raises(UntrustedPlugin):                    # a key can name any code: not run without consent
@@ -130,3 +132,34 @@ def test_missing_plugin_source_says_so(tmp_path):
     from markweightx.registry import load_plugin
     with pytest.raises(FileNotFoundError, match="not found"):
         load_plugin(str(tmp_path / "gone.py"))
+
+
+def test_owner_detects_with_own_plugin_in_same_process(tmp_path, monkeypatch):
+    import markweightx.keys as K
+    from markweightx.api import scheme_spec
+    from markweightx.registry import scheme_source
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
+    f = tmp_path / "bob_mark.py"; f.write_text(BOB)
+    name, params, src = scheme_spec(str(f))               # the owner imports the plugin (as embed does)
+    key = mwx.Key(scheme=name, params={}, base="llama-3.2-1b", scheme_params={"bias": 0.25}, scheme_source=src)
+    K.store(key)                                          # the key now names a blob copy of the file
+    k2 = mwx.Key.open(K.key_path(key.commitment))
+    assert k2.scheme_source.startswith("blob:")
+    mwx.detect(["even"], k2, device="cpu")                # same code already loaded: no trust flag needed
+
+
+def test_edit_params_are_checked_before_any_work():
+    rel = mwx.Release(path="x", base="llama-3.2-1b", scheme="s")
+    for spec, msg in (("quantize:bits=3", "4 \\(nf4\\) or 8"), ("prune:method=wanda", "magnitude"),
+                      ("prune:sparsity=1.5", "in \\[0, 1\\)"), ("finetune:step=10", "has no parameter step")):
+        with pytest.raises(ValueError, match=msg):
+            mwx.modify(rel, spec)
+    with pytest.raises(ValueError, match="has no parameter ratoi"):
+        mwx.rewrite(["a b c"], "synonym:ratoi=0.3")
+
+
+def test_save_never_sees_the_release(tmp_path, monkeypatch):
+    import markweightx.keys as K
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
+    d = K.stage_dir()
+    assert d.startswith(str(tmp_path / "keys")) and os.path.isdir(d)

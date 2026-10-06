@@ -161,6 +161,7 @@ def main(argv=None):
     p.add_argument("key", help=KEY_HELP)
     p.add_argument("--base", help="base model whose texts form the null (default: the key's base)")
     p.add_argument("--n", type=int, default=500, help="null texts to sample (default 500)")
+    p.add_argument("--prompts", help=TEXTS_HELP + " (default: n held-out C4 prompts); reuse them for verify")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
     p = sub.add_parser("modify", help="Downstream: edit the weights of a release",
@@ -185,6 +186,7 @@ def main(argv=None):
     p.add_argument("--grant", choices=["R0", "R0_AUX", "R1", "R2"], help="what this detector may access "
                    "(default: what the scheme needs); a lower grant is refused")
     p.add_argument("--fpr", type=float, default=0.01, help="false-positive rate for the flag (default 0.01)")
+    p.add_argument("--base", help="base model for R1/R2 detectors (default: the key's base)")
     p.add_argument("--device", help="default: the device the key was made on")
     p.add_argument("--out", help="output .jsonl (default: stdout)")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
@@ -211,7 +213,8 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         _run(a)
-    except (KeyError, ValueError, ImportError, FileNotFoundError, SyntaxError, PermissionError, NotImplementedError) as e:
+    except (KeyError, ValueError, TypeError, ImportError, FileNotFoundError, SyntaxError, PermissionError,
+            NotImplementedError) as e:
         if os.environ.get("MWX_DEBUG"):
             raise
         msg = e.args[0] if isinstance(e, KeyError) and e.args else str(e)
@@ -229,7 +232,8 @@ def _run(a):
         rel, key = mwx.embed(a.base, a.watermark, a.out, device=a.device, **recipe)
         print(json.dumps({"release": rel.path, "key": key.commitment}))
     elif a.cmd == "calibrate":
-        k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, n=a.n, device=a.device, trust_plugin=a.trust_plugin)
+        k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, _read_texts(a.prompts) if a.prompts else None,
+                          n=a.n, device=a.device, trust_plugin=a.trust_plugin)
         print(json.dumps({"key": k.commitment, "null_n": k.calibration["n"]}))
     elif a.cmd == "modify":
         r = mwx.modify(_release(a.release), a.edit, a.out, device=a.device)
@@ -242,7 +246,8 @@ def _run(a):
     elif a.cmd == "detect":
         grant = getattr(mwx.Access, a.grant) if a.grant else None
         texts = _read_texts(a.texts)
-        dets = mwx.detect(texts, _key(a.key), device=a.device, fpr=a.fpr, grant=grant, trust_plugin=a.trust_plugin)
+        dets = mwx.detect(texts, _key(a.key), base=a.base, device=a.device, fpr=a.fpr, grant=grant,
+                          trust_plugin=a.trust_plugin)
         _write_jsonl(a.out, [{"text": t[:80], "statistic": d.statistic, "p_value": d.p_value, "n_tokens": d.n_tokens,
                               "flagged": d.flagged} for t, d in zip(texts, dets)])
     elif a.cmd == "verify":

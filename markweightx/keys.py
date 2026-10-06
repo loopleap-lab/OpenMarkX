@@ -51,6 +51,13 @@ def stage(name: str) -> str:
     return os.path.join(d, f"{os.urandom(8).hex()}-{name}")
 
 
+def stage_dir() -> str:
+    """A fresh private directory for a scheme's save(): key material written there is filed by store()."""
+    d = os.path.join(STORE, "tmp", os.urandom(8).hex())
+    os.makedirs(d)
+    return d
+
+
 def store(key: Key) -> str:
     """Move file-valued params (and a plugin scheme's source file) into the blob store, then file the key under its
     commitment. Keys are the owner's own artifacts: a key's plugin source is code that detection imports."""
@@ -62,6 +69,11 @@ def store(key: Key) -> str:
             key.params[k] = put_blob(v)
             if os.path.abspath(v).startswith(tmp):        # staged key material: the blob is now the only copy
                 os.remove(v)
+                if os.path.dirname(os.path.abspath(v)) != tmp.rstrip(os.sep):
+                    try:
+                        os.rmdir(os.path.dirname(v))        # an emptied stage_dir()
+                    except OSError:
+                        pass
     return key.save(key_path(key.commitment))
 
 
@@ -71,5 +83,8 @@ def load_key(release: Release | str) -> Key:
     if rel.key_commitment and os.path.exists(key_path(rel.key_commitment)):
         return Key.open(key_path(rel.key_commitment))
     if rel.key:
+        import warnings
+        warnings.warn(f"{rel.path}: using the key copy inside release.json (old format). A release can carry any key; "
+                      f"use a key from your own key store when it matters who made it.")
         return Key(scheme=rel.scheme, params=dict(rel.key), base=rel.base)
     raise FileNotFoundError(f"no key for release {rel.path}: commitment {rel.key_commitment} not in {STORE}")

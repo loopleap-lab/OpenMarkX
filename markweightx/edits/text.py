@@ -8,6 +8,8 @@ from ..paths import MARKLLM
 
 
 def rewrite(texts, kind: str, *, ratio=0.3, seed=0, device="cuda:0"):
+    if not 0 < ratio <= 1:
+        raise ValueError(f"{kind}: ratio={ratio!r} must be in (0, 1]")
     if MARKLLM not in sys.path:
         sys.path.insert(0, MARKLLM)
     from evaluation.tools import text_editor as te

@@ -178,7 +178,8 @@ def _run(name, source, base, n_null, store_dir):
         k = bind(s, m, tok, None)
         if edit:
             out = tempfile.mkdtemp(prefix="mwx-check-rel-")
-            s.imprint_edit(m, tok, out); k = s.save(out, k)
+            from .keys import stage_dir
+            s.imprint_edit(m, tok, out); k = s.save(stage_dir(), k)
             return s, k, out
         return s, k, None
 
@@ -298,7 +299,7 @@ print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
 
     def c7():
         if not edit:
-            return None, "teacher-learned: the release is a LoRA adapter; key material never enters it (P1 tests)"
+            return None, "teacher-learned: the release is a LoRA adapter; save() only ever sees a private key directory"
         import hashlib
         files = [os.path.relpath(os.path.join(d, f), state["out"]) for d, _, fs in os.walk(state["out"]) for f in fs]
         extra = [f for f in files if not (f.startswith("weights" + os.sep) and os.path.basename(f) in RELEASE_FILES

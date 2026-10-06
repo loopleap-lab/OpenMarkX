@@ -13,20 +13,29 @@ Detector     detect(texts, key) ─▶ one Detection per text;  verify_model(rel
 ## Install
 
 ```bash
-pip install -e .               # or: uv pip install -e .  (local only; nothing is published)
-export MWX_RUNS=/path/to/runs  # releases, results, key store (default: /mnt/data/jiaq/mwx-runs)
-export MWX_HF=/path/to/hf      # where base models are cached
+pip install -e .                    # or: uv pip install -e .  (local only; nothing is published)
+export MWX_RUNS=/path/to/runs       # releases, results and the key store (default: /mnt/data/jiaq/mwx-runs)
+export MWX_HF=/path/to/hf           # where pinned base snapshots are looked up
+python exp/prepare_data.py          # once: C4 text for training, prompts and human continuations ($MWX_DATA)
 ```
 
-MarkLLM and the PRO paper code are used unchanged from local checkouts (`MARKLLM_DIR`, `PRO_CODE_DIR`; see
-`markweightx/paths.py`). Base model names (`llama-3.2-1b`, `llama-3.2-1b-instruct`, ...) map to snapshots there.
-You can also pass any local model path.
+- **Base models.** Names like `llama-3.2-1b` map to pinned snapshots under `$MWX_HF`. If a snapshot is not on
+  disk, the name falls back to its Hugging Face repo (e.g. `unsloth/Llama-3.2-1B`), which is downloaded on first
+  use. Any local model path also works.
+- **Methods built on other code.** MarkLLM schemes need a checkout of upstream MarkLLM (`MARKLLM_DIR`) with its
+  requirements installed. PRO needs the PRO paper code (`PRO_CODE_DIR`) and its sentence embedder. Both are used
+  unchanged.
+- **Key store.** It lives in `$MWX_KEYS` (default `$MWX_RUNS/keys`). Back it up: a key that is lost cannot be
+  recovered.
 
 ## Quickstart
 
 ```python
 import markweightx as mwx
+from markweightx.models import load_tokenizer
+from markweightx.sampling import eval_prompts
 
+prompts = eval_prompts(load_tokenizer("llama-3.2-1b"), n=50)  # held-out C4 prompts (exp/prepare_data.py)
 release, key = mwx.embed("llama-3.2-1b", "gaussmark")        # Owner: mark the weights; the key stays private
 key = mwx.calibrate(key, "llama-3.2-1b")                     # freeze the null on the base model's own texts
 
@@ -47,7 +56,9 @@ markweightx embed --base llama-3.2-1b --watermark gaussmark            # prints 
 markweightx calibrate KEY --base llama-3.2-1b
 markweightx modify RELEASE --edit finetune:steps=200 --out edited/
 markweightx generate edited/ --prompts prompts.jsonl --out texts.jsonl
+markweightx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
 markweightx detect texts.jsonl --key KEY
+markweightx verify edited/ --key KEY --prompts prompts.jsonl            # one verdict for the model
 markweightx --help                                                       # every command, with examples
 ```
 
@@ -74,8 +85,8 @@ primitives: Key, Signal, Imprint, Perturb, Probe and Score.
 | teacher-learned | `pro`, `pro-coopt-c100`, `pro-full-b01` (ours); `markllm-<x>-d` for 12 MarkLLM watermarks | distill a decode-time teacher's logits into the weights (LoRA) |
 | teacher-free | `gaussmark` | write a keyed perturbation straight into one weight matrix |
 
-Parameters go after a colon: `gaussmark:sigma=0.02,layer=12`. A misspelled parameter or name is an error, with
-the accepted list. `embed` writes every parameter into the key, defaults included. So a key keeps detecting the
+Parameters go after a colon: `gaussmark:sigma=0.02,layer=12`. A misspelled scheme or edit parameter is an error
+that lists the accepted ones. So is an edit value the code would otherwise ignore, such as `quantize:bits=3`. `embed` writes every parameter into the key, defaults included. So a key keeps detecting the
 same way after a default changes in the code.
 
 Not included: `markllm-expgumbel-d`. Upstream builds a (V·prefix)×V noise table, 128 GB at V = 128k, and it
@@ -132,17 +143,20 @@ markweightx embed --base llama-3.2-1b --watermark my_mark.py
 | C10 positions | `target_logits` on a whole sequence (training) equals it on each prefix (decoding) |
 
 C9 (scores across text lengths) needs the real base, so `check` skips it: run `exp/learnability.py` for that.
-`tests/broken/` holds ten adapters with typical bugs, and `tests/test_check.py` makes sure each one fails.
+`tests/broken/` holds 17 adapters with typical bugs, and `tests/test_check.py` makes sure each one fails.
 
 Rules for plugins:
 - **One file.** The key stores that file, so it cannot import a sibling module. `check` runs C3 from another
   directory to catch this. A plugin can also be an installed module (`pkg.mod:name`); the key then pins the
-  module's file digest.
+  module's file digest. Only that file is covered, not other modules of its package.
 - **Pinned code.** The key records the code that made it: the content hash of a file, or the digest of a module.
-  A detector scores with exactly that code. An edited module is refused rather than silently used.
+  A detector scores with exactly that code. An edited plugin file is refused rather than silently used.
 - **Unique names.** A plugin cannot reuse a built-in scheme's name.
 - **Trust.** A key from someone else can name any code. `detect`, `verify_model` and `calibrate` run plugin code
-  only if your process already imported it, or with `trust_plugin=True` (CLI `--trust-plugin`).
+  only if your process already imported that exact file, or with `trust_plugin=True`. From the shell, a new
+  process has imported nothing, so owners pass `--trust-plugin` for keys made with their own plugin.
+- **Key material goes through `save(key_dir, key)`.** `key_dir` is a private directory in the key store; the
+  scheme never sees the release directory.
 
 ## Experiments and the leaderboard
 

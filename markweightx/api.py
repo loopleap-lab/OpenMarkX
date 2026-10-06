@@ -96,11 +96,13 @@ def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, d
     from .keys import store
     from .models import load_base, load_tokenizer
     device = device or _auto_device()
+    det_device = _detect_device(key, device)
+    build_scheme(key, trust_plugin=trust_plugin)            # refuse an untrusted plugin before any sampling
     tok = load_tokenizer(base); model = load_base(base, device)
     prompts = prompts or eval_prompts(tok, n=n)
     texts = _gen(model, tok, prompts, adapter=False, seed=seed)
     del model
-    sch = scheme_for(key, base, _detect_device(key, device), trust_plugin=trust_plugin)
+    sch = scheme_for(key, base, det_device, trust_plugin=trust_plugin)
     key.calibration = {"base": base, "null": sorted(s for s, _ in scores(sch, texts)), "n": len(texts)}
     store(key)
     return key
@@ -128,7 +130,9 @@ def generate(release: Release, prompts: list[str], *, device=DEFAULT_DEVICE, new
 def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> list[str]:
     """Text edits through MarkLLM's text editors: 'synonym:ratio=0.3', 'word_deletion:ratio=0.3'."""
     from .edits import rewrite as _rewrite
+    from .edits.weights import check_params
     op, params = _spec(edits)
+    check_params(_rewrite, op, params, {}, skip=("texts", "kind", "device"))
     return _rewrite(texts, op, device=device or _auto_device(), **params)
 
 
@@ -163,16 +167,27 @@ def scheme_for(key: Key, base: str | None, device: str, grant=None, trust_plugin
     return sch
 
 
+def _rng_device(key: Key) -> str | None:
+    """The device type a key's randomness was drawn on, or None if the scheme declares it device-independent.
+    Keys made before this was recorded: MarkLLM keys were all made on CUDA."""
+    from .registry import SCHEMES
+    cls = SCHEMES.get(key.scheme)
+    if cls is not None and not getattr(cls, "rng_bound", True):
+        return None
+    return key.params.get("rng_device", "cuda" if key.scheme.startswith("markllm-") else "cpu")
+
+
 def _detect_device(key: Key, device: str | None) -> str:
-    """The device type must match the one the key's randomness was drawn on (KGW-family green lists differ between
-    CUDA and CPU generators). Keys made before this was recorded were all made on CUDA."""
+    """Detect on the device type the key was made on: generators on CUDA and CPU draw different numbers (e.g.
+    KGW-family green lists), so a mismatch would silently score with a different key."""
     import torch
-    want = key.params.get("rng_device", "cuda" if key.scheme.startswith("markllm-") else "cpu")
+    from . import schemes  # noqa: F401  (registers the built-ins, whose rng_bound _rng_device reads)
+    want = _rng_device(key)
     if device is None:
         device = "cuda:0" if want == "cuda" else "cpu"
-    if want == "cuda" and not str(device).startswith("cuda"):
-        raise ValueError(f"key {key.commitment[:12]} was made on CUDA; its {key.scheme} detector must run on a CUDA "
-                         f"device (got {device!r}): CPU and CUDA generators draw different green lists")
+    if want is not None and str(device).split(":")[0] != want:
+        raise ValueError(f"key {key.commitment[:12]} drew its randomness on {want}; its {key.scheme} detector must "
+                         f"run on {want} (got {device!r}): CPU and CUDA generators draw different numbers")
     if str(device).startswith("cuda") and not torch.cuda.is_available():
         raise RuntimeError(f"key {key.commitment[:12]} needs a CUDA device to detect, and none is available")
     return device
@@ -196,9 +211,13 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     calibration's sampling error and its prompt distribution, so use the calibration prompts and a large n.
     Needs a calibrated key, unless the scheme has a closed-form p-value."""
     from scipy.stats import binom
-    if not key.calibration.get("null") and build_scheme(key, trust_plugin=trust_plugin).pvalue(0.0, 1) is None:
+    sch = build_scheme(key, trust_plugin=trust_plugin)       # refuse an untrusted plugin before any sampling
+    if not key.calibration.get("null") and sch.pvalue(0.0, 1) is None:
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")
-    dets = detect(generate(release, prompts, device=device or _auto_device()), key, fpr=fpr, trust_plugin=trust_plugin)
+    device = device or _auto_device()
+    want = _rng_device(key)
+    dets = detect(generate(release, prompts, device=device), key, fpr=fpr, trust_plugin=trust_plugin,
+                  device=device if want is None or str(device).split(":")[0] == want else None)
     k, n = sum(bool(d.flagged) for d in dets), len(dets)
     p = float(binom.sf(k - 1, n, fpr))
     return Detection(statistic=float(k), p_value=p, n_tokens=sum(d.n_tokens for d in dets), flagged=p < fpr)

@@ -33,6 +33,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     os.makedirs(out, exist_ok=True)
     tok = load_tokenizer(base)
     from .registry import scheme_source as _src_of
+    from .keys import stage_dir
     from .primitives import Imprint
     scheme_params = dict(scheme_params or {})
     sch = get_scheme(scheme, source=scheme_source, **scheme_params)
@@ -51,7 +52,8 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         from .keys import store
         os.makedirs(out, exist_ok=True)
         weights = sch.imprint_edit(model, tok, out)
-        k = Key(scheme=scheme, params=sch.save(out, key), base=base, scheme_params=scheme_params, scheme_source=src)
+        params = {**sch.save(stage_dir(), key), "rng_device": str(device).split(":")[0]}
+        k = Key(scheme=scheme, params=params, base=base, scheme_params=scheme_params, scheme_source=src)
         store(k)
         return Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, weights=weights,
                        lineage=[vars(Step("embed", {"scheme": scheme, "imprint": "edit", "base": base,
@@ -145,9 +147,8 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
             print(rec, flush=True)
         if (step + 1) % save_every == 0 or step + 1 == steps:
             model.save_pretrained(f"{out}/adapter_step{step + 1}")
-            sch.save(f"{out}/adapter_step{step + 1}", key)
     model.save_pretrained(f"{out}/adapter")
-    key = sch.save(out, key)
+    key = sch.save(stage_dir(), key)                       # key material goes to the key store, never into out
     from .keys import store
     from .types import Key
     # MarkLLM's KGW-family teachers draw their green lists from a generator on the model's device; CUDA and CPU give

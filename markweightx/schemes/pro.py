@@ -125,11 +125,10 @@ class PRO(Scheme):
         if self.co_opt:
             self.wm.set_tanh_temperature(self.tau0 + min(step / steps, 1.0) * (self.tau1 - self.tau0))
 
-    def save(self, out, key):
+    def save(self, key_dir, key):
         """The trained policy is part of the key: write it outside the release (the key store takes it from there)."""
         if self.co_opt:
-            from ..keys import stage
-            p = stage("transform.pt")
+            p = os.path.join(key_dir, "transform.pt")
             torch.save(self.wm.transform_model.state_dict(), p)
             key = {**key, "transform": p, "spread": self.spread[-1][1] if self.spread else None}
         return key

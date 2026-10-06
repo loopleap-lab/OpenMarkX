@@ -3,6 +3,7 @@ from __future__ import annotations
 
 SCHEMES: dict = {}       # name -> class (for a plugin: the version loaded last)
 VERSIONS: dict = {}      # (name, module) -> class: every loaded plugin version, so a key finds its own code
+LOADED: set = set()      # sha256 of every plugin file imported in this process (by you, or by a trusted key)
 EDITS: dict = {}
 
 
@@ -57,7 +58,8 @@ def plugin_loaded(source: str) -> bool:
     from .keys import resolve
     path = resolve(source)
     if path.endswith(".py"):
-        return os.path.isfile(path) and _file_module_name(path) in sys.modules
+        import hashlib
+        return os.path.isfile(path) and hashlib.sha256(open(path, "rb").read()).hexdigest() in LOADED
     mod, _, digest = path.partition("@")
     m = sys.modules.get(mod)
     return m is not None and (not digest or _module_digest(m) == digest)
@@ -95,6 +97,8 @@ def load_plugin(source: str):
     mod = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod                                # so the scheme's source file can be found again
     spec.loader.exec_module(mod)
+    import hashlib
+    LOADED.add(hashlib.sha256(open(source, "rb").read()).hexdigest())
     return mod
 
 

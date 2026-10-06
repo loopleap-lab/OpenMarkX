@@ -104,7 +104,9 @@ class GaussMark(Scheme):
         model.save_pretrained(wdir, safe_serialization=True); tokenizer.save_pretrained(wdir)
         return wdir
 
-    def save(self, out, key):
+    rng_bound = False                                      # xi is drawn on a CPU generator, whatever the device
+
+    def save(self, key_dir, key):
         return self._key()
 
     # ---- Score (R2) -------------------------------------------------------------------------------------

@@ -116,8 +116,31 @@ def quantize(rel: Release, out: str, *, bits=4, device="cuda:0"):
                   load={"quant": "4bit" if bits == 4 else "8bit"}).save()
 
 
+RANGES = {  # edit -> param -> (check, what it must be); checked before any model is loaded
+    "finetune": {"steps": (lambda v: int(v) == v and v > 0, "a positive integer"),
+                 "lr": (lambda v: v > 0, "positive"), "bs": (lambda v: int(v) == v and v > 0, "a positive integer"),
+                 "rank": (lambda v: int(v) == v and v > 0, "a positive integer")},
+    "merge": {"ratio": (lambda v: 0 <= v <= 1, "in [0, 1]")},
+    "prune": {"sparsity": (lambda v: 0 <= v < 1, "in [0, 1)"), "method": (lambda v: v == "magnitude", "magnitude")},
+    "quantize": {"bits": (lambda v: v in (4, 8), "4 (nf4) or 8 (int8)")},
+}
+
+
+def check_params(fn, name: str, params: dict, ranges: dict, skip=("rel", "out", "texts", "kind", "device")):
+    """Refuse a parameter the edit does not take, or a value it would silently ignore."""
+    import inspect
+    accepted = [k for k in inspect.signature(fn).parameters if k not in skip]
+    bad = sorted(set(params) - set(accepted))
+    if bad:
+        raise ValueError(f"{name} has no parameter {', '.join(bad)}; it takes: {', '.join(accepted)}")
+    for k, (ok, what) in ranges.get(name, {}).items():
+        if k in params and not ok(params[k]):
+            raise ValueError(f"{name}: {k}={params[k]!r} must be {what}")
+
+
 def modify(rel: Release, edit: str, out: str, **params) -> Release:
     from ..registry import EDITS
     if edit not in EDITS:
         raise ValueError(f"unknown weight edit {edit!r}; available: {', '.join(sorted(EDITS))}")
+    check_params(EDITS[edit], edit, {k: v for k, v in params.items() if k != "device"}, RANGES)
     return EDITS[edit](rel, out, **params)
