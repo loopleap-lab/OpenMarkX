@@ -1,6 +1,6 @@
 """M3 · real data for the web demo: leaderboards, per-edit TPR, and real example texts with token-level marks.
 
-  python exp/demo_data.py --base llama-3.1-8b --out RUNS/demo_data.json      (CPU is enough: no language model runs)
+  python exp/demo_data.py --base llama-3.2-1b --out RUNS/demo_data_1b.json      (CPU is enough: no language model runs)
 Every number comes from an experiment directory; nothing is synthetic. Example texts all continue one held-out C4
 prompt: Alice's model (the release), the same prompt after each of Dana's weight edits, Charlie's rewrites of
 Alice's text, the unwatermarked base, and the human continuation. Each carries the detector statistic, the
@@ -112,14 +112,14 @@ def method_block(rel_dir, tok, pick=None):
     h = human_continuation(tok, tx["prompts"][pick])
     if h:
         exs.append(ex("human", h))
-    return {"scheme": rel.scheme, "teacher": res.get("teacher"), "learned": res["student"], "ceiling": res.get("teacher_decode"),
+    return {"scheme": rel.scheme, "key": load_key(rel).commitment[:12], "teacher": res.get("teacher"), "learned": res["student"], "ceiling": res.get("teacher_decode"),
             "ppl_student": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": rows, "threshold": thr,
             "prompt": tx["prompts"][pick], "pick": pick, "examples": exs}, pick
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="llama-3.1-8b")
+    ap.add_argument("--base", default="llama-3.2-1b")
     ap.add_argument("--tag", default=None)
     ap.add_argument("--methods", default="pro,markllm-kgw-d")
     ap.add_argument("--out", default=f"{RUNS}/demo_data.json")
