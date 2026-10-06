@@ -235,6 +235,10 @@ class MarkLLMDistill(Scheme):
             self._positional_key()
         c = self.wm.config
         k = key.get("secret", key.get("key", getattr(c, "key", 42) if hasattr(c, "key") else 42))
+        try:
+            k = int(k)                                       # a ported key may hold the secret as a string
+        except (TypeError, ValueError):
+            pass
         if self.teacher == "Unbiased":                       # A3: a fixed, derivable key
             c.hash_key = _derive(k, 128)
             c.ignore_history_generation = False              # teacher forcing: no per-generation dedupe state

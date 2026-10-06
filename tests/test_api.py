@@ -39,7 +39,7 @@ def test_legacy_release_key_still_loads(tmp_path):
 
 def test_spec_values_and_errors():
     import pytest
-    assert _spec("finetune:steps=8e2") == ("finetune", {"steps": 800})
+    assert _spec("finetune:steps=8e2") == ("finetune", {"steps": 800}) and type(_spec("x:s=8e2")[1]["s"]) is int
     assert _spec("x:flag=true,lr=0.5") == ("x", {"flag": True, "lr": 0.5})
     with pytest.raises(ValueError, match="key=value"):
         _spec("finetune:steps")

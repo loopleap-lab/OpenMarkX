@@ -36,9 +36,11 @@ def _value(v: str):
     except ValueError:
         pass
     try:
-        return float(v)
+        f = float(v)
     except ValueError:
         return v
+    whole = f.is_integer() and "." not in v and "e-" not in v.lower()   # '8e2' -> 800, an int, as before
+    return int(f) if whole else f
 
 
 def scheme_spec(watermark: str) -> tuple[str, dict, str | None]:

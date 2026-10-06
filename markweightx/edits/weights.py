@@ -117,10 +117,10 @@ def quantize(rel: Release, out: str, *, bits=4, device="cuda:0"):
 
 
 RANGES = {  # edit -> param -> (check, what it must be); checked before any model is loaded
-    "finetune": {"steps": (lambda v: int(v) == v and v > 0, "a positive integer"),
-                 "lr": (lambda v: v > 0, "positive"), "bs": (lambda v: int(v) == v and v > 0, "a positive integer"),
-                 "rank": (lambda v: int(v) == v and v > 0, "a positive integer"),
-                 "micro_bs": (lambda v: int(v) == v and v > 0, "a positive integer"),
+    "finetune": {"steps": (lambda v: isinstance(v, int) and v > 0, "a positive integer"),
+                 "lr": (lambda v: v > 0, "positive"), "bs": (lambda v: isinstance(v, int) and v > 0, "a positive integer"),
+                 "rank": (lambda v: isinstance(v, int) and v > 0, "a positive integer"),
+                 "micro_bs": (lambda v: isinstance(v, int) and v > 0, "a positive integer"),
                  "data": (lambda v: os.path.isfile(v), "an existing file")},
     "merge": {"ratio": (lambda v: 0 <= v <= 1, "in [0, 1]")},
     "prune": {"sparsity": (lambda v: 0 <= v < 1, "in [0, 1)"), "method": (lambda v: v == "magnitude", "magnitude")},
