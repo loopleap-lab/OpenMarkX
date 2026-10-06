@@ -71,7 +71,7 @@ section.band { padding-block: 72px; border-top: 1px solid var(--line); scroll-ma
 .hero { padding-block: 64px 56px; }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 48px; align-items: center; }
 @media (max-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); } }
-.hero h1 { font-size: clamp(38px, 6vw, 64px); font-weight: 800; letter-spacing: -.02em; }
+.hero h1 { font-size: clamp(40px, 6vw, 60px); font-weight: 800; letter-spacing: -.02em; }
 .hero h1 em { font-style: normal; color: var(--mark); }
 .hero .lede { font-size: 19px; color: var(--muted); max-width: 54ch; margin: 18px 0 26px; }
 .ctas { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -180,7 +180,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       MarkWeightX
     </a>
     <div class="nav-links">
-      <a href="#how">How it works</a><a href="#methods">Methods</a><a href="#leaderboard">Leaderboard</a><a href="#quickstart">Quickstart</a><a href="demo.html">Demo</a><a href="#cite">Cite</a>
+      <a href="#how">Overview</a><a href="#methods">Methods</a><a href="#leaderboard">Leaderboard</a><a href="#quickstart">Quickstart</a><a href="demo.html">Demo</a><a href="#cite">Cite</a>
       <a class="btn sm ghost" href="https://arxiv.org/abs/2510.23891">Paper</a>
       <a class="btn sm primary js-repo" href="#quickstart">Code</a>
     </div>
@@ -190,9 +190,8 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 <header class="hero" id="top">
   <div class="wrap">
     <div>
-      <div class="eyebrow">Open-weight LLM watermarking</div>
-      <h1>Put the watermark <em>in the weights</em>, where every copy carries it.</h1>
-      <p class="lede">MarkWeightX is a toolkit for watermarks that open-source language models write themselves: embed one into a model, edit the weights the way users do, and trace any text back with a key. It ships PRO and the methods it is compared with, one benchmark command, and a template for your own method.</p>
+      <h1>MarkWeightX</h1>
+      <p class="lede">A toolkit for watermarking open-weight language models. The watermark is trained into the model weights, and the toolkit evaluates whether it can still be detected after fine-tuning, merging, pruning, quantization and paraphrasing. It includes PRO, the baselines from the PRO paper, MarkLLM watermarks, and a benchmark for new methods.</p>
       <div class="ctas">
         <a class="btn primary" href="#quickstart">Get started</a>
         <a class="btn ghost" href="#leaderboard">Leaderboard</a>
@@ -204,8 +203,8 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     <figure class="specimen" aria-label="A text checked by the detector, with each token marked">
       <div class="specimen-head"><span>mwx.detect(texts, key)</span><span>key 4f2a…c91e</span></div>
       <p class="specimen-text" id="specimen"></p>
-      <div class="verdict"><b>● From Alice's model</b><span id="specCount"></span></div>
-      <p class="specimen-note">Illustration. Green tokens follow the key's watermark, red ones do not; the detector needs only the text and the key.</p>
+      <div class="verdict"><b>Watermark detected</b><span id="specCount"></span></div>
+      <p class="specimen-note">Illustration of token-level detection: green tokens match the watermark key, red tokens do not.</p>
     </figure>
   </div>
 </header>
@@ -213,36 +212,35 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 <div class="wrap">
   <div class="facts" aria-label="Key figures">
     <div class="fact"><b>0.92</b><span>TPR at 1% FPR, PRO on LLaMA-3-8B</span></div>
-    <div class="fact"><b>16</b><span>watermark schemes, one interface</span></div>
-    <div class="fact"><b>4</b><span>kinds of weight edit, plus rewording</span></div>
-    <div class="fact"><b>10</b><span>checks a new method must pass</span></div>
+    <div class="fact"><b>16</b><span>supported watermark schemes</span></div>
+    <div class="fact"><b>4</b><span>weight modifications, plus paraphrasing</span></div>
+    <div class="fact"><b>10</b><span>tests for new methods</span></div>
   </div>
 </div>
 
 <section class="band" id="how">
   <div class="wrap">
     <div class="band-head">
-      <div class="eyebrow">How it works</div>
-      <h2>Three roles, one API</h2>
-      <p>A closed model marks text on its provider's servers. An open model runs on anyone's machine, so the weights have to write the mark themselves, and the mark has to survive what people do to weights.</p>
+      <h2>Overview</h2>
+      <p>For a closed model, the provider adds the watermark at decoding time on its own servers. An open-weight model is run by its users, so the watermark has to be part of the weights. MarkWeightX models three parties: the owner who releases the model, users who modify it, and a detector who holds the key.</p>
     </div>
     <div class="roles">
       <div class="role own">
         <h3>Owner <span class="tag">embed</span></h3>
-        <p>Learns a watermark into the weights and publishes the model. The key stays private.</p>
+        <p>Trains the watermark into the model and releases the weights. The key is kept separately.</p>
         <pre class="code"><span class="k">rel, key</span> = mwx.embed(<span class="c">"llama-3-8b"</span>, <span class="c">"pro"</span>)
 key = mwx.calibrate(key, <span class="c">"llama-3-8b"</span>)</pre>
       </div>
       <div class="role down">
         <h3>Downstream <span class="tag">modify</span></h3>
-        <p>Fine-tunes, merges, prunes or quantizes the model, then writes with it and rewords the text.</p>
+        <p>May fine-tune, merge, prune or quantize the model, and paraphrase its outputs.</p>
         <pre class="code">edited = mwx.modify(rel, <span class="c">"quantize:bits=4"</span>)
 texts  = mwx.generate(edited, prompts)
 texts  = mwx.rewrite(texts, <span class="c">"synonym:ratio=0.3"</span>)</pre>
       </div>
       <div class="role det">
         <h3>Detector <span class="tag">detect</span></h3>
-        <p>Holds the key and checks single texts, or a whole suspect model with as few queries as needed.</p>
+        <p>Tests single texts with the key, or tests a suspect model from its outputs.</p>
         <pre class="code">mwx.detect(texts, key)
 mwx.verify_model(edited, key, prompts,
                  sequential=<span class="k">True</span>)</pre>
@@ -254,16 +252,15 @@ mwx.verify_model(edited, key, prompts,
 <section class="band" id="methods">
   <div class="wrap">
     <div class="band-head">
-      <div class="eyebrow">Supported methods</div>
-      <h2>PRO, its baselines, and any watermark you bring</h2>
-      <p>Every method is a scheme with the same five parts: a key, a training signal, a way into the weights, a detector, and what the detector may access. The leaderboard reports the paper's methods; the others run through the same benchmark.</p>
+      <h2>Supported methods</h2>
+      <p>Each method is implemented as a scheme with a key, a training signal, a way of writing it into the weights, and a detector. The leaderboard below reports the methods evaluated in the PRO paper; the others can be evaluated with the same benchmark.</p>
     </div>
     <div class="methods">
       <div class="method"><h3>PRO</h3><p>A semantic watermark policy co-trained with the model, with perturbation-aware training against weight edits.</p><div class="chips"><span class="chip ours">ours · NeurIPS 2026</span><span class="chip">distilled</span><span class="chip">text + key</span></div><div class="names">pro · pro-coopt-c100 · pro-full-b01</div></div>
       <div class="method"><h3>Distilled KGW / KTH</h3><p>Decode-time watermarks learned into the weights by distillation, as in Gu et al., the paper's main baselines.</p><div class="chips"><span class="chip">distilled</span><span class="chip">text + key</span></div><div class="names">markllm-kgw-d · markllm-exp-d</div></div>
       <div class="method"><h3>MarkLLM watermarks</h3><p>Twelve decode-time watermarks from MarkLLM, each distilled the same way, used unchanged from upstream.</p><div class="chips"><span class="chip">distilled</span><span class="chip">text + key</span><span class="chip">some: base model</span></div><div class="names">unigram · sweet · ewd · morphmark · dip · unbiased · synthid · expedit · itsedit · pf</div></div>
       <div class="method"><h3>GaussMark</h3><p>A keyed Gaussian perturbation written straight into one weight matrix, detected with gradients of the base model.</p><div class="chips"><span class="chip">weight edit</span><span class="chip">text + key + base gradients</span></div><div class="names">gaussmark</div></div>
-      <div class="method yours"><h3>Your method</h3><p>One file from a template. <code>markweightx check</code> runs ten checks on CPU, then <code>markweightx bench</code> puts it on the board.</p><div class="chips"><span class="chip">plugin</span><span class="chip">any access level</span></div><div class="names">markweightx new-scheme my-mark</div></div>
+      <div class="method yours"><h3>Your method</h3><p>A new method is a single Python file created from a template. <code>markweightx check</code> runs ten tests on CPU and <code>markweightx bench</code> evaluates it.</p><div class="chips"><span class="chip">plugin</span><span class="chip">any access level</span></div><div class="names">markweightx new-scheme my-mark</div></div>
     </div>
   </div>
 </section>
@@ -271,9 +268,8 @@ mwx.verify_model(edited, key, prompts,
 <section class="band" id="leaderboard">
   <div class="wrap">
     <div class="band-head">
-      <div class="eyebrow">Leaderboard</div>
-      <h2>How long the mark survives</h2>
-      <p>LLaMA-3-8B, 5,000 watermarked and 5,000 human texts per cell, as reported in the PRO paper. PPL is the median perplexity under LLaMA-2-13B; the unwatermarked model scores 3.6.</p>
+      <h2>Leaderboard</h2>
+      <p>Results from the PRO paper on LLaMA-3-8B, with 5,000 watermarked and 5,000 unwatermarked texts per setting. PPL is the median perplexity under LLaMA-2-13B; the unwatermarked model has a PPL of 3.6.</p>
     </div>
     <div class="board">
       <div class="controls">
@@ -300,16 +296,15 @@ mwx.verify_model(edited, key, prompts,
 <section class="band" id="quickstart">
   <div class="wrap">
     <div class="band-head">
-      <div class="eyebrow">Quickstart</div>
-      <h2>From install to a traced text</h2>
-      <p>Python 3.10+ and one CUDA GPU for training and sampling; the checks and tests run on CPU. No trained weights ship: you watermark your own model.</p>
+      <h2>Quickstart</h2>
+      <p>Requires Python 3.10+ and a CUDA GPU for training and generation; the tests run on CPU. The repository does not include trained watermarked models.</p>
     </div>
     <div class="qs">
       <ol class="steps">
-        <li><div><b>Install the toolkit</b><span>The package, the <code>markweightx</code> command, and upstream MarkLLM at a pinned commit.</span></div></li>
-        <li><div><b>Prepare the text</b><span>Held-out C4 prompts and training text, tokenized once.</span></div></li>
-        <li><div><b>Embed, edit, detect</b><span>The three roles in a few lines of Python, or the same steps from the shell.</span></div></li>
-        <li><div><b>Bring your own method</b><span>Write one file, pass the checks, run the benchmark.</span></div></li>
+        <li><div><b>Install</b><span>The package, the <code>markweightx</code> command, and MarkLLM at a pinned commit.</span></div></li>
+        <li><div><b>Prepare data</b><span>Tokenize the C4 training text and evaluation prompts.</span></div></li>
+        <li><div><b>Embed, modify, detect</b><span>From Python or from the command line.</span></div></li>
+        <li><div><b>Add a method</b><span>Create a scheme file, run the tests, run the benchmark.</span></div></li>
       </ol>
       <div class="codecard">
         <div class="codebar"><div class="seg" role="group" aria-label="Code example" id="codeSeg"></div><button class="btn sm ghost" type="button" id="copyBtn">Copy</button></div>
@@ -322,7 +317,7 @@ mwx.verify_model(edited, key, prompts,
 <section class="band" id="demo">
   <div class="wrap">
     <div class="demo-cta">
-      <div><h2>Walk through it in the browser</h2><p>Ship a model as Alice, edit it as Dana, reword its text as Charlie, and trace it as the program chair, with the paper's numbers at every step.</p></div>
+      <div><h2>Interactive demo</h2><p>A step-by-step example: release a watermarked model, modify it, paraphrase its output, and run detection, using the results reported in the paper.</p></div>
       <a class="btn" href="demo.html">Open the demo</a>
     </div>
   </div>
@@ -330,8 +325,8 @@ mwx.verify_model(edited, key, prompts,
 
 <section class="band" id="cite">
   <div class="wrap cite">
-    <div class="band-head"><div class="eyebrow">Cite</div><h2>BibTeX</h2></div>
-    <div class="codebar"><span class="note">If you use MarkWeightX or PRO, please cite the paper.</span><button class="btn sm ghost" type="button" id="citeBtn">Copy</button></div>
+    <div class="band-head"><h2>Citation</h2></div>
+    <div class="codebar"><span class="note">If you use MarkWeightX or PRO, please cite:</span><button class="btn sm ghost" type="button" id="citeBtn">Copy</button></div>
     <pre class="code" id="bib">@inproceedings{xue2026pro,
   title     = {PRO: Enabling Precise and Robust Text Watermark for Open-Source LLMs},
   author    = {Xue, Jiaqi and Zhao, Yifei and Al Ghanim, Mansour and Gao, Shangqian and
@@ -369,7 +364,7 @@ mwx.verify_model(edited, key, prompts,
 
   // hero specimen: an illustration of a detector's token marks
   const SPEC = [["The", 1], [" committee", 1], [" met", 0], [" on", 1], [" Tuesday", 1], [" to", 1], [" review", 1], [" the", 0], [" budget", 1], [" for", 1], [" next", 1], [" year", 1], [",", 1], [" and", 0], [" agreed", 1], [" to", 1], [" postpone", 1], [" the", 1], [" final", 1], [" vote", 0], [" until", 1], [" the", 1], [" auditors", 1], [" deliver", 1], [" their", 1], [" report", 0], [".", 1]];
-  $("specCount").textContent = `${SPEC.filter((x) => x[1]).length} of ${SPEC.length} tokens follow the key`;
+  $("specCount").textContent = `${SPEC.filter((x) => x[1]).length} of ${SPEC.length} tokens match`;
   $("specimen").innerHTML = SPEC.map(([t, g]) => { const m = t.match(/^(\s*)(.*)$/); return esc(m[1]) + `<span class="tk ${g ? "g" : "r"}">${esc(m[2])}</span>`; }).join("");
 
   function seg(el, items, cur, on) {

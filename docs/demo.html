@@ -373,7 +373,7 @@ td.na { color: var(--muted); }
 <main class="wrap">
   <header class="hero">
     <span class="eyebrow">MarkWeightX</span>
-    <h1>Text provenance for open-weight models</h1>
+    <h1>MarkWeightX demo</h1>
     <div class="why" role="table" aria-label="Watermarking closed vs open models">
       <div class="why-h" role="row"><span role="columnheader"></span><span role="columnheader"><b>Closed model</b>e.g. a chatbot on its provider's servers</span><span role="columnheader"><b>Open model</b>e.g. Llama, anyone can download it</span></div>
       <div class="why-r" role="row"><span class="k" role="rowheader">Who runs it</span><span role="cell">The provider's servers</span><span role="cell" class="hard">Anyone, on their own machine</span></div>
@@ -506,7 +506,7 @@ td.na { color: var(--muted); }
 <circle cx="68" cy="99" r="5" fill="var(--skin)"/>
 <circle cx="24" cy="92" r="6.5" fill="none" stroke="var(--sim)" stroke-width="3"/><path d="M30 92 L44 92 M39 92 L39 97 M43 92 L43 96" stroke="var(--sim)" stroke-width="3" stroke-linecap="round"/>
 <circle cx="45" cy="95" r="5" fill="var(--skin)"/></svg><figcaption><b>Alice</b>model publisher</figcaption></figure>
-      <div class="sh-text"><div class="sh-top"><span class="step">1</span><h2>Ship your model</h2><code class="apib">mwx.embed()</code></div><p class="who">Bake a watermark into the weights. Publish the model, keep the key.</p></div>
+      <div class="sh-text"><div class="sh-top"><span class="step">1</span><h2>Ship your model</h2><code class="apib">mwx.embed()</code></div><p class="who">Train the watermark into the weights, release the model, and keep the key.</p></div>
     </div>
     <div class="grid">
       <div class="panel">
@@ -698,7 +698,7 @@ td.na { color: var(--muted); }
 <rect x="32" y="84" width="56" height="25" rx="3" fill="var(--term-bg)" stroke="var(--muted)" stroke-width="2"/>
 <text x="60" y="101" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="500" fill="var(--term-ok)">&lt;/&gt;</text>
 <circle cx="29" cy="104" r="5" fill="var(--skin)"/><circle cx="91" cy="104" r="5" fill="var(--skin)"/></svg><figcaption><b>Bob</b>watermark researcher</figcaption></figure>
-      <div class="sh-text"><div class="sh-top"><span class="step">5</span><h2>Bring your own method</h2></div><p class="who">Your code stays in your repo. One adapter file plugs it in.</p></div>
+      <div class="sh-text"><div class="sh-top"><span class="step">5</span><h2>Add a new method</h2></div><p class="who">A new method is added as one adapter file; its own code can stay in a separate repository.</p></div>
     </div>
     <div class="panel">
       <div class="subh"><span class="n">a</span><b>Plug it in</b><span class="who-s">what you add, what stays fixed</span><code class="apib">@register_scheme</code></div>
@@ -739,7 +739,7 @@ td.na { color: var(--muted); }
 
   <!-- API recap -->
   <section class="scene" id="api">
-    <div class="api-head"><h2>What you just saw: five calls + one file</h2><p class="who">Same lanes as the threat model. Real downstream users never need MarkWeightX.</p></div>
+    <div class="api-head"><h2>API summary</h2><p class="who">Each call corresponds to a step above. Users who only download and modify a model do not need MarkWeightX.</p></div>
     <div class="flow5">
       <div class="fg own" style="--n:1"><div class="fh"><span class="avs"><span class="av" data-av="publish"></span></span><span><b>Owner</b>Alice</span></div>
         <a class="fc" href="#publish"><b>embed</b><code>(base, watermark)</code><span class="fo">&rarr; Release, Key</span><span class="fw">Bake the mark into the weights</span><span class="fs">Step 1</span></a></div>
