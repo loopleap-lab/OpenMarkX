@@ -27,13 +27,24 @@ def key_path(commitment: str) -> str:
     return os.path.join(STORE, f"{commitment}.json")
 
 
+def _sha(path: str) -> str:
+    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+
 def put_blob(path: str) -> str:
-    h = hashlib.sha256(open(path, "rb").read()).hexdigest()
+    """Copy a key file into the store under its sha256. Written to a temporary name and renamed, and an existing blob
+    is checked: a truncated copy (full disk) never stands in for the real one."""
+    h = _sha(path)
     ext = os.path.splitext(path)[1]
     dst = os.path.join(STORE, "blobs", h + ext)
-    if not os.path.exists(dst):
+    if not os.path.exists(dst) or _sha(dst) != h:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copyfile(path, dst)
+        tmp = f"{dst}.tmp{os.getpid()}"
+        shutil.copyfile(path, tmp)
+        if _sha(tmp) != h:
+            os.remove(tmp)
+            raise OSError(f"copying {path} into the key store did not reproduce it (disk full?)")
+        os.replace(tmp, dst)
     return f"blob:{h}{ext}"
 
 
@@ -66,6 +77,8 @@ def store(key: Key) -> str:
         key.scheme_source = put_blob(key.scheme_source)
     tmp = os.path.join(STORE, "tmp") + os.sep
     for k, v in list(key.params.items()):
+        if isinstance(v, str) and os.path.abspath(v).startswith(tmp) and not os.path.isfile(v):
+            raise FileNotFoundError(f"key field {k}: the staged file {v} is gone; the key cannot be stored")
         if isinstance(v, str) and not v.startswith("blob:") and os.path.isfile(v):
             key.params[k] = put_blob(v)
             if os.path.abspath(v).startswith(tmp):        # staged key material: the blob is now the only copy

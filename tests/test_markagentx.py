@@ -61,4 +61,4 @@ def test_wrong_key_needs_a_secret(tmp_path, monkeypatch):
     import markweightx.keys as K
     from markweightx.schemes.base import Scheme
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
-    assert Scheme().wrong_key({"rng_device": "cpu"}, __import__("random").Random(0)) is None
+    assert Scheme().wrong_key({"rng_device": "cpu"}, __import__("random").Random(0), str(tmp_path)) is None

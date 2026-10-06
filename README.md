@@ -139,8 +139,9 @@ scheme, its parameters and the plugin source. The key lives in the key store, `$
 draws its own token mapping. A calibrated key carries a frozen empirical null, so `detect` returns calibrated
 p-values. The calibration also holds nulls for the texts cut to 20, 50 and 100 tokens: a text is judged against the
 null calibrated at the largest length not above its own, because some detectors' false positives grow on short texts
-(C9: PRO reaches 14% at 50 tokens against a 200-token threshold). A text shorter than 20 tokens is not flagged; keys
-calibrated before this change warn until calibrated again. Schemes with an exact closed-form null (`exact_null = True`, e.g. GaussMark) use it
+(C9: PRO reaches 14% at 50 tokens against a 200-token threshold). Keys
+calibrated before this change warn until calibrated again. A text too short to be judged gets `p_value=None` and
+`flagged=None` (no evidence either way), and `verify_model` does not count it. Schemes with an exact closed-form null (`exact_null = True`, e.g. GaussMark) use it
 directly.
 
 ```bash
@@ -243,9 +244,11 @@ are on Llama-3.2-1B.
 | `Scheme.keygen / signal / recipe / detector` | `Scheme.setup` (key) / `target_logits` (Signal) / `configs/embed.yaml` / `score`, `pvalue` |
 | CLI `verify` | `markweightx verify` → `mwx.verify_model` |
 
-`verify_model(..., sequential=True)` runs Wald's SPRT on the per-text flag rate (fpr against `p1`, 20 texts at a
-time): false accusations stay below `alpha` and a watermarked model is usually settled in a few batches;
-`budget` caps the texts asked of the suspect model, and `n_queries` in the verdict says how many were used.
+`verify_model(..., sequential=True)` asks the suspect model for 20 texts at a time. It accuses the model as soon as
+an always-valid test (flag rate `p1` against `fpr`) is decisive, so a strongly marked model is settled in about 20
+texts; it never clears a model early, so a weakly marked one (after edits) gets the full `budget` and the power of
+the fixed test (simulated at a 5% flag rate: 87% vs 88%). False accusations stay below `alpha`, the p-value stays
+valid despite the early stop, and `n_queries` says how many texts were used.
 
 Not built yet: importing the published checkpoints of other papers (`port` takes the checkpoint and its key files;
 fetching and converting them is per paper, and they are 7B-8B), `TP-*` grants (prompt

@@ -211,7 +211,8 @@ def main(argv=None):
     p.add_argument("--alpha", type=float, default=0.01, help="model-level false-accusation rate (default 0.01)")
     p.add_argument("--budget", type=int, help="at most this many texts from the suspect model")
     p.add_argument("--sequential", action="store_true",
-                   help="stop as soon as the evidence is decisive (Wald's SPRT, 20 texts at a time)")
+                   help="20 texts at a time; accuse early once decisive, never clear early (see verify_model)")
+    p.add_argument("--p1", type=float, default=0.2, help="flag rate the early accusation is tuned for (default 0.2)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
     p = sub.add_parser("bench", aliases=["evaluate"],
@@ -278,7 +279,8 @@ def _run(a):
                               "flagged": d.flagged} for t, d in zip(texts, dets)])
     elif a.cmd == "verify":
         d = mwx.verify_model(_release(a.release), _key(a.key), _read_texts(a.prompts), device=a.device, fpr=a.fpr,
-                             alpha=a.alpha, budget=a.budget, sequential=a.sequential, trust_plugin=a.trust_plugin)
+                             alpha=a.alpha, budget=a.budget, sequential=a.sequential, p1=a.p1,
+                             trust_plugin=a.trust_plugin)
         print(json.dumps({"flagged_texts": d.statistic, "texts": d.n_queries, "p_value": d.p_value,
                           "from_this_key": d.flagged}))
     elif a.cmd in ("bench", "evaluate"):

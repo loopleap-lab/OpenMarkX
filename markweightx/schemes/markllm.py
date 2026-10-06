@@ -172,7 +172,9 @@ def keyed_config(teacher: str, secret: int, store_dir: str) -> str:
             cfg[f] = [rng.randrange(1, 2**31) for _ in cfg[f]] if kind == "list30" else rng.randrange(1, 2**40)
     os.makedirs(store_dir, exist_ok=True)
     path = os.path.join(store_dir, f"{teacher}-{hashlib.sha256(str(secret).encode()).hexdigest()[:16]}.json")
-    json.dump(cfg, open(path, "w"), indent=1)
+    if not os.path.exists(path):                           # derived from the secret: identical every time
+        from ..files import write_json
+        write_json(path, cfg, indent=1)
     return path
 
 
@@ -219,7 +221,8 @@ class MarkLLMDistill(Scheme):
             key["secret"] = new_secret()
         if key.get("secret") is not None:
             from ..keys import STORE
-            cfg_path = keyed_config(self.teacher, int(key["secret"]), os.path.join(STORE, "configs"))
+            cfg_path = keyed_config(self.teacher, int(key["secret"]),
+                                    getattr(self, "config_dir", None) or os.path.join(STORE, "configs"))
         else:                                                  # legacy keys (made before keys were secret)
             cfg_path = os.path.join(MARKLLM, "config", f"{self.teacher}.json")
         if self.teacher == "ITSEdit":                        # A10: AutoWatermark.load passes a config object, which

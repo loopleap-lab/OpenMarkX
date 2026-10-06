@@ -53,9 +53,10 @@ class Scheme:
     def on_step(self, step: int, steps: int):
         pass
 
-    def wrong_key(self, params: dict, rng) -> dict | None:
+    def wrong_key(self, params: dict, rng, workdir: str) -> dict | None:
         """A wrong key for the wrong-key null: the true key's material with only its secret redrawn from `rng` (a
-        random.Random), so wrong keys and the true key are exchangeable. None: this scheme has no secret to redraw."""
+        random.Random), so wrong keys and the true key are exchangeable. Files it needs go in `workdir` (private,
+        removed afterwards). None: this scheme has no secret to redraw."""
         if "secret" not in params:
             return None
         return {**params, "secret": rng.getrandbits(40)}

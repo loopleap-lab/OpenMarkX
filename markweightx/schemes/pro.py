@@ -131,16 +131,15 @@ class PRO(Scheme):
         if self.co_opt:
             self.wm.set_tanh_temperature(self.tau0 + min(step / steps, 1.0) * (self.tau1 - self.tau0))
 
-    def wrong_key(self, params, rng):
+    def wrong_key(self, params, rng, workdir):
         """PRO's secret is the token -> policy-dimension mapping: redraw it, keep the policy (trained or not)."""
         if "mapping" not in params:
             return None
         import json
         import random
-        from ..keys import stage
         r = random.Random(rng.getrandbits(64))
         n = len(json.load(open(resolve_path(params["mapping"]))))
-        path = stage("wrong-mapping.json")
+        path = os.path.join(workdir, "mapping.json")
         json.dump([r.randrange(300) for _ in range(n)], open(path, "w"))
         return {**params, "mapping": path}
 

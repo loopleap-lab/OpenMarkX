@@ -47,6 +47,9 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01, by_length: 
         if not by_length:
             warnings.warn("this key was calibrated with one null for every length: short texts can be over-flagged "
                           "(C9); calibrate it again with mwx.calibrate")
+        elif min(int(n) for n in by_length) > LENGTHS[0]:
+            warnings.warn(f"this key's shortest calibrated length is {min(int(n) for n in by_length)} tokens: shorter "
+                          f"texts are not judged; calibrate it again for nulls down to {LENGTHS[0]} tokens")
         elif null_len and max(lengths, default=0) > 1.5 * null_len:
             warnings.warn(f"some texts are much longer than the {null_len}-token texts the null was calibrated on")
     for e, length in zip(empty, lengths):
@@ -56,8 +59,8 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01, by_length: 
             continue
         if ns and not getattr(scheme, "exact_null", False):  # a calibrated key: its frozen empirical null
             null_l = _null_for(length, ns, by_length, null_len)
-            if null_l is None:                              # too short to judge against any calibrated null
-                out.append(Detection(statistic=s, p_value=1.0, n_tokens=n, flagged=False))
+            if null_l is None:                              # too short to judge: no p-value, not counted as negative
+                out.append(Detection(statistic=s, p_value=None, n_tokens=n, flagged=None))
                 continue
             p, flagged = empirical_p(s, null_l), s > (thr if null_l is ns else threshold(null_l, fpr))
         else:                                               # otherwise the scheme's closed form, if it has one

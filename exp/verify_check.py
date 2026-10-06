@@ -1,7 +1,8 @@
 """P10 end to end: the sequential model-level test on a watermarked release and on the unwatermarked base.
 
   python exp/verify_check.py --release RUNS/e2/llama-3.2-1b/gaussmark --device cuda:0
-Prints one JSON line per suspect: verdict, texts used, flagged texts, binomial p. Uses held-out C4 prompts.
+Prints one JSON line per suspect: verdict, texts used, flagged texts, p. Uses the evaluation prompts; GaussMark's
+null is exact, so their overlap with a calibration does not matter here.
 """
 import argparse
 import json

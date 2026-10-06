@@ -168,8 +168,9 @@ def _same_code(m: str, result: str) -> None:
     src = json.load(open(result)).get("scheme_source") or ""
     sha = hashlib.sha256(open(head, "rb").read()).hexdigest()
     if src.startswith("blob:") and not src[5:].startswith(sha):
-        raise ValueError(f"{os.path.dirname(result)} holds results made by other code than {head} (an earlier version, "
-                         f"or another file registering the same scheme name): rename the scheme, or move that run away")
+        raise ValueError(f"{os.path.dirname(result)} holds results made by other code than {head} (an earlier version "
+                         f"of this file, even a comment changed, or another file registering the same scheme name). To "
+                         f"run it again, move that directory away; to keep both, give this scheme another name")
 
 
 def check_plugins(arena: dict) -> list[str]:

@@ -62,21 +62,24 @@ def test_short_texts_use_the_null_calibrated_at_their_length():
     assert _null_for(20, full, None, None) is full          # an old calibration: one null for every length
 
 
-def test_sprt_keeps_its_error_rates():
+def test_sequential_verdict_keeps_its_error_rates_and_power():
     import random
-    from markweightx.api import sprt
+    from scipy.stats import binom
+    from markweightx.api import sequential_p
     rng = random.Random(0)
 
-    def run(rate, budget=400):
+    def run(rate, budget=200, alpha=0.01, fpr=0.01):         # the decision rule of verify_model(sequential=True)
         k = n = 0
         while n < budget:
             k += sum(rng.random() < rate for _ in range(20)); n += 20
-            d = sprt(k, n, 0.01, 0.2, 0.01, 0.05)
-            if d is not None:
-                return d, n
-        return False, n
-    null = [run(0.01) for _ in range(2000)]
-    marked = [run(0.3) for _ in range(500)]
-    assert sum(d for d, _ in null) / len(null) <= 0.01           # false accusations
-    assert sum(d for d, _ in marked) / len(marked) >= 0.95       # watermarked models found ...
-    assert sum(n for _, n in marked) / len(marked) <= 60         # ... in about three batches
+            if 2 * sequential_p(k, n, fpr, 0.2) <= alpha:
+                return True, n
+        return 2 * binom.sf(k - 1, n, fpr) <= alpha, n
+
+    assert sum(run(0.01)[0] for _ in range(2000)) / 2000 <= 0.01          # false accusations
+    strong = [run(0.3) for _ in range(300)]
+    assert all(d for d, _ in strong) and sum(n for _, n in strong) / len(strong) <= 40   # settled in ~1-2 batches
+    weak = sum(run(0.05)[0] for _ in range(500)) / 500
+    fixed = binom.sf(binom.isf(0.01, 200, 0.01), 200, 0.05)             # the fixed test's power at the same budget
+    assert weak >= fixed - 0.15                                         # weak marks are not cleared early
+

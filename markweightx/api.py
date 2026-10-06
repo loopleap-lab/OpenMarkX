@@ -290,7 +290,6 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
     schemes are refused: a wrong key needs another release, and their closed-form null is exact."""
     import random
     import warnings
-    from .keys import STORE
     from .primitives import Imprint
     from .scoring import scores
     if n_null < 1:
@@ -305,32 +304,29 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
     live = [i for i, t in enumerate(texts) if sch.tok(t, add_special_tokens=False)["input_ids"]]
     true = dict(zip(live, scores(sch, [texts[i] for i in live])))
     null = {i: [] for i in live}
+    import shutil
+    import tempfile
     rng = random.Random(0xC0FFEE)
-    made = os.path.join(STORE, "configs"), os.path.join(STORE, "tmp")
-    before = {d: set(os.listdir(d)) if os.path.isdir(d) else set() for d in made}
-    try:
-        drawn = attempts = 0
-        while drawn < n_null:
-            attempts += 1
-            if attempts > 3 * n_null + 10:
-                raise ValueError(f"{key.scheme}: could not draw {n_null} wrong keys different from the true key")
-            params = sch.wrong_key(dict(key.params), rng)
+    drawn = attempts = 0
+    while drawn < n_null:
+        attempts += 1
+        if attempts > 3 * n_null + 10:
+            raise ValueError(f"{key.scheme}: could not draw {n_null} wrong keys different from the true key")
+        work = tempfile.mkdtemp(prefix="mwx-wrongkey-")    # this wrong key's files; nothing touches the key store
+        try:
+            params = sch.wrong_key(dict(key.params), rng, work)
             if params is None:
                 raise ValueError(f"{key.scheme} has no secret to redraw (Scheme.wrong_key): use mwx.calibrate instead")
             if params == key.params:                       # the true key: excluded
                 continue
             w = build_scheme(key, trust_plugin=trust_plugin)
-            w.probe = sch.probe
+            w.probe, w.config_dir = sch.probe, work
             w.setup(sch.model, sch.tok, sch.device, params)    # the model (or config) scheme_for bound
             for i, (s, _) in zip(live, scores(w, [texts[i] for i in live])):
                 null[i].append(s)
             drawn += 1
-    finally:                                               # only what this call created in the key store
-        for d in made:
-            for f in (set(os.listdir(d)) if os.path.isdir(d) else set()) - before[d]:
-                p = os.path.join(d, f)
-                if os.path.isfile(p):
-                    os.remove(p)
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
     out = []
     for i in range(len(texts)):
         if i not in true or not true[i][1]:                # nothing scored: a vacuous answer
@@ -342,39 +338,43 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
     return out
 
 
-def sprt(k: int, n: int, fpr: float, p1: float, alpha: float, beta: float) -> bool | None:
-    """Wald's SPRT after k flags in n texts: True (watermarked: rate p1), False (not: rate fpr), None (keep going)."""
+def sequential_p(k: int, n: int, fpr: float, p1: float) -> float:
+    """An always-valid p-value after k flags in n texts: 1 / LR, LR the likelihood ratio of flag rate p1 against fpr.
+    Under the null LR is a martingale, so P(1/LR ever <= a) <= a however often it is looked at (Ville)."""
     import math
     llr = k * math.log(p1 / fpr) + (n - k) * math.log((1 - p1) / (1 - fpr))
-    if llr >= math.log((1 - beta) / alpha):
-        return True
-    if llr <= math.log(beta / (1 - alpha)):
-        return False
-    return None
+    return min(1.0, math.exp(-llr))
 
 
 def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01, alpha=0.01,
-                 budget: int | None = None, sequential: bool = False, p1: float = 0.2, beta: float = 0.05,
-                 batch: int = 20, trust_plugin: bool = False) -> Detection:
-    """Model-level verdict on a suspect model: sample it on the prompts, flag each text at `fpr`, and test the flag
-    rate. Under the null each text is flagged with probability fpr.
-      fixed (default): all prompts (at most `budget`); p = P(Binom(n, fpr) >= k), flagged when p < alpha.
-      sequential=True: Wald's SPRT of flag rate fpr against p1, `batch` texts at a time; it stops as soon as the
-        evidence crosses a bound, so a watermarked model is usually settled in a few batches. Type-I error <= alpha
-        and type-II <= beta (at rate p1) hold despite the early stop; `budget` caps the texts, and a test that hits
-        the cap without crossing a bound is reported as not flagged. p_value is the binomial tail of what was seen.
-    The verdict's n_queries is how many texts were generated. Exact for schemes with an exact null (GaussMark); with
-    an empirical null the per-text rate is fpr up to the calibration's sampling error, so use the calibration
-    prompts. Needs a calibrated key, unless the scheme has a closed-form p-value."""
+                 budget: int | None = None, sequential: bool = False, p1: float = 0.2, batch: int = 20,
+                 trust_plugin: bool = False) -> Detection:
+    """Model-level verdict on a suspect model: sample it on the prompts (at most `budget`), flag each text at `fpr`,
+    and test the flag rate; under the null each text is flagged with probability fpr.
+      fixed (default): p = P(Binom(n, fpr) >= k) over all n texts; flagged when p <= alpha.
+      sequential=True: `batch` texts at a time. The model is accused early once an always-valid test against flag
+        rate p1 is decisive (strong watermarks settle in a batch or two); it is never cleared early: otherwise all
+        texts are generated and the fixed test decides, so weak watermarks (flag rates well below p1) keep the fixed
+        test's power. Each part runs at alpha/2 and p_value is twice the deciding part's p, so the verdict is flagged
+        exactly when p_value <= alpha, with false accusations <= alpha.
+    Texts too short to be judged are not counted. n_queries is how many texts were generated. Exact for schemes with
+    an exact null (GaussMark). With an empirical null the per-text rate is fpr up to the calibration's sampling error
+    (a 500-text null makes alpha = 0.01 behave like ~0.016); prompts disjoint from the calibration's are the clean
+    choice."""
     from scipy.stats import binom
     from .models import load_release, load_tokenizer
     from .sampling import generate as _gen
     from .scoring import detect as _detect
     if not 0 < fpr < p1 < 1:
         raise ValueError(f"need 0 < fpr < p1 < 1 (got fpr={fpr}, p1={p1})")
+    if budget is not None and budget < 1:
+        raise ValueError(f"budget must be at least 1 (got {budget})")
     sch = build_scheme(key, trust_plugin=trust_plugin)       # refuse an untrusted plugin before any sampling
     if not key.calibration.get("null") and sch.pvalue(0.0, 1) is None:
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")
+    if key.params.get("public"):
+        import warnings
+        warnings.warn(f"key {key.commitment[:12]} is public: anyone could also have removed or forged this mark")
     device = device or _auto_device()
     prompts = prompts[:budget] if budget else prompts
     bound = scheme_for(key, None, _matching_device(key, device, type(sch)), trust_plugin=trust_plugin)
@@ -382,15 +382,15 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     c = key.calibration
     size = batch if sequential else max(len(prompts), 1)
     k = n = n_tok = 0
-    decided = None
     for i in range(0, len(prompts), size):
         texts = _gen(model, tok, prompts[i:i + size], seed=i)
-        dets = _detect(bound, texts, null=c.get("null"), fpr=fpr, by_length=c.get("by_length"), null_len=c.get("n_tokens"))
-        k += sum(bool(d.flagged) for d in dets); n += len(dets); n_tok += sum(d.n_tokens for d in dets)
-        if sequential:
-            decided = sprt(k, n, fpr, p1, alpha, beta)
-            if decided is not None:
-                break
+        dets = [d for d in _detect(bound, texts, null=c.get("null"), fpr=fpr, by_length=c.get("by_length"),
+                                   null_len=c.get("n_tokens")) if d.flagged is not None]   # unjudged: not counted
+        k += sum(d.flagged for d in dets); n += len(dets); n_tok += sum(d.n_tokens for d in dets)
+        if sequential and n and 2 * sequential_p(k, n, fpr, p1) <= alpha:      # accused early
+            return Detection(statistic=float(k), p_value=2 * sequential_p(k, n, fpr, p1), n_tokens=n_tok,
+                             flagged=True, n_queries=n)
     p = float(binom.sf(k - 1, n, fpr)) if n else 1.0
-    flagged = decided if sequential else p < alpha
-    return Detection(statistic=float(k), p_value=p, n_tokens=n_tok, flagged=bool(flagged), n_queries=n)
+    if sequential:
+        p = min(1.0, 2 * p)
+    return Detection(statistic=float(k), p_value=p, n_tokens=n_tok, flagged=bool(n) and p <= alpha, n_queries=n)
