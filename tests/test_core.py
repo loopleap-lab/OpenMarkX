@@ -85,18 +85,20 @@ def test_sequential_verdict_keeps_its_error_rates_and_power():
 
 
 
-def test_empirical_null_rate_bound_keeps_false_accusations_below_alpha():
-    """A threshold from 311 null texts has a random true rate (Beta); testing against _null_rate's bound at alpha/2
-    keeps false accusations at or below alpha even over 200 texts (testing against fpr gave ~4.7%)."""
-    import math
+def test_empirical_null_beta_binomial_test_is_exact_and_powerful():
+    """With a threshold from 311 null texts, the flags of unmarked texts are Beta-binomial: testing with it keeps
+    false accusations at or below alpha (testing against fpr gave ~4.7% over 200 texts), with most of the power."""
     import numpy as np
-    from scipy.stats import binom
-    from markweightx.api import _null_rate
+    from scipy.stats import betabinom, binom
+    from markweightx.api import null_ab, sequential_p
     rng = np.random.default_rng(0)
     N, fpr, alpha, n = 311, 0.01, 0.01, 200
-    idx = math.ceil((1 - fpr) * N) - 1
-    true = rng.beta(N - idx, idx + 1, size=20000)            # the threshold's actual false-flag rate, per calibration
+    a, b = null_ab(N, fpr)
+    true = rng.beta(a, b, size=20000)                        # the threshold's actual false-flag rate, per calibration
     k = rng.binomial(n, true)
-    bound = _null_rate(N, fpr, alpha / 2)
-    assert np.mean(binom.sf(k - 1, n, bound) <= alpha / 2) <= alpha
-    assert np.mean(binom.sf(k - 1, n, fpr) <= alpha) > 2 * alpha   # the naive test this replaces
+    assert np.mean(betabinom.sf(k - 1, n, a, b) <= alpha) <= alpha
+    assert np.mean(binom.sf(k - 1, n, fpr) <= alpha) > 2 * alpha    # the naive test this replaces
+    crit = next(c for c in range(n) if betabinom.sf(c - 1, n, a, b) <= alpha)
+    assert binom.sf(crit - 1, n, 0.05) > 0.5                       # power at a 5% flag rate
+    early = [sequential_p(kk, 20, fpr, 0.2, (a, b)) for kk in range(21)]
+    assert all(x >= y for x, y in zip(early, early[1:]))           # more flags: smaller p

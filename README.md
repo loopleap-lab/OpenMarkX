@@ -247,11 +247,19 @@ are on Llama-3.2-1B.
 `verify_model(..., sequential=True)` asks the suspect model for 20 texts at a time. It accuses the model as soon as
 an always-valid test (flag rate `p1` against `fpr`) is decisive, so a strongly marked model is settled in about 20
 texts; it never clears a model early, so a weakly marked one (after edits) gets the full `budget` and the power of
-the fixed test (`exp/verify_power.py`: at a 5% flag rate 87% vs 88%). False accusations stay below `alpha` and the
-p-value stays valid despite the early stop. With an empirical null the threshold's own false-flag rate is uncertain
-(a 311-text calibration: 1.3% on average, bounded by 3.5%), so half of `alpha` bounds it and the test runs against
-the bound; a larger calibration gives more power. Prompts disjoint from the calibration's are the clean choice (the
-bundled C4 split has only 311 usable prompts, so the quickstart reuses them; GaussMark's exact null is unaffected). `n_queries` says how many texts were generated.
+the fixed test. False accusations stay below `alpha` despite the early stop, and the verdict is flagged exactly when
+`p_value <= alpha`. With an exact null (GaussMark) the flags of an unmarked model are Binomial(n, fpr); with an
+empirical null of N texts they are exactly Beta-binomial, because the suspect's texts are exchangeable with the
+calibration's, which accounts for the threshold's own uncertainty (1.3% on average for 311 texts). Found at a 5% flag
+rate with a budget of 200 (`exp/verify_power.py [--null-n 311]`):
+
+| null | sequential | fixed |
+|---|---|---|
+| exact | 87% | 88% |
+| empirical, 311 texts | 43% | 55% |
+
+A larger calibration narrows the gap. Prompts disjoint from the calibration's are the clean choice (the bundled C4
+split has only 311 usable prompts, so the quickstart reuses them; GaussMark's exact null is unaffected). `n_queries` says how many texts were generated.
 
 Not built yet: importing the published checkpoints of other papers (`port` takes the checkpoint and its key files;
 fetching and converting them is per paper, and they are 7B-8B), `TP-*` grants (prompt

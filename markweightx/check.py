@@ -109,11 +109,13 @@ def run(name: str, source: str | None = None, base: str = "llama-3.2-1b", n_null
     store_dir = os.path.join(root, "keys")
     old_store, old_tmp, K.STORE = K.STORE, tempfile.tempdir, store_dir
     tempfile.tempdir = root
+    import random
+    K._TEST_RNG = random.Random(20261006)                   # the same fresh keys every run: a reproducible verdict
     os.environ["TQDM_DISABLE"] = "1"
     try:
         return _run(name, source, base, n_null, store_dir)
     finally:
-        K.STORE, tempfile.tempdir = old_store, old_tmp
+        K.STORE, tempfile.tempdir, K._TEST_RNG = old_store, old_tmp, None
         shutil.rmtree(root, ignore_errors=True)
 
 

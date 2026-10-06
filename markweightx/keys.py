@@ -18,8 +18,13 @@ STORE = os.environ.get("MWX_KEYS", os.path.join(RUNS, "keys"))
 PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256", "public"}    # key fields that are not secret (shown by `keys show`)
 
 
+_TEST_RNG = None                 # markweightx check sets a seeded random.Random here so its verdict is reproducible
+
+
 def new_secret(bits: int = 40) -> int:
     """A fresh random secret, small enough for every teacher's seeding arithmetic (seed * token id < 2**64)."""
+    if _TEST_RNG is not None:
+        return _TEST_RNG.getrandbits(bits)
     return secrets.randbits(bits)
 
 

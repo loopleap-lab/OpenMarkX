@@ -136,3 +136,24 @@ def test_port_copies_key_files_and_refuses_to_overwrite(tmp_path, monkeypatch):
                        MWX_KEYS=str(tmp_path / "keys"), CUDA_VISIBLE_DEVICES="",
                        PYTHONPATH=__import__("os").path.join(__import__("os").path.dirname(__file__), "..")))
     assert r.returncode == 0, r.stderr
+
+
+def test_verify_model_with_an_empirical_null_uses_the_beta_binomial(tmp_path, monkeypatch):
+    import markweightx.api as api
+    import markweightx.models as models
+    import markweightx.sampling as sampling
+    import markweightx.scoring as scoring
+    from markweightx.types import Detection
+    from scipy.stats import betabinom
+    monkeypatch.setattr(models, "load_release", lambda rel, device: None)
+    monkeypatch.setattr(models, "load_tokenizer", lambda base: None)
+    monkeypatch.setattr(api, "scheme_for", lambda *a, **k: None)
+    monkeypatch.setattr(sampling, "generate", lambda m, t, prompts, seed=0: list(prompts))
+    monkeypatch.setattr(scoring, "detect", lambda b, texts, **k: [Detection(1.0, 0.5, 5, t == "x") for t in texts])
+    key = mwx.Key(scheme="markllm-kgw-d", params={"secret": 1, "rng_device": "cpu"}, base="llama-3.2-1b",
+                  calibration={"null": [0.0] * 311, "n": 311, "n_tokens": 200})
+    rel = mwx.Release(path=str(tmp_path), base="llama-3.2-1b", scheme="markllm-kgw-d")
+    prompts = ["x"] * 10 + ["o"] * 190
+    d = mwx.verify_model(rel, key, prompts, device="cpu")
+    a, b = api.null_ab(311, 0.01)
+    assert d.p_value == pytest.approx(float(betabinom.sf(9, 200, a, b))) and d.flagged == (d.p_value <= 0.01)
