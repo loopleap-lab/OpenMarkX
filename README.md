@@ -160,6 +160,23 @@ Rules for plugins:
 
 ## Experiments and the leaderboard
 
+One command runs the benchmark for a list of methods: learn, every edit, forgery, then the leaderboard. Finished
+steps are skipped, so it can be stopped and run again.
+
+```bash
+markweightx bench configs/arena/1b.yaml --dry-run     # what is done, what would run
+markweightx bench configs/arena/1b.yaml               # run the missing steps on this machine
+markweightx bench my_arena.yaml --queue lab2          # or hand them to the GPU scheduler
+```
+
+```yaml
+# my_arena.yaml
+base: llama-3.2-1b
+methods: [pro-coopt-c100, my_mark.py]                 # built-in names (with :params) or plugin files
+```
+
+The steps are these scripts, which can also be run one at a time:
+
 | Script | What it runs |
 |---|---|
 | `exp/learnability.py --scheme NAME` | E2: embed, sample 500 C4 prompts, TPR at 1% FPR against the base model's texts, PPL |
@@ -180,7 +197,7 @@ are on Llama-3.2-1B.
 | `WDetection` | `Detection(statistic, p_value, n_tokens, flagged)` |
 | `modify(release, attack)`, `ft:full`, `quant` | `modify(release, "finetune:steps=800")`, `"quantize:bits=4"`, `"merge:partner=...,ratio=0.4"`, `"prune:sparsity=0.5"` |
 | `harness.attack` (text) | `rewrite(texts, "synonym:ratio=0.3")`, `"word_deletion:ratio=0.3"` |
-| `harness.evaluate(arena.yaml)` | `exp/learnability.py` + `exp/robustness.py` + `exp/spoof.py` + `exp/leaderboard.py` |
+| `harness.evaluate(arena.yaml)` | `markweightx bench arena.yaml` (runs `exp/learnability.py`, `robustness.py`, `spoof.py`, `leaderboard.py`) |
 | `Scheme.keygen / signal / recipe / detector` | `Scheme.setup` (key) / `target_logits` (Signal) / `configs/embed.yaml` / `score`, `pvalue` |
 | CLI `verify` | `markweightx verify` → `mwx.verify_model` |
 

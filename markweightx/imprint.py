@@ -27,6 +27,13 @@ def kl_teacher_student(t_logits, s_logits):
     return (t_logp.exp() * (t_logp - s_logp)).sum(-1).mean()
 
 
+def _drop_if_empty(d):
+    try:
+        os.rmdir(d)                                        # a stage_dir() that save() left empty
+    except OSError:
+        pass
+
+
 def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_len=128, lr=2e-4, rank=64,
           device="cuda:0", key: dict | None = None, data: str | None = None, save_every=500, seed=0, log_every=10,
           bos: bool = False, scheme_params: dict | None = None, scheme_source: str | None = None):
@@ -52,9 +59,10 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         from .keys import store
         os.makedirs(out, exist_ok=True)
         weights = sch.imprint_edit(model, tok, out)
-        params = {**sch.save(stage_dir(), key), "rng_device": str(device).split(":")[0]}
+        kdir = stage_dir()
+        params = {**sch.save(kdir, key), "rng_device": str(device).split(":")[0]}
         k = Key(scheme=scheme, params=params, base=base, scheme_params=scheme_params, scheme_source=src)
-        store(k)
+        store(k); _drop_if_empty(kdir)
         return Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, weights=weights,
                        lineage=[vars(Step("embed", {"scheme": scheme, "imprint": "edit", "base": base,
                                                     "scheme_params": scheme_params}))]).save()
@@ -148,14 +156,15 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         if (step + 1) % save_every == 0 or step + 1 == steps:
             model.save_pretrained(f"{out}/adapter_step{step + 1}")
     model.save_pretrained(f"{out}/adapter")
-    key = sch.save(stage_dir(), key)                       # key material goes to the key store, never into out
+    kdir = stage_dir()
+    key = sch.save(kdir, key)                              # key material goes to the key store, never into out
     from .keys import store
     from .types import Key
     # MarkLLM's KGW-family teachers draw their green lists from a generator on the model's device; CUDA and CPU give
     # different lists, so the detector must use the device type the key was made on (fork change A2).
     key = {**key, "rng_device": str(device).split(":")[0]}
     k = Key(scheme=scheme, params=key, base=base, scheme_params=scheme_params, scheme_source=src)
-    store(k)                                               # the key goes to the key store, not into the release
+    store(k); _drop_if_empty(kdir)                         # the key goes to the key store, not into the release
     rel = Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, adapter=f"{out}/adapter",
                   lineage=[vars(Step("embed", cfg))])
     return rel.save()

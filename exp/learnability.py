@@ -40,7 +40,8 @@ def main():
     a = ap.parse_args()
     from markweightx.api import scheme_spec
     sname, sparams, ssrc = scheme_spec(a.scheme)           # "gaussmark:sigma=1e-3", or a plugin "my_scheme.py"
-    out = f"{RUNS}/{a.tag}/{a.base}/" + sname + "".join(f"_{k}{v}" for k, v in sparams.items())
+    from markweightx.bench import result_dir
+    out = result_dir(a.scheme, a.base, a.tag)                # the same place `markweightx bench` looks
     t0 = time.time()
     rel = Release.open(out) if a.skip_embed else embed(sname, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos,
                                                      scheme_params=sparams, scheme_source=ssrc)

@@ -26,7 +26,10 @@ def base_path(name: str) -> str:
     p = BASES.get(name, name)
     if p.endswith("/{}"):                                   # snapshot hash not pinned yet: take the one on disk
         root = p[:-3]
-        p = os.path.join(root, sorted(os.listdir(root))[0]) if os.path.isdir(root) else root
+        snaps = sorted(os.listdir(root)) if os.path.isdir(root) else []
+        p = os.path.join(root, snaps[0]) if snaps else root
     if name in HUB and not os.path.isdir(p):               # not on this machine: the Hugging Face repo
+        import warnings                                    # (latest revision: results may differ from pinned runs)
+        warnings.warn(f"{name}: pinned snapshot not found under {HF}; using the Hugging Face repo {HUB[name]}")
         return HUB[name]
     return p

@@ -30,6 +30,7 @@ EMBEDDER = "perceptiveshawty/compositional-bert-large-uncased"
 class PRO(Scheme):
     name, kind = "pro", "distill_logit"
     access = Access.R0_AUX                                 # the detector runs the BERT embedder and the policy
+    rng_bound = False                                      # the mapping is drawn by random.Random(secret): any device
 
     def __init__(self, gamma=0.5, delta=1.0, chunk_size=10, transform_loss_weight=1e-3, tau_init=10.0, tau_max=1000.0,
                  co_opt=False, transform_lr=1e-5, transform_wd=0.01, centered_range=False, **params):

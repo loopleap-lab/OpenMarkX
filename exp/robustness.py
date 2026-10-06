@@ -24,15 +24,7 @@ from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
 
-GRID = [("finetune", dict(steps=200)), ("finetune", dict(steps=800)), ("finetune", dict(steps=2400)),
-        ("merge", dict(ratio=0.2)), ("merge", dict(ratio=0.4)), ("merge", dict(ratio=0.6)),
-        ("prune", dict(sparsity=0.2)), ("prune", dict(sparsity=0.5)),
-        ("quantize", dict(bits=8)), ("quantize", dict(bits=4)),
-        ("text:word_deletion", dict(ratio=0.3)), ("text:synonym", dict(ratio=0.3))]
-
-
-def tag(op, p):
-    return op + "_" + "_".join(f"{k}{v}" for k, v in p.items())
+from markweightx.bench import EDIT_GRID as GRID, edit_tag as tag   # one grid for bench and this script
 
 
 def main():

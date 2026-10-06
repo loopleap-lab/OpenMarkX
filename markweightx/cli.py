@@ -10,6 +10,7 @@
               markweightx verify RELEASE --key KEY --prompts prompts.jsonl
   Researcher  markweightx describe [NAME ...]          markweightx check --adapter NAME|file.py
               markweightx new-scheme NAME [--out my_scheme.py]
+              markweightx bench configs/arena/1b.yaml [--dry-run | --queue HOST]
               markweightx keys list|show KEY
 Text files are .jsonl ({"text": ...} per line) or plain text (one text per line). KEY is a key id (commitment, or
 a unique prefix) from the key store, or the path of a release (its key is found by commitment).
@@ -197,6 +198,10 @@ def main(argv=None):
     p.add_argument("--fpr", type=float, default=0.01, help="per-text flag rate under the null (default 0.01)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
+    p = sub.add_parser("bench", help="Researcher: the whole benchmark for an arena file (learn, edits, forge, leaderboard)")
+    p.add_argument("arena", help="arena YAML: base, methods, optional steps (see configs/arena/1b.yaml)")
+    p.add_argument("--dry-run", action="store_true", help="show what is done and what would run")
+    p.add_argument("--queue", metavar="HOST", help="append the pending steps to exp/scheduler.py's queue for HOST")
     p = sub.add_parser("describe", help="Researcher: the scheme x primitive matrix")
     p.add_argument("names", nargs="*", help="scheme names or plugin .py files (default: every registered method)")
     p = sub.add_parser("check", help="Researcher: the adapter checks a scheme must pass")
@@ -254,6 +259,19 @@ def _run(a):
         d = mwx.verify_model(_release(a.release), _key(a.key), _read_texts(a.prompts), device=a.device, fpr=a.fpr,
                              trust_plugin=a.trust_plugin)
         print(json.dumps({"flagged_texts": d.statistic, "p_value": d.p_value, "from_this_key": d.flagged}))
+    elif a.cmd == "bench":
+        from . import bench
+        arena = bench.load_arena(a.arena)
+        jobs = bench.plan(arena)
+        print(bench.show(jobs))
+        if a.dry_run:
+            return
+        if a.queue:
+            new = bench.queue(jobs, a.queue)
+            print(f"queued {len(new)} step(s) for {a.queue}; rebuild the board afterwards with: "
+                  f"{bench.leaderboard_cmd(arena)}" if new else "nothing new to queue")
+            return
+        sys.exit(bench.run_here(arena, jobs))
     elif a.cmd == "describe":
         print(mwx.describe(a.names or None))
     elif a.cmd == "check":

@@ -109,7 +109,10 @@ def scheme_source(cls) -> str | None:
     mod = cls.__module__
     if mod.startswith("markweightx."):
         return None
-    if mod.startswith("mwx_plugin_") or mod == "__main__":
+    if mod == "__main__":
+        raise ValueError(f"scheme {cls.__name__} is defined in the script being run (or a notebook); a key must be able "
+                         f"to load it again, so put it in its own .py file and pass that file (or import it)")
+    if mod.startswith("mwx_plugin_"):
         f = getattr(sys.modules.get(mod), "__file__", None)
         return os.path.abspath(f) if f else None
     return f"{mod}@{_module_digest(sys.modules[mod])}"     # an importable module, pinned to its current code

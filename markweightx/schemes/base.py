@@ -82,6 +82,7 @@ class NoWatermark(Scheme):
     """The unwatermarked base: a control row in every comparison."""
     name, kind = "nowm", "none"
     imprint = Imprint.EDIT
+    rng_bound = False
 
     def imprint_edit(self, model, tokenizer, out):
         return None

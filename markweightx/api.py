@@ -96,8 +96,8 @@ def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, d
     from .keys import store
     from .models import load_base, load_tokenizer
     device = device or _auto_device()
-    det_device = _detect_device(key, device)
-    build_scheme(key, trust_plugin=trust_plugin)            # refuse an untrusted plugin before any sampling
+    cls = type(build_scheme(key, trust_plugin=trust_plugin))  # refuse an untrusted plugin before any sampling
+    det_device = _matching_device(key, device, cls)         # sample on `device`, score on the key's device type
     tok = load_tokenizer(base); model = load_base(base, device)
     prompts = prompts or eval_prompts(tok, n=n)
     texts = _gen(model, tok, prompts, adapter=False, seed=seed)
@@ -112,6 +112,8 @@ def modify(release: Release, edits: str | dict, out: str | None = None, *, devic
     """Apply a weight edit (finetune / merge / prune / quantize) to a release; returns the edited release."""
     from .edits import modify as _modify
     op, params = _spec(edits)
+    if "device" in params:
+        raise ValueError("the device is not an edit parameter: pass device= (CLI --device)")
     if op == "merge" and "partner" not in params:
         raise ValueError("merge needs an explicit partner model, e.g. 'merge:partner=llama-3.2-1b-instruct,ratio=0.4'")
     if op == "quantize":
@@ -131,8 +133,12 @@ def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> li
     """Text edits through MarkLLM's text editors: 'synonym:ratio=0.3', 'word_deletion:ratio=0.3'."""
     from .edits import rewrite as _rewrite
     from .edits.weights import check_params
+    RATIO = {"ratio": (lambda v: 0 < v <= 1, "in (0, 1]")}
     op, params = _spec(edits)
-    check_params(_rewrite, op, params, {}, skip=("texts", "kind", "device"))
+    if "device" in params:
+        raise ValueError("the device is not an edit parameter: pass device= (CLI --device)")
+    check_params(_rewrite, op, params, {"synonym": RATIO, "word_deletion": RATIO, "context_synonym": RATIO},
+                 skip=("texts", "kind", "device"))
     return _rewrite(texts, op, device=device or _auto_device(), **params)
 
 
@@ -167,22 +173,29 @@ def scheme_for(key: Key, base: str | None, device: str, grant=None, trust_plugin
     return sch
 
 
-def _rng_device(key: Key) -> str | None:
-    """The device type a key's randomness was drawn on, or None if the scheme declares it device-independent.
+def _rng_device(key: Key, cls=None) -> str | None:
+    """The device type a key's randomness was drawn on, or None if the scheme declares it device-independent
+    (cls: the key's scheme class, e.g. type(build_scheme(key)); plugins are only known once loaded).
     Keys made before this was recorded: MarkLLM keys were all made on CUDA."""
     from .registry import SCHEMES
-    cls = SCHEMES.get(key.scheme)
+    cls = cls or SCHEMES.get(key.scheme)
     if cls is not None and not getattr(cls, "rng_bound", True):
         return None
     return key.params.get("rng_device", "cuda" if key.scheme.startswith("markllm-") else "cpu")
 
 
-def _detect_device(key: Key, device: str | None) -> str:
+def _matching_device(key: Key, device: str, cls=None) -> str:
+    """`device` if the key can be scored there, else the key's own device type."""
+    want = _rng_device(key, cls)
+    return device if want is None or str(device).split(":")[0] == want else _detect_device(key, None, cls)
+
+
+def _detect_device(key: Key, device: str | None, cls=None) -> str:
     """Detect on the device type the key was made on: generators on CUDA and CPU draw different numbers (e.g.
     KGW-family green lists), so a mismatch would silently score with a different key."""
     import torch
     from . import schemes  # noqa: F401  (registers the built-ins, whose rng_bound _rng_device reads)
-    want = _rng_device(key)
+    want = _rng_device(key, cls)
     if device is None:
         device = "cuda:0" if want == "cuda" else "cpu"
     if want is not None and str(device).split(":")[0] != want:
@@ -199,7 +212,7 @@ def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device:
     p-values and flags come from the frozen null. The device defaults to the one the key was made on."""
     from .scoring import detect as _detect
     texts = [texts] if isinstance(texts, str) else texts
-    device = _detect_device(key, device)
+    device = _detect_device(key, device, type(build_scheme(key, trust_plugin=trust_plugin)))
     return _detect(scheme_for(key, base, device, grant, trust_plugin), texts, null=key.calibration.get("null"), fpr=fpr)
 
 
@@ -215,9 +228,8 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     if not key.calibration.get("null") and sch.pvalue(0.0, 1) is None:
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")
     device = device or _auto_device()
-    want = _rng_device(key)
     dets = detect(generate(release, prompts, device=device), key, fpr=fpr, trust_plugin=trust_plugin,
-                  device=device if want is None or str(device).split(":")[0] == want else None)
+                  device=_matching_device(key, device, type(sch)))
     k, n = sum(bool(d.flagged) for d in dets), len(dets)
     p = float(binom.sf(k - 1, n, fpr))
     return Detection(statistic=float(k), p_value=p, n_tokens=sum(d.n_tokens for d in dets), flagged=p < fpr)
