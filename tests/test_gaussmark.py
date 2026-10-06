@@ -93,3 +93,22 @@ def test_null_is_standard_normal_and_marked_text_scores_high(tiny):
     marked = tok.batch_decode(outs, skip_special_tokens=True)
     psi_m = [s for s, _ in det.score_batch(marked)]
     assert statistics.mean(psi_m) > statistics.mean(psi) + 0.5
+
+
+def test_release_keeps_the_checkpoint_dtype(tmp_path, monkeypatch):
+    """Embedding loads the base in fp32, but the release must be saved in the checkpoint's own dtype (bf16)."""
+    from safetensors import safe_open
+    from transformers import AutoModelForCausalLM, LlamaConfig, LlamaForCausalLM
+    from markweightx.models import load_tokenizer
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
+    cfg = LlamaConfig(vocab_size=128256, hidden_size=64, intermediate_size=128, num_hidden_layers=2,
+                      num_attention_heads=4, num_key_value_heads=4, torch_dtype="bfloat16")
+    ck = tmp_path / "base"; LlamaForCausalLM(cfg).to(torch.bfloat16).save_pretrained(ck)
+    model = AutoModelForCausalLM.from_pretrained(ck, torch_dtype=torch.float32)
+    tok = load_tokenizer("llama-3.2-1b")
+    sch = get_scheme("gaussmark", sigma=0.01, layer=1); key = sch.setup(model, tok, "cpu", None)
+    wdir = sch.imprint_edit(model, tok, str(tmp_path / "rel"))
+    assert sch.save(None, key)["dtype"] == "bfloat16"
+    f = [x for x in os.listdir(wdir) if x.endswith(".safetensors")][0]
+    with safe_open(os.path.join(wdir, f), "pt") as st:
+        assert st.get_tensor(st.keys()[0]).dtype == torch.bfloat16

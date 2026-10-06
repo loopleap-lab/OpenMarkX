@@ -72,9 +72,13 @@ class Probe:
         return self._grads(list(texts), wrt)
 
     def _grads(self, texts, wrt):
-        import torch
-        self._need(Access.R2, "the gradient of the base model")
         names = [wrt] if isinstance(wrt, str) else list(wrt)
+        for t in texts:
+            yield self._grad_one(t, names)
+
+    def _grad_one(self, text, names):
+        """One text's gradients, with grad mode and requires_grad confined to this call."""
+        import torch
         m, tok = self.model(), self.tokenizer()
         params = dict(m.named_parameters())
         ps = [params[n] for n in names]
@@ -82,14 +86,13 @@ class Probe:
             for p in ps:
                 p.requires_grad_(True)
             try:
-                for t in texts:
-                    ids = tok(t, return_tensors="pt").input_ids.to(self.device)
-                    lp = -torch.nn.functional.cross_entropy(m(input_ids=ids).logits[0, :-1].float(), ids[0, 1:], reduction="sum")
-                    gs = torch.autograd.grad(lp, ps)
-                    yield {n: g.detach() for n, g in zip(names, gs)}
+                ids = tok(text, return_tensors="pt").input_ids.to(self.device)
+                lp = -torch.nn.functional.cross_entropy(m(input_ids=ids).logits[0, :-1].float(), ids[0, 1:], reduction="sum")
+                gs = torch.autograd.grad(lp, ps)
             finally:
                 for p in ps:
                     p.requires_grad_(False)
+        return {n: g.detach() for n, g in zip(names, gs)}
 
 
 class Imprint(str, Enum):

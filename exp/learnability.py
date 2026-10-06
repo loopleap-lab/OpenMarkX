@@ -54,20 +54,22 @@ def main():
     sch.probe = Probe(rel.base, a.device, sch.access)       # R1/R2 detectors work through the probe
     sch.setup(model, tok, a.device, load_key(rel).params)
     prompts = eval_prompts(tok, n=a.n)
+    judge = None
     base_cache = f"{RUNS}/{a.tag}/{a.base}/base_texts_n{a.n}.json"
     if os.path.exists(base_cache):
         base_txt = json.load(open(base_cache))
     else:
         # null texts must come from the unwatermarked base: for an Imprint.EDIT release the model IS the edited one
-        judge0 = load_base(a.base, a.device) if rel.weights else model
-        base_txt = generate(judge0, tok, prompts, adapter=False, seed=1)
+        judge = load_base(a.base, a.device) if rel.weights else model
+        base_txt = generate(judge, tok, prompts, adapter=False, seed=1)
         json.dump(base_txt, open(base_cache, "w"))
     stud = generate(model, tok, prompts, adapter=True, seed=0)
     teach = generate(model, tok, prompts, adapter=False, seed=2, logits_processor=sch.processor()) \
         if sch.kind == "distill_logit" else None
     # quality is judged by the unwatermarked base: the release with its adapter off, or the base itself for
     # Imprint.EDIT releases (their weights are the edited model, there is no adapter to switch off)
-    judge = load_base(a.base, a.device) if rel.weights else model
+    if judge is None:
+        judge = load_base(a.base, a.device) if rel.weights else model
     s_null = [s for s, _ in scores(sch, base_txt)]
     s_stud = [s for s, _ in scores(sch, stud)]
     res = {"scheme": a.scheme, "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),

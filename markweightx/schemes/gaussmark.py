@@ -10,8 +10,7 @@ Key:          secret, sigma, layer, matrix, and sha256 of the base matrix and of
               probe's base and checked, so a detector holding a different base snapshot fails instead of mis-scoring.
 Primitives:   Key (secret -> xi -> delta), Imprint.edit, Probe at R2 (gradients of the base), Score. Never Signal,
               never MarkLLM: the scheme that shows the SDK is a layer of its own (technical appendix §1.1).
-Scale:        sigma is absolute. For Llama-3.2-1B, layer 10 up_proj has weight std ~0.017, so sigma = 1e-3 changes
-              the matrix by ~6%; sweep sigma against perplexity.
+Scale:        sigma is absolute (layer-10 up_proj of Llama-3.2-1B has weight std ~0.017); sweep it against perplexity.
 """
 from __future__ import annotations
 
@@ -32,7 +31,9 @@ class GaussMark(Scheme):
     access = Access.R2
     exact_null = True              # psi ~ N(0, 1) by construction: the closed form beats a finite empirical null
 
-    def __init__(self, sigma: float = 1e-3, layer: int = 10, matrix: str = "mlp.up_proj", **params):
+    # defaults from the Llama-3.2-1B sweep (dev plan, 2026-10-06): sigma 0.01 at layer 14 traces 89% of texts at
+    # 1% FPR for +3% perplexity; at layer 10 the same sigma costs +30%, sigma 0.03 breaks the model
+    def __init__(self, sigma: float = 0.01, layer: int = 14, matrix: str = "mlp.up_proj", **params):
         super().__init__(sigma=sigma, layer=layer, matrix=matrix, **params)
         self.sigma, self.layer, self.matrix = float(sigma), int(layer), matrix
 
@@ -50,12 +51,24 @@ class GaussMark(Scheme):
         self.sigma = float(key.get("sigma", self.sigma)); self.layer = int(key.get("layer", self.layer))
         self.matrix = key.get("matrix", self.matrix)
         self.secret = int(key["secret"])
+        self.dtype = key.get("dtype") or self._checkpoint_dtype(model)
         self.base_sha, self.delta_sha = key.get("base_sha256"), key.get("delta_sha256")
         self._delta = None
         return self._key()
 
+    @staticmethod
+    def _checkpoint_dtype(model) -> str:
+        """The dtype the base checkpoint is stored in (the in-memory model may have been loaded in fp32)."""
+        from transformers import AutoConfig
+        try:
+            d = AutoConfig.from_pretrained(model.config._name_or_path).torch_dtype
+        except Exception:
+            d = None
+        d = d or torch.bfloat16
+        return str(d).replace("torch.", "") if not isinstance(d, str) else d
+
     def _key(self):
-        k = {"secret": self.secret, "sigma": self.sigma, "layer": self.layer, "matrix": self.matrix}
+        k = {"secret": self.secret, "sigma": self.sigma, "layer": self.layer, "matrix": self.matrix, "dtype": self.dtype}
         if self.delta_sha:
             k.update(base_sha256=self.base_sha, delta_sha256=self.delta_sha)
         return k
@@ -75,14 +88,13 @@ class GaussMark(Scheme):
     # ---- Imprint.edit ---------------------------------------------------------------------------------
     def imprint_edit(self, model, tokenizer, out):
         # the release keeps the base checkpoint's dtype (bf16 for Llama): that is what users load
-        dtype = getattr(model.config, "torch_dtype", None) or torch.bfloat16
-        dtype = getattr(torch, dtype) if isinstance(dtype, str) else dtype
+        dtype = getattr(torch, self.dtype)
         W = dict(model.named_parameters())[self.param]
         base = W.detach().to(dtype).float().cpu()            # the base matrix as its checkpoint stores it
         delta = self._realize(base, dtype)
         with torch.no_grad():
             W.copy_((base + delta).to(W.device, W.dtype))
-        model.to(dtype)
+        model.to(dtype); model.config.torch_dtype = dtype
         self.base_sha, self.delta_sha = self._sha(base), self._sha(delta)
         wdir = os.path.join(out, "weights")
         model.save_pretrained(wdir, safe_serialization=True); tokenizer.save_pretrained(wdir)
@@ -98,8 +110,7 @@ class GaussMark(Scheme):
             if not self.delta_sha:
                 raise ValueError("this GaussMark key has no delta hash: it was not produced by mwx.embed")
             W = dict(model.named_parameters())[self.param]
-            dtype = getattr(model.config, "torch_dtype", None) or torch.bfloat16
-            dtype = getattr(torch, dtype) if isinstance(dtype, str) else dtype
+            dtype = getattr(torch, self.dtype)
             base = W.detach().float().cpu().to(dtype).float()
             if self._sha(base) != self.base_sha:
                 raise ValueError(f"the detector's base differs from the one this key was made on ({self.param} "
