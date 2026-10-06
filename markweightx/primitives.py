@@ -67,6 +67,7 @@ class Probe:
         a generator of {name: grad}, one text at a time, so a caller reducing each gradient (an inner product, a
         norm) never holds more than one: a 1B layer's gradient is ~64 MB in fp32. Only the requested parameters
         track gradients, so the cost is one forward + backward per text."""
+        self._need(Access.R2, "the gradient of the base model")   # refuse before anything is loaded
         if isinstance(texts, str):
             return next(self._grads([texts], wrt))
         return self._grads(list(texts), wrt)
@@ -79,6 +80,7 @@ class Probe:
     def _grad_one(self, text, names):
         """One text's gradients, with grad mode and requires_grad confined to this call."""
         import torch
+        self._need(Access.R2, "the gradient of the base model")
         m, tok = self.model(), self.tokenizer()
         params = dict(m.named_parameters())
         ps = [params[n] for n in names]

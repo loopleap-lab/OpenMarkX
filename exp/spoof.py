@@ -50,12 +50,15 @@ def main():
     cw, cb = ids(tx["student"]), ids(base_txt)
     nw, nb = sum(cw.values()), sum(cb.values())
     green = [t for t in set(cw) | set(cb) if cw[t] + cb[t] >= a.min_count and (cw[t] + 1) / nw > 1.5 * (cb[t] + 1) / nb]
+    sch = build_scheme(load_key(rel))
+    from markweightx.primitives import Probe
+    sch.probe = Probe(rel.base, a.device, sch.access)      # R1/R2 detectors (GaussMark) score through the probe
     model = load_base(rel.base, a.device)
     bias = torch.zeros(model.config.vocab_size, device=a.device)
     bias[green] = a.delta
     prompts = tx["prompts"][: a.n] if a.n else tx["prompts"]
     forged = generate(model, tok, prompts, adapter=False, seed=3, logits_processor=Bias(bias))
-    sch = build_scheme(load_key(rel)); sch.setup(model, tok, a.device, load_key(rel).params)
+    sch.setup(model, tok, a.device, load_key(rel).params)
     s = [x for x, _ in scores(sch, forged)]
     row = {"edit": "attack:spoof_unigram", **summary(s, tx["scores"]["null"]), "ppl": perplexity(model, tok, prompts, forged),
            "rep4": sum(map(repetition, forged)) / len(forged), "n_green_estimated": len(green)}

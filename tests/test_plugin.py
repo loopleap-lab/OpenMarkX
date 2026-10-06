@@ -60,3 +60,9 @@ def test_describe_hides_variants():
 def test_merge_needs_a_partner():
     with pytest.raises(ValueError, match="partner"):
         mwx.modify(mwx.Release(path="x", base="b", scheme="s"), "merge:ratio=0.4")
+
+
+def test_r1_probe_gets_no_gradients():
+    from markweightx.primitives import Probe
+    with pytest.raises(AccessDenied):
+        Probe("llama-3.2-1b", "cpu", mwx.Access.R1).grad_seq_logprob("text", "model.layers.0.mlp.up_proj.weight")
