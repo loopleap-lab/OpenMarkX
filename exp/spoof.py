@@ -50,7 +50,7 @@ def main():
     cw, cb = ids(tx["student"]), ids(base_txt)
     nw, nb = sum(cw.values()), sum(cb.values())
     green = [t for t in set(cw) | set(cb) if cw[t] + cb[t] >= a.min_count and (cw[t] + 1) / nw > 1.5 * (cb[t] + 1) / nb]
-    sch = build_scheme(load_key(rel))
+    sch = build_scheme(load_key(rel), trust_plugin=True)
     from markweightx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)      # R1/R2 detectors (GaussMark) score through the probe
     model = load_base(rel.base, a.device)

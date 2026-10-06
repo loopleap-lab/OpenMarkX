@@ -40,16 +40,20 @@ def scheme_spec(watermark: str) -> tuple[str, dict, str | None]:
     import os
     from .registry import load_plugin, plugin_schemes
     head, _, rest = watermark.partition(":")
-    if head.endswith(".py") or ("." in head and not os.path.exists(head) and ":" in watermark and "=" not in rest.split(":")[0]):
+    if head.endswith(".py") or "." in head:                # built-in names have no dots: a file or a module
         src = os.path.abspath(head) if head.endswith(".py") else head
-        mod = load_plugin(src).__name__
+        loaded = load_plugin(src)
+        mod = loaded.__name__
+        if not head.endswith(".py"):                       # pin a module plugin to its current code
+            from .registry import _module_digest
+            src = f"{head}@{_module_digest(loaded)}"
         new = plugin_schemes(mod)
         name_part, _, params_part = rest.partition(":")
         if "=" in name_part:                                # 'file.py:k=v' (no name given)
             name_part, params_part = "", name_part
         name = name_part or (new[0] if len(new) == 1 else None)
         if not name:
-            raise ValueError(f"{head} registers {', '.join(new) + ': say which, e.g. ' + repr(head + ':' + new[0]) if new else 'no scheme: decorate the class with @mwx.register_scheme'}")
+            raise ValueError(f"{head} registers {', '.join(new) + ': say which, e.g. ' + repr(head + ':' + new[0]) + ' (CLI check: --name)' if new else 'no scheme: decorate the class with @mwx.register_scheme'}")
         params = _spec(f"x:{params_part}")[1] if params_part else {}
     else:
         (name, params), src = _spec(watermark), None
@@ -84,7 +88,8 @@ def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=D
     return rel, load_key(rel)
 
 
-def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, device=DEFAULT_DEVICE, seed=1) -> Key:
+def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, device=DEFAULT_DEVICE, seed=1,
+              trust_plugin: bool = False) -> Key:
     """Freeze the null for this key: the detector's statistics on the unwatermarked base's continuations."""
     from .scoring import scores
     from .sampling import eval_prompts, generate as _gen
@@ -95,7 +100,7 @@ def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, d
     prompts = prompts or eval_prompts(tok, n=n)
     texts = _gen(model, tok, prompts, adapter=False, seed=seed)
     del model
-    sch = scheme_for(key, base, _detect_device(key, device))
+    sch = scheme_for(key, base, _detect_device(key, device), trust_plugin=trust_plugin)
     key.calibration = {"base": base, "null": sorted(s for s, _ in scores(sch, texts)), "n": len(texts)}
     store(key)
     return key
@@ -127,13 +132,18 @@ def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> li
     return _rewrite(texts, op, device=device or _auto_device(), **params)
 
 
-def build_scheme(key: Key):
-    """The key's scheme object with its params (and plugin source), not yet bound to a model."""
-    from .registry import get_scheme
+def build_scheme(key: Key, *, trust_plugin: bool = False):
+    """The key's scheme object with its params, not yet bound to a model. A key made with a plugin names the plugin's
+    code; that code runs only if this process already imported it, or with trust_plugin=True (a key from someone
+    else can name any code)."""
+    from .registry import UntrustedPlugin, get_scheme, plugin_loaded
+    if key.scheme_source and not trust_plugin and not plugin_loaded(key.scheme_source):
+        raise UntrustedPlugin(f"this key runs plugin code {key.scheme_source}: import it yourself first, or pass "
+                              f"trust_plugin=True (CLI --trust-plugin) if you trust whoever made the key")
     return get_scheme(key.scheme, source=key.scheme_source, **key.scheme_params)
 
 
-def scheme_for(key: Key, base: str | None, device: str, grant=None):
+def scheme_for(key: Key, base: str | None, device: str, grant=None, trust_plugin: bool = False):
     """Rebuild the key's scheme for detection, with a Probe at the granted access level (default: what the scheme
     declares). A grant below the scheme's need raises AccessDenied before anything is loaded."""
     from .models import ConfigOnly
@@ -142,7 +152,7 @@ def scheme_for(key: Key, base: str | None, device: str, grant=None):
     base = base or key.base or key.calibration.get("base")
     if not base:
         raise ValueError("detect needs the base model name: pass base=, or use a key made by mwx.embed")
-    sch = build_scheme(key)
+    sch = build_scheme(key, trust_plugin=trust_plugin)
     grant = grant or sch.access
     if ORDER[sch.access.name] > ORDER[grant.name]:
         raise AccessDenied(f"{key.scheme} detects with {sch.access.value}; granted only {grant.value}")
@@ -169,25 +179,26 @@ def _detect_device(key: Key, device: str | None) -> str:
 
 
 def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device: str | None = None,
-           fpr=0.01, grant=None) -> list[Detection]:
+           fpr=0.01, grant=None, trust_plugin: bool = False) -> list[Detection]:
     """Score texts with the key alone (plus the base model for detectors that need one). With a calibrated key,
     p-values and flags come from the frozen null. The device defaults to the one the key was made on."""
     from .scoring import detect as _detect
     texts = [texts] if isinstance(texts, str) else texts
     device = _detect_device(key, device)
-    return _detect(scheme_for(key, base, device, grant), texts, null=key.calibration.get("null"), fpr=fpr)
+    return _detect(scheme_for(key, base, device, grant, trust_plugin), texts, null=key.calibration.get("null"), fpr=fpr)
 
 
-def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01) -> Detection:
+def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01,
+                 trust_plugin: bool = False) -> Detection:
     """Model-level verdict: sample the suspect model on the prompts and count the texts flagged at `fpr`. Under the
     null each text is flagged with probability fpr, so the model's p-value is the binomial tail P(Binom(n, fpr) >= k).
     Exact for schemes with an exact null (GaussMark); with an empirical null the per-text rate is only fpr up to the
     calibration's sampling error and its prompt distribution, so use the calibration prompts and a large n.
     Needs a calibrated key, unless the scheme has a closed-form p-value."""
     from scipy.stats import binom
-    if not key.calibration.get("null") and build_scheme(key).pvalue(0.0, 1) is None:
+    if not key.calibration.get("null") and build_scheme(key, trust_plugin=trust_plugin).pvalue(0.0, 1) is None:
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")
-    dets = detect(generate(release, prompts, device=device or _auto_device()), key, fpr=fpr)
+    dets = detect(generate(release, prompts, device=device or _auto_device()), key, fpr=fpr, trust_plugin=trust_plugin)
     k, n = sum(bool(d.flagged) for d in dets), len(dets)
     p = float(binom.sf(k - 1, n, fpr))
     return Detection(statistic=float(k), p_value=p, n_tokens=sum(d.n_tokens for d in dets), flagged=p < fpr)

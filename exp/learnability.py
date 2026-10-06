@@ -49,7 +49,7 @@ def main():
 
     tok = load_tokenizer(a.base)
     model = load_release(rel, a.device)
-    sch = build_scheme(load_key(rel))
+    sch = build_scheme(load_key(rel), trust_plugin=True)
     from markweightx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)       # R1/R2 detectors work through the probe
     sch.setup(model, tok, a.device, load_key(rel).params)

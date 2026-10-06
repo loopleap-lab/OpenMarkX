@@ -36,7 +36,17 @@ def _read_texts(path: str) -> list[str]:
     return out
 
 
-PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256"}
+WEIGHT_EDITS = """edits:
+  finetune:steps=800,lr=1e-4,bs=8,seq_len=256,rank=16     LoRA fine-tune on clean text, merged into the weights
+  merge:partner=llama-3.2-1b-instruct,ratio=0.4            linear merge; ratio is the partner's weight
+  prune:sparsity=0.5,method=magnitude                      zero the smallest weights
+  quantize:bits=4                                          bitsandbytes: 8 (int8) or 4 (nf4)
+"""
+TEXT_EDITS = """edits:
+  synonym:ratio=0.3          swap that share of the words for WordNet synonyms
+  word_deletion:ratio=0.3    delete that share of the words
+  context_synonym:ratio=0.3  synonyms chosen by BERT from the context (downloads bert-large-uncased)
+"""
 
 
 def _recipe(path: str | None) -> dict:
@@ -144,38 +154,64 @@ def main(argv=None):
     p.add_argument("--recipe", help="training recipe YAML for teacher-learned schemes (see configs/embed.yaml)")
     p.add_argument("--steps", type=int, help="training steps for teacher-learned schemes (overrides the recipe)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
+    KEY_HELP = "key id (or unique prefix) from `markweightx keys list`, or a release dir"
+    TEXTS_HELP = ".jsonl ({\"text\": ...} per line) or .txt (one text per line)"
+    TRUST_HELP = "run the plugin code a key names (only for keys you or someone you trust made)"
     p = sub.add_parser("calibrate", help="Owner: freeze the null for a key")
-    p.add_argument("key"); p.add_argument("--base"); p.add_argument("--n", type=int, default=500); p.add_argument("--device")
-    p = sub.add_parser("modify", help="Downstream: edit the weights of a release")
-    p.add_argument("release"); p.add_argument("--edit", required=True); p.add_argument("--out"); p.add_argument("--device")
+    p.add_argument("key", help=KEY_HELP)
+    p.add_argument("--base", help="base model whose texts form the null (default: the key's base)")
+    p.add_argument("--n", type=int, default=500, help="null texts to sample (default 500)")
+    p.add_argument("--device", help="default: the first GPU, else CPU")
+    p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
+    p = sub.add_parser("modify", help="Downstream: edit the weights of a release",
+                       formatter_class=argparse.RawDescriptionHelpFormatter, epilog=WEIGHT_EDITS)
+    p.add_argument("release", help="release directory")
+    p.add_argument("--edit", required=True, help="op:param=value,... (see below)")
+    p.add_argument("--out", help="directory for the edited release (default: next to the release)")
+    p.add_argument("--device", help="default: the first GPU, else CPU")
     p = sub.add_parser("generate", help="Downstream: sample texts from a release")
-    p.add_argument("release"); p.add_argument("--prompts", required=True); p.add_argument("--out"); p.add_argument("--device")
-    p = sub.add_parser("rewrite", help="Downstream: reword texts")
-    p.add_argument("texts"); p.add_argument("--edit", required=True); p.add_argument("--out")
+    p.add_argument("release", help="release directory")
+    p.add_argument("--prompts", required=True, help=TEXTS_HELP)
+    p.add_argument("--out", help="output .jsonl (default: stdout)")
+    p.add_argument("--device", help="default: the first GPU, else CPU")
+    p = sub.add_parser("rewrite", help="Downstream: reword texts",
+                       formatter_class=argparse.RawDescriptionHelpFormatter, epilog=TEXT_EDITS)
+    p.add_argument("texts", help=TEXTS_HELP)
+    p.add_argument("--edit", required=True, help="op:param=value (see below)")
+    p.add_argument("--out", help="output .jsonl (default: stdout)")
     p = sub.add_parser("detect", help="Detector: score texts with a key")
-    p.add_argument("texts", help=".jsonl ({\"text\": ...} per line) or .txt (one text per line)")
-    p.add_argument("--key", required=True, help="key id (or unique prefix) from `markweightx keys list`, or a release dir")
+    p.add_argument("texts", help=TEXTS_HELP)
+    p.add_argument("--key", required=True, help=KEY_HELP)
     p.add_argument("--grant", choices=["R0", "R0_AUX", "R1", "R2"], help="what this detector may access "
                    "(default: what the scheme needs); a lower grant is refused")
-    p.add_argument("--fpr", type=float, default=0.01); p.add_argument("--device"); p.add_argument("--out")
+    p.add_argument("--fpr", type=float, default=0.01, help="false-positive rate for the flag (default 0.01)")
+    p.add_argument("--device", help="default: the device the key was made on")
+    p.add_argument("--out", help="output .jsonl (default: stdout)")
+    p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
     p = sub.add_parser("verify", help="Detector: model-level verdict on a suspect release")
-    p.add_argument("release"); p.add_argument("--key", required=True); p.add_argument("--prompts", required=True)
-    p.add_argument("--fpr", type=float, default=0.01); p.add_argument("--device")
+    p.add_argument("release", help="the suspect release directory")
+    p.add_argument("--key", required=True, help=KEY_HELP)
+    p.add_argument("--prompts", required=True, help=TEXTS_HELP + "; the release is sampled on these")
+    p.add_argument("--fpr", type=float, default=0.01, help="per-text flag rate under the null (default 0.01)")
+    p.add_argument("--device", help="default: the first GPU, else CPU")
+    p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
     p = sub.add_parser("describe", help="Researcher: the scheme x primitive matrix")
-    p.add_argument("names", nargs="*")
+    p.add_argument("names", nargs="*", help="scheme names or plugin .py files (default: every registered method)")
     p = sub.add_parser("check", help="Researcher: the adapter checks a scheme must pass")
-    p.add_argument("--adapter", required=True, help="a registered scheme name, or a .py file defining one")
+    p.add_argument("--adapter", required=True, help="a registered scheme name, a .py file, or a module (pkg.mod)")
     p.add_argument("--name", help="scheme name inside the file (default: the file's only scheme)")
     p.add_argument("--base", default="llama-3.2-1b", help="whose tokenizer the tiny test model uses")
     p = sub.add_parser("new-scheme", help="Researcher: write a one-file scheme template")
-    p.add_argument("name"); p.add_argument("--out"); p.add_argument("--force", action="store_true", help="overwrite")
-    p = sub.add_parser("keys", help="the key store")
-    p.add_argument("action", choices=["list", "show"]); p.add_argument("key", nargs="?")
+    p.add_argument("name", help="scheme name, e.g. my-mark")
+    p.add_argument("--out", help="file to write (default: <name>.py)")
+    p.add_argument("--force", action="store_true", help="overwrite an existing file")
+    p = sub.add_parser("keys", help="the key store ($MWX_KEYS)")
+    p.add_argument("action", choices=["list", "show"], help="list every key, or show one (key material hidden)")
+    p.add_argument("key", nargs="?", help=KEY_HELP)
     a = ap.parse_args(argv)
-    from .primitives import AccessDenied
     try:
         _run(a)
-    except (KeyError, ValueError, ImportError, FileNotFoundError, SyntaxError, AccessDenied, NotImplementedError) as e:
+    except (KeyError, ValueError, ImportError, FileNotFoundError, SyntaxError, PermissionError, NotImplementedError) as e:
         if os.environ.get("MWX_DEBUG"):
             raise
         msg = e.args[0] if isinstance(e, KeyError) and e.args else str(e)
@@ -193,7 +229,7 @@ def _run(a):
         rel, key = mwx.embed(a.base, a.watermark, a.out, device=a.device, **recipe)
         print(json.dumps({"release": rel.path, "key": key.commitment}))
     elif a.cmd == "calibrate":
-        k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, n=a.n, device=a.device)
+        k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, n=a.n, device=a.device, trust_plugin=a.trust_plugin)
         print(json.dumps({"key": k.commitment, "null_n": k.calibration["n"]}))
     elif a.cmd == "modify":
         r = mwx.modify(_release(a.release), a.edit, a.out, device=a.device)
@@ -206,29 +242,21 @@ def _run(a):
     elif a.cmd == "detect":
         grant = getattr(mwx.Access, a.grant) if a.grant else None
         texts = _read_texts(a.texts)
-        dets = mwx.detect(texts, _key(a.key), device=a.device, fpr=a.fpr, grant=grant)
+        dets = mwx.detect(texts, _key(a.key), device=a.device, fpr=a.fpr, grant=grant, trust_plugin=a.trust_plugin)
         _write_jsonl(a.out, [{"text": t[:80], "statistic": d.statistic, "p_value": d.p_value, "n_tokens": d.n_tokens,
                               "flagged": d.flagged} for t, d in zip(texts, dets)])
     elif a.cmd == "verify":
-        d = mwx.verify_model(_release(a.release), _key(a.key), _read_texts(a.prompts), device=a.device, fpr=a.fpr)
+        d = mwx.verify_model(_release(a.release), _key(a.key), _read_texts(a.prompts), device=a.device, fpr=a.fpr,
+                             trust_plugin=a.trust_plugin)
         print(json.dumps({"flagged_texts": d.statistic, "p_value": d.p_value, "from_this_key": d.flagged}))
     elif a.cmd == "describe":
         print(mwx.describe(a.names or None))
     elif a.cmd == "check":
         from .check import report, run
-        from .registry import load_plugin, plugin_schemes
         name, source = a.adapter, None
-        if a.adapter.endswith(".py"):
-            if not os.path.exists(a.adapter):
-                raise FileNotFoundError(f"no such file: {a.adapter}")
-            new = plugin_schemes(load_plugin(os.path.abspath(a.adapter)).__name__)
-            if a.name:
-                name = a.name
-            elif len(new) == 1:
-                name = new[0]
-            else:
-                raise SystemExit(f"{a.adapter} registers {', '.join(new) + ': pass --name' if new else 'no scheme: decorate the class with @mwx.register_scheme'}")
-            source = os.path.abspath(a.adapter)
+        if a.adapter.endswith(".py") or "." in a.adapter.split(":")[0]:      # a plugin file or module
+            from .api import scheme_spec
+            name, _, source = scheme_spec(a.adapter + (f":{a.name}" if a.name else ""))
         import contextlib
         with open(os.devnull, "w") as null, contextlib.redirect_stderr(null):   # progress bars, model-load chatter
             rows = run(name, source=source, base=a.base)
@@ -244,7 +272,7 @@ def _run(a):
         open(out, "w").write(TEMPLATE.format(name=a.name, cls=cls, file=out))
         print(f"wrote {out}: edit it, then run `markweightx check --adapter {out}`")
     elif a.cmd == "keys":
-        from .keys import STORE
+        from .keys import PUBLIC_KEY_FIELDS, STORE
         from .types import Key
         if a.action == "list":
             for f in sorted(os.listdir(STORE)) if os.path.isdir(STORE) else []:

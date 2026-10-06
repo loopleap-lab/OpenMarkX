@@ -3,19 +3,23 @@
   C1 declared     imprint and access are declared, kind is one embed can train (distill_logit, or none for EDIT),
                   params are JSON-serializable, and all of it matches configs/watermark/*.yaml
   C2 access       detect() with a grant one level below the scheme's is refused before any model is loaded
-  C3 round trip   a fresh process holding only the key (plugin source included, other RNG seed, no model for R0
+  C3 round trip   a fresh process holding only the key (plugin source included, other RNG and hash seeds, another
+                  working directory, no model for R0
                   schemes) reproduces the scores exactly
-  C4 key          two fresh keys (drawn the way embed draws them) give different scores on the same texts
-  C5 null         schemes with a closed-form pvalue(): over fresh keys, p on human text is not below U(0,1) (KS), its
+  C4 key          fresh keys (drawn the way embed draws them) give different scores; 24 keys give no more than one
+                  identical pair (a small key space repeats)
+  C5 null         schemes with a closed-form pvalue(): over fresh keys, p on human text (short, long, looping) is
+                  not below U(0,1) (KS), its
                   1% and 5% tails are not too heavy (binomial bound), and marked text gets lower p than plain text
   C6 signal       teacher-learned: decoding the tiny model with target_logits() scores clearly above plain decoding;
                   teacher-free: text from the edited tiny model scores clearly above text from the base
-  C7 isolation    teacher-free: the release holds only model files (config, safetensors, tokenizer), none of them
-                  equal to key material in the key store
+  C7 isolation    teacher-free: the release holds only model files (config, safetensors, tokenizer), none equal
+                  to key material in the key store, none containing a value from the key
+  C8 determinism  rebinding the same key gives the same key material and the same scores; setup() leaves the
+                  model and tokenizer it is given unchanged
+  C9 length       not checked here: run exp/learnability.py, whose null is per length bucket in the leaderboard
   C10 positions   teacher-learned: target_logits() on a whole sequence (what training sees) equals target_logits()
                   on each prefix at its last position (what decoding sees)
-  C8 determinism  rebinding the same key gives the same key material and the same scores
-  C9 length       not checked here: run exp/learnability.py, whose null is per length bucket in the leaderboard
 Every check runs against a temporary key store and in its own try/except, so a crash is a FAIL row, not a traceback.
 """
 from __future__ import annotations
@@ -36,6 +40,19 @@ TEXTS = ["The committee met on Tuesday to review the budget for next year and ag
          "thunderstorms by the morning commute; temperatures will stay mild through the weekend.",
          "She opened the old notebook and found her grandmother's recipe for plum cake, written in pencil and "
          "stained with butter, with a note in the margin about using less sugar than the recipe says."]
+# the null set: the three short texts, a long one (length bugs), and a looping one (repeated-token bugs)
+LONG = ("The town council voted on Monday night to approve a new budget for the public library, ending a debate that "
+        "had stretched over three months. Supporters argued that the library had become a second home for students "
+        "after school, for job seekers who needed computers, and for older residents who came for the newspapers and "
+        "the company. Critics said the money would be better spent on roads, pointing to the potholes on Main Street "
+        "and the bridge over the river that has needed repairs since the spring floods. In the end the vote was five "
+        "to two. The budget adds two librarians, extends opening hours on weekends, and replaces the heating system, "
+        "which broke twice last winter. The head librarian thanked the council and said the first change readers "
+        "would notice is the Sunday opening, starting next month. A group of parents who had spoken at every meeting "
+        "said they were relieved, and one of the council members who voted against the plan said she would keep "
+        "pushing for the road repairs in the next budget, which the council will start drafting in January.")
+LOOP = "I think that the answer is yes. " * 12
+NULL_TEXTS = TEXTS + [LONG, LOOP]
 LOWER = {"R0_AUX": "R0", "R1": "R0", "R2": "R1"}
 
 
@@ -116,6 +133,8 @@ def _run(name, source, base, n_null, store_dir):
         return ok
 
     tok = load_tokenizer(base)
+    import copy
+    pristine_tok = copy.deepcopy(tok)                      # C8 compares setup() against an untouched tokenizer
     model = tiny_model(tok)
     new = lambda: get_scheme(name, source=source)
     sch = new()
@@ -172,12 +191,30 @@ def _run(name, source, base, n_null, store_dir):
             s2 = new(); k2 = bind(s2, tiny_model(tok), tok, k2)
         a = [x for x, _ in s1.score_batch(TEXTS)]; b = [x for x, _ in s2.score_batch(TEXTS)]
         state.update(key=k1, scores=a, out=out1)
-        return a != b, f"two fresh keys: {['%.3f' % x for x in a]} vs {['%.3f' % x for x in b]}"
+        if a == b:
+            return False, f"two fresh keys give the same scores: {['%.3f' % x for x in a]}"
+        seen = []                                          # a small key space shows up as repeated scores
+        for i in range(24):
+            s, k, out = fresh(100 + i)
+            if edit:
+                s = new(); bind(s, tiny_model(tok), tok, k); shutil.rmtree(out, ignore_errors=True)
+            seen.append(tuple(round(x, 6) for x, _ in s.score_batch(NULL_TEXTS)))
+        same = sum(seen[i] == seen[j] for i in range(len(seen)) for j in range(i))
+        return same <= 1, (f"24 fresh keys: {len(set(seen))} distinct score vectors"
+                           + ("" if same <= 1 else f", {same} identical pairs: the key space looks small"))
     if not check("C4 key", c4):
         return sorted(rows, key=lambda r: int(r[0].split()[0][1:]))
 
     def c8():
-        s = new(); k = bind(s, tiny_model(tok), tok, dict(state["key"]))
+        import hashlib
+        import copy
+        m0, t0 = tiny_model(tok), copy.deepcopy(pristine_tok)
+        fp = lambda: (hashlib.sha256(b"".join(v.detach().float().numpy().tobytes() for v in m0.state_dict().values()))
+                      .hexdigest(), len(t0), t0.padding_side, t0.truncation_side, str(t0.special_tokens_map))
+        before = fp()
+        s = new(); k = bind(s, m0, t0, dict(state["key"]))
+        if not edit and fp() != before:
+            return False, "setup() changed the model or tokenizer it was given"
         again = [x for x, _ in s.score_batch(TEXTS)]
         same_key = json.dumps(k, sort_keys=True, default=str) == json.dumps(state["key"], sort_keys=True, default=str)
         return same_key and again == state["scores"], "rebinding the key gives the same material and scores" \
@@ -198,11 +235,13 @@ from markweightx.check import tiny_model, bind, TEXTS
 from markweightx.models import load_tokenizer
 torch.manual_seed(987654)                                   # a different global RNG than the parent
 k = Key.open(key_path({k.commitment!r})); tok = load_tokenizer({base!r})
-s = build_scheme(k); bind(s, tiny_model(tok), tok, k.params)
+s = build_scheme(k, trust_plugin=True); bind(s, tiny_model(tok), tok, k.params)
 print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
 """
         r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
-                           env=dict(os.environ, MWX_KEYS=store_dir, TQDM_DISABLE="1"))
+                           env=dict(os.environ, MWX_KEYS=store_dir, TQDM_DISABLE="1",
+                                    PYTHONHASHSEED=str(int(os.environ.get("PYTHONHASHSEED", "0") or 0) + 4711)),
+                           cwd=tempfile.mkdtemp())        # nothing next to the plugin file is importable
         if r.returncode != 0:
             return False, (r.stderr.strip().splitlines() or ["no output"])[-1][:200]
         got = json.loads(r.stdout.strip().splitlines()[-1])
@@ -242,7 +281,7 @@ print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
             if edit:
                 s = new(); bind(s, tiny_model(tok), tok, k)
                 shutil.rmtree(out, ignore_errors=True)
-            ps += [s.pvalue(stat, n) for stat, n in s.score_batch(TEXTS)]
+            ps += [s.pvalue(stat, n) for stat, n in s.score_batch(NULL_TEXTS)]
         ks = kstest(ps, "uniform", alternative="greater").pvalue  # too many small p; a conservative p is allowed
         tails = {a: sum(p < a for p in ps) for a in (0.01, 0.05)}
         heavy = [a for a, c in tails.items() if c > binom.ppf(0.999, len(ps), a)]
@@ -267,8 +306,23 @@ print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
         sha = lambda f: hashlib.sha256(open(f, "rb").read()).hexdigest()
         blobs = {sha(os.path.join(d, f)) for d, _, fs in os.walk(store_dir) for f in fs}
         leaked = [f for f in files if sha(os.path.join(state["out"], f)) in blobs]
-        if extra or leaked:
-            return False, f"not model files: {extra}" if extra else f"files equal to key material: {leaked}"
+        from .keys import PUBLIC_KEY_FIELDS
+        from .registry import resolved_params
+        public = {str(v) for v in resolved_params(sch).values()}   # scheme params are public (release lineage)
+        vals = set()
+
+        def walk(v):
+            if isinstance(v, dict):
+                [walk(x) for k_, x in v.items() if k_ not in PUBLIC_KEY_FIELDS]
+            elif isinstance(v, (list, tuple)):
+                [walk(x) for x in v]
+            elif isinstance(v, (int, str)) and not isinstance(v, bool) and len(str(v)) >= 6 and str(v) not in public:
+                vals.add(str(v))
+        walk(state["key"])
+        found = [f for f in files for v in vals if v.encode() in open(os.path.join(state["out"], f), "rb").read()]
+        if extra or leaked or found:
+            return False, (f"not model files: {extra}" if extra else f"files equal to key material: {leaked}"
+                           if leaked else f"key values written into: {sorted(set(found))}")
         return True, f"the release holds model files only ({len(files)}), none equal to key material"
     check("C7 isolation", c7)
 

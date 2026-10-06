@@ -33,27 +33,69 @@ def register_edit(fn=None, *, name: str | None = None):
     return wrap(fn) if fn is not None else wrap
 
 
+class UntrustedPlugin(PermissionError):
+    """A key names plugin code that this process has not loaded itself."""
+
+
+def _module_digest(module) -> str:
+    import hashlib
+    return hashlib.sha256(open(module.__file__, "rb").read()).hexdigest()[:12]
+
+
+def _file_module_name(path: str) -> str:
+    import hashlib
+    import os
+    h = hashlib.sha256(open(path, "rb").read()).hexdigest()[:12]   # one module per version of the code
+    stem = "".join(ch if ch.isalnum() else "_" for ch in os.path.splitext(os.path.basename(path))[0])
+    return f"mwx_plugin_{stem}_{h}"
+
+
+def plugin_loaded(source: str) -> bool:
+    """Whether this exact plugin code is already imported in this process (so running it again adds no trust)."""
+    import os
+    import sys
+    from .keys import resolve
+    path = resolve(source)
+    if path.endswith(".py"):
+        return os.path.isfile(path) and _file_module_name(path) in sys.modules
+    mod, _, digest = path.partition("@")
+    m = sys.modules.get(mod)
+    return m is not None and (not digest or _module_digest(m) == digest)
+
+
 def load_plugin(source: str):
-    """Import a scheme defined outside the package: a module name ("bob_lab.mark") or a .py file."""
+    """Import a scheme defined outside the package: a .py file, a key-store blob, or a module name. A module name
+    may carry the digest of its file ("bob_lab.mark@1a2b3c4d5e6f"); the import fails if the file has changed."""
     import importlib
     import importlib.util
     import os
     if source.startswith("blob:"):
         from .keys import resolve
         source = resolve(source)
-    if source.endswith(".py") and os.path.exists(source):
-        import hashlib
-        import sys
-        h = hashlib.sha256(open(source, "rb").read()).hexdigest()[:12]   # one module per version of the code
-        name = "mwx_plugin_" + "".join(ch if ch.isalnum() else "_" for ch in os.path.splitext(os.path.basename(source))[0]) + "_" + h
-        if name in sys.modules:
-            return sys.modules[name]
-        spec = importlib.util.spec_from_file_location(name, source)
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[name] = mod                            # so the scheme's source file can be found again
-        spec.loader.exec_module(mod)
+        if not os.path.isfile(source):
+            raise FileNotFoundError(f"plugin source {source} is missing from the key store (was the store copied "
+                                    f"without its blobs/ directory?)")
+    if source.endswith(".py") and not os.path.isfile(source):
+        raise FileNotFoundError(f"plugin source {source} not found (moved or deleted?)")
+    if not source.endswith(".py"):
+        mod_name, _, digest = source.partition("@")
+        try:
+            mod = importlib.import_module(mod_name)
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError(f"plugin module {mod_name!r} cannot be imported: {e}") from None
+        if digest and _module_digest(mod) != digest:
+            raise ValueError(f"plugin module {mod_name} has changed since this key was made "
+                             f"(file digest {_module_digest(mod)}, key expects {digest})")
         return mod
-    return importlib.import_module(source)
+    import sys                                             # a .py file or blob
+    name = _file_module_name(source)
+    if name in sys.modules:
+        return sys.modules[name]
+    spec = importlib.util.spec_from_file_location(name, source)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod                                # so the scheme's source file can be found again
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def scheme_source(cls) -> str | None:
@@ -66,7 +108,7 @@ def scheme_source(cls) -> str | None:
     if mod.startswith("mwx_plugin_") or mod == "__main__":
         f = getattr(sys.modules.get(mod), "__file__", None)
         return os.path.abspath(f) if f else None
-    return mod
+    return f"{mod}@{_module_digest(sys.modules[mod])}"     # an importable module, pinned to its current code
 
 
 def scheme_params(cls) -> list[str]:
@@ -97,6 +139,14 @@ def resolved_params(sch) -> dict:
     return {k: v for k, v in out.items() if k in scheme_params(type(sch))}
 
 
+def _takes_any(cls) -> bool:
+    """The class's own __init__ takes only **params (no named parameters)."""
+    import inspect
+    init = next((k.__dict__["__init__"] for k in cls.__mro__ if "__init__" in k.__dict__), None)
+    ps = [p for p in inspect.signature(init).parameters.values() if p.name != "self"] if init else []
+    return bool(ps) and all(p.kind == p.VAR_KEYWORD for p in ps) and not init.__module__.startswith("markweightx.")
+
+
 def get_scheme(name: str, *, source: str | None = None, **params):
     """A scheme object by name. With source (a plugin file, blob or module), the class comes from that code, so a key
     made with one version of a plugin is never scored with another."""
@@ -114,9 +164,13 @@ def get_scheme(name: str, *, source: str | None = None, **params):
         known = sorted(n for n, c in SCHEMES.items() if not getattr(c, "experimental", False))
         near = difflib.get_close_matches(name, list(SCHEMES), n=1)
         raise KeyError(f"unknown scheme {name!r}{f' (did you mean {near[0]!r}?)' if near else ''}; available: {', '.join(known)} "
-                       f"(or a plugin file: my_scheme.py)")
+                       f"(or a plugin: my_scheme.py, pkg.module)")
     allowed = scheme_params(cls)
     bad = sorted(set(params) - set(allowed))
+    if bad and not cls.__module__.startswith("markweightx.") and _takes_any(cls):
+        import warnings                                    # a plugin that declares no named parameters
+        warnings.warn(f"{name}: parameters {bad} are not named in __init__; passing them through **params")
+        bad = []
     if bad:
         raise ValueError(f"scheme {name!r} has no parameter {', '.join(bad)}; it takes: {', '.join(allowed) or 'none'}")
     return cls(**params)

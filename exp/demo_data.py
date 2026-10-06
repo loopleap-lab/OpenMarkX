@@ -77,7 +77,7 @@ def human_continuation(tok, prompt, n_new=200):
 
 def method_block(rel_dir, tok, pick=None):
     rel = Release.open(rel_dir)
-    sch = build_scheme(load_key(rel)); sch.setup(ConfigOnly(rel.base, "cpu"), tok, "cpu", load_key(rel).params)
+    sch = build_scheme(load_key(rel), trust_plugin=True); sch.setup(ConfigOnly(rel.base, "cpu"), tok, "cpu", load_key(rel).params)
     tx = json.load(open(f"{rel_dir}/texts.json")); res = json.load(open(f"{rel_dir}/result.json"))
     null = sorted(tx["scores"]["null"]); thr = threshold(null, 0.01)
     rows = {}

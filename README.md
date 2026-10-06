@@ -51,7 +51,18 @@ markweightx detect texts.jsonl --key KEY
 markweightx --help                                                       # every command, with examples
 ```
 
-A KEY is a key id from `markweightx keys list`, a unique prefix of one, or a release directory.
+A KEY is a key id from `markweightx keys list`, a unique prefix of one, or a release directory. Text files are
+`.jsonl` (`{"text": ...}` per line) or `.txt` (one text per line).
+
+Edits are written `op:param=value,...`:
+
+| Edit | Params (defaults) |
+|---|---|
+| `finetune` | `steps=800, lr=1e-4, bs=8, seq_len=256, rank=16`: LoRA on clean text, merged into the weights |
+| `merge` | `partner=` (required, e.g. `llama-3.2-1b-instruct`), `ratio=0.4` (the partner's weight) |
+| `prune` | `sparsity=0.5, method=magnitude` |
+| `quantize` | `bits=4` (nf4) or `bits=8` (int8) |
+| `synonym`, `word_deletion`, `context_synonym` | `ratio=0.3` (text edits, used with `rewrite`) |
 
 ## Methods
 
@@ -95,6 +106,9 @@ markweightx keys list
 markweightx keys show KEY        # prints metadata only; key material stays hidden
 ```
 
+Keys made before 2026-10-06 store only the parameters that were typed, not the defaults. Their parameters are part
+of the commitment, so they cannot be filled in afterwards. Such a key detects with the scheme's current defaults.
+
 ## Add your own method
 
 ```bash
@@ -109,19 +123,26 @@ markweightx embed --base llama-3.2-1b --watermark my_mark.py
 |---|---|
 | C1 declared | imprint, access and kind are declared; kind is one `embed` trains; matches `configs/watermark/*.yaml` |
 | C2 access | `detect` with a grant one level too low is refused before any model loads |
-| C3 round trip | a fresh process holding only the key (other RNG seed; no model for R0) reproduces the scores |
-| C4 key | two fresh keys give different scores |
-| C5 null | closed-form p-values are not too small on human text: KS, 1% and 5% tails; marked text gets lower p than plain |
+| C3 round trip | a fresh process holding only the key reproduces the scores (other RNG and hash seeds, another working directory, no model for R0) |
+| C4 key | fresh keys give different scores; 24 keys give at most one identical pair (no tiny key space) |
+| C5 null | closed-form p-values are not too small on short, long and looping human text (KS, 1% and 5% tails); marked text gets lower p than plain |
 | C6 signal | text decoded with the Signal (or from the edited model) scores clearly above plain text |
-| C7 isolation | an EDIT release holds only model files, none equal to key material |
-| C8 determinism | rebinding the same key gives the same material and scores |
+| C7 isolation | an EDIT release holds only model files, none equal to key material or containing a key value |
+| C8 determinism | rebinding the same key gives the same material and scores; `setup` leaves the model and tokenizer unchanged |
 | C10 positions | `target_logits` on a whole sequence (training) equals it on each prefix (decoding) |
 
 C9 (scores across text lengths) needs the real base, so `check` skips it: run `exp/learnability.py` for that.
 `tests/broken/` holds ten adapters with typical bugs, and `tests/test_check.py` makes sure each one fails.
 
-A plugin file is recorded in the key by content hash. A detector therefore always scores with the code that made
-the key, even if the file is edited later.
+Rules for plugins:
+- **One file.** The key stores that file, so it cannot import a sibling module. `check` runs C3 from another
+  directory to catch this. A plugin can also be an installed module (`pkg.mod:name`); the key then pins the
+  module's file digest.
+- **Pinned code.** The key records the code that made it: the content hash of a file, or the digest of a module.
+  A detector scores with exactly that code. An edited module is refused rather than silently used.
+- **Unique names.** A plugin cannot reuse a built-in scheme's name.
+- **Trust.** A key from someone else can name any code. `detect`, `verify_model` and `calibrate` run plugin code
+  only if your process already imported it, or with `trust_plugin=True` (CLI `--trust-plugin`).
 
 ## Experiments and the leaderboard
 

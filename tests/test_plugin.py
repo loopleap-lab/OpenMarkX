@@ -41,7 +41,11 @@ def test_plugin_scheme_round_trip(tmp_path, monkeypatch):
                   scheme_source=scheme_source(type(sch)))
     K.store(key)
     SCHEMES.pop("bob-toy")                                  # a fresh detector process has never imported Bob's file
-    d = mwx.detect(["even even even even", "odd odd odd"], mwx.Key.open(K.key_path(key.commitment)), device="cpu")
+    k2 = mwx.Key.open(K.key_path(key.commitment))
+    from markweightx.registry import UntrustedPlugin
+    with pytest.raises(UntrustedPlugin):                    # a key can name any code: not run without consent
+        mwx.detect(["even"], k2, device="cpu")
+    d = mwx.detect(["even even even even", "odd odd odd"], k2, device="cpu", trust_plugin=True)
     assert d[0].flagged and d[0].p_value == 0.001 and not d[1].flagged
     assert d[0].statistic == pytest.approx(1.25)            # the scheme param travelled with the key
 
@@ -107,3 +111,22 @@ def test_cli_errors_are_one_line(tmp_path):
                  ["check", "--adapter", str(tmp_path / "missing.py")], ["new-scheme", "2 bad name"]):
         r = subprocess.run([sys.executable, "-m", "markweightx.cli", *args], capture_output=True, text=True, env=env)
         assert r.returncode != 0 and "Traceback" not in r.stderr and r.stderr.strip(), (args, r.stderr)
+
+
+def test_module_plugin_is_pinned_to_its_code(tmp_path, monkeypatch):
+    from markweightx.api import scheme_spec
+    from markweightx.registry import load_plugin
+    pkg = tmp_path / "labpkg"; pkg.mkdir(); (pkg / "__init__.py").write_text("")
+    _plugin(pkg / "mark.py", 1)
+    monkeypatch.syspath_prepend(str(tmp_path))
+    name, _, src = scheme_spec("labpkg.mark:versioned")
+    assert name == "versioned" and src.startswith("labpkg.mark@")
+    (pkg / "mark.py").write_text((pkg / "mark.py").read_text() + "\n# edited\n")
+    with pytest.raises(ValueError, match="changed since this key was made"):
+        load_plugin(src)
+
+
+def test_missing_plugin_source_says_so(tmp_path):
+    from markweightx.registry import load_plugin
+    with pytest.raises(FileNotFoundError, match="not found"):
+        load_plugin(str(tmp_path / "gone.py"))

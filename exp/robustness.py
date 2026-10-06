@@ -53,7 +53,7 @@ def main():
     partner = rel.base + "-instruct"                      # merge with the instruct model of the same base
     big = "8b" in rel.base
 
-    sch = build_scheme(load_key(rel))
+    sch = build_scheme(load_key(rel), trust_plugin=True)
     from markweightx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)
     # detectors that run a language model get the base; the others only need its config. On 8B the base used to
