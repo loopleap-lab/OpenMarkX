@@ -52,4 +52,4 @@ def test_unknown_edit_lists_the_options():
 
 def test_describe_shows_primitives_and_access():
     t = mwx.describe(["pro", "markllm-kgw-d", "markllm-sweet-d"])
-    assert "Imprint" in t and "R0+aux" in t and "R1" in t
+    assert "Imprint" in t and "R0_AUX" in t and "R1" in t

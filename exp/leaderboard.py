@@ -37,7 +37,7 @@ def main():
         if os.path.exists(rf):
             for l in open(rf):
                 r = json.loads(l); edits[r["edit"]] = r
-        rows.append({"scheme": res["scheme"], "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
+        rows.append({"scheme": res["scheme"], "scheme_params": res.get("scheme_params"), "note": res.get("label_note"), "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
                      "auc": res["student"]["auc"], "ceiling": (res.get("teacher_decode") or {}).get("tpr_at_1fpr"),
                      "ppl": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": edits})
     rows.sort(key=lambda r: -r["learned"])
@@ -63,6 +63,20 @@ def is_main(name: str) -> bool:
     return c is not None and not getattr(c, "experimental", False)
 
 
+def label(r):
+    """Ablation rows say what actually ran: the parameters that differ from the method's current defaults."""
+    if r.get("main") or not r.get("scheme_params"):
+        return r["scheme"]
+    from markweightx.registry import get_scheme, resolved_params
+    name = r["scheme"].split(":")[0]
+    try:
+        now = resolved_params(get_scheme(name))
+    except (KeyError, ValueError):
+        return r["scheme"]
+    diff = [f"{k}={v}" for k, v in r["scheme_params"].items() if now.get(k) != v] or ["= default"]
+    return name + " (" + ", ".join(diff + ([r["note"]] if r.get("note") else [])) + ")"
+
+
 def table(rows, ppl_base):
     f = lambda x: "–" if x is None else f"{x:.2f}"
     print("| method | learned | ceiling | AUC | " + " | ".join(c for _, c in COLS) + f" | PPL (base {ppl_base:.1f}) | rep4 |")
@@ -73,7 +87,7 @@ def table(rows, ppl_base):
             e = r["edits"].get(k)
             cells.append("" if e is None else f(e["tpr_at_1fpr"]) + ("*" if e.get("rep4", 0) > 0.3 else ""))
         rep = r["edits"].get("none", {}).get("rep4")
-        print(f'| {r["scheme"]} | {f(r["learned"])} | {f(r["ceiling"])} | {r["auc"]:.3f} | ' + " | ".join(cells) +
+        print(f'| {label(r)} | {f(r["learned"])} | {f(r["ceiling"])} | {r["auc"]:.3f} | ' + " | ".join(cells) +
               f' | {r["ppl"]:.1f} | {f(rep)} |')
 
 

@@ -33,7 +33,9 @@ class PRO(Scheme):
 
     def __init__(self, gamma=0.5, delta=1.0, chunk_size=10, transform_loss_weight=1e-3, tau_init=10.0, tau_max=1000.0,
                  co_opt=False, transform_lr=1e-5, transform_wd=0.01, centered_range=False, **params):
-        super().__init__(gamma=gamma, delta=delta, chunk_size=chunk_size, **params)
+        super().__init__(gamma=gamma, delta=delta, chunk_size=chunk_size, transform_loss_weight=transform_loss_weight,
+                         tau_init=tau_init, tau_max=tau_max, co_opt=co_opt, transform_lr=transform_lr,
+                         transform_wd=transform_wd, centered_range=centered_range, **params)
         self.gamma, self.delta, self.chunk = gamma, delta, chunk_size
         self.w_aux, self.tau0, self.tau1, self.co_opt = transform_loss_weight, tau_init, tau_max, co_opt
         # PRO's own run trains the transform at its global lr (1e-5); at the LoRA lr (2e-4) the KL objective flattens the
@@ -78,6 +80,10 @@ class PRO(Scheme):
         return {"gamma": self.gamma, "delta": self.delta, "chunk_size": self.chunk, "transform": tpath, "mapping": mpath}
 
     # ---- training -------------------------------------------------------------------------------------
+    # PRO's training path (watermark_logits on [batch, seq, vocab]) embeds the whole sequence once and adds that one
+    # bias at every position; decoding embeds the prefix. Kept as in the PRO code; check C10 reports it.
+    sequence_signal = "PRO's training adds one bias per sequence, computed from the whole sequence"
+
     def target_logits(self, input_ids, logits):
         self.wm.last_input_ids = None                      # the batch changes every step; never reuse the cache
         return self.wm.watermark_logits(input_ids, logits)

@@ -29,13 +29,19 @@ class MyScheme(mwx.Scheme):
         return logits + self.delta * self.green.to(logits.device, logits.dtype)
 
     def score(self, text):
-        """Score: a statistic (higher = more marked) and the number of tokens scored."""
-        ids = self.tok(text, add_special_tokens=False)["input_ids"]
+        """Score: a statistic (higher = more marked) and the number of tokens scored. Each distinct token counts
+        once: a repeated word would otherwise count many times and make the p-value too small."""
+        ids = set(self.tok(text, add_special_tokens=False)["input_ids"])
         n = max(len(ids), 1)
         g = sum(bool(self.green[i]) for i in ids)
         return (g - 0.5 * n) / (0.25 * n) ** 0.5, len(ids)
 
+    exact_null = True                  # pvalue() below is exact, so detect() uses it even after mwx.calibrate
+
     def pvalue(self, statistic, n_tokens):
-        """Optional closed-form null; return None to use the key's calibrated empirical null."""
+        """Optional closed-form null: P(score >= statistic) for unmarked text. Return None to use the key's
+        calibrated empirical null instead (mwx.calibrate); with exact_null = False a calibrated null takes over."""
         import math
-        return 0.5 * math.erfc(statistic / math.sqrt(2))
+        n = max(n_tokens, 1)
+        g = round(statistic * (0.25 * n) ** 0.5 + 0.5 * n)    # green tokens: Binomial(n, 1/2) without the mark
+        return sum(math.comb(n, k) for k in range(max(g, 0), n + 1)) / 2 ** n

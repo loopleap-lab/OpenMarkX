@@ -18,7 +18,7 @@ from enum import Enum
 class Access(str, Enum):
     """What the detector needs besides the text (appendix §2.5)."""
     R0 = "R0: key + tokenizer"
-    R0_AUX = "R0+aux: key + tokenizer + an auxiliary network"
+    R0_AUX = "R0_AUX: key + tokenizer + an auxiliary network"
     R1 = "R1: the base model, forward passes"
     R2 = "R2: the base model, gradients"
 
@@ -138,7 +138,15 @@ def describe(names: list[str] | None = None) -> str:
     from .registry import SCHEMES, get_scheme
     get_scheme("nowm")
     names = names or sorted(n for n, c in SCHEMES.items() if n != "nowm" and not getattr(c, "experimental", False))
-    rows = [(n, composition(get_scheme(n))) for n in names]
+    rows = []
+    for n in names:
+        if n.endswith(".py"):                                # a plugin file: describe the schemes it registers
+            from .registry import load_plugin, plugin_schemes
+            import os
+            src = os.path.abspath(n)
+            rows += [(m, composition(get_scheme(m, source=src))) for m in plugin_schemes(load_plugin(src).__name__)]
+        else:
+            rows.append((n, composition(get_scheme(n))))
     w = max(len(n) for n, _ in rows)
     cols = ["Class", *PRIMITIVES]
     widths = {c: max(len(c), *(len(r[c]) for _, r in rows)) for c in cols}

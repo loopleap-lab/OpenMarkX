@@ -36,6 +36,9 @@ def _read_texts(path: str) -> list[str]:
     return out
 
 
+PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256"}
+
+
 def _recipe(path: str | None) -> dict:
     if not path:
         return {}
@@ -110,17 +113,22 @@ class {cls}(mwx.Scheme):
         return logits + self.delta * self.green.to(logits.device, logits.dtype)
 
     def score(self, text):
-        """Score: a statistic (higher = more marked) and the number of tokens scored."""
-        ids = self.tok(text, add_special_tokens=False)["input_ids"]
+        """Score: a statistic (higher = more marked) and the number of tokens scored. Each distinct token counts
+        once: a repeated word would otherwise count many times and make the p-value too small."""
+        ids = set(self.tok(text, add_special_tokens=False)["input_ids"])
         n = max(len(ids), 1)
         g = sum(bool(self.green[i]) for i in ids)
         return (g - 0.5 * n) / (0.25 * n) ** 0.5, len(ids)
 
+    exact_null = True                  # pvalue() below is exact, so detect() uses it even after mwx.calibrate
+
     def pvalue(self, statistic, n_tokens):
-        """Optional closed-form null; return None to use the key's calibrated empirical null. A calibrated key's
-        empirical null takes precedence unless the class sets exact_null = True (the closed form is exact)."""
+        """Optional closed-form null: P(score >= statistic) for unmarked text. Return None to use the key's
+        calibrated empirical null instead (mwx.calibrate); with exact_null = False a calibrated null takes over."""
         import math
-        return 0.5 * math.erfc(statistic / math.sqrt(2))
+        n = max(n_tokens, 1)
+        g = round(statistic * (0.25 * n) ** 0.5 + 0.5 * n)    # green tokens: Binomial(n, 1/2) without the mark
+        return sum(math.comb(n, k) for k in range(max(g, 0), n + 1)) / 2 ** n
 '''
 
 
@@ -157,13 +165,26 @@ def main(argv=None):
     p.add_argument("names", nargs="*")
     p = sub.add_parser("check", help="Researcher: the adapter checks a scheme must pass")
     p.add_argument("--adapter", required=True, help="a registered scheme name, or a .py file defining one")
-    p.add_argument("--name", help="scheme name inside the file (default: the file's only new scheme)")
+    p.add_argument("--name", help="scheme name inside the file (default: the file's only scheme)")
+    p.add_argument("--base", default="llama-3.2-1b", help="whose tokenizer the tiny test model uses")
     p = sub.add_parser("new-scheme", help="Researcher: write a one-file scheme template")
     p.add_argument("name"); p.add_argument("--out"); p.add_argument("--force", action="store_true", help="overwrite")
     p = sub.add_parser("keys", help="the key store")
     p.add_argument("action", choices=["list", "show"]); p.add_argument("key", nargs="?")
     a = ap.parse_args(argv)
+    from .primitives import AccessDenied
+    try:
+        _run(a)
+    except (KeyError, ValueError, ImportError, FileNotFoundError, SyntaxError, AccessDenied, NotImplementedError) as e:
+        if os.environ.get("MWX_DEBUG"):
+            raise
+        msg = e.args[0] if isinstance(e, KeyError) and e.args else str(e)
+        if isinstance(e, SyntaxError):
+            msg = f"{e.filename}:{e.lineno}: {e.msg}"
+        raise SystemExit(f"markweightx {a.cmd}: {msg}  (MWX_DEBUG=1 for the traceback)")
 
+
+def _run(a):
     import markweightx as mwx
     if a.cmd == "embed":
         recipe = _recipe(a.recipe)
@@ -195,23 +216,27 @@ def main(argv=None):
         print(mwx.describe(a.names or None))
     elif a.cmd == "check":
         from .check import report, run
-        from .registry import SCHEMES, load_plugin
+        from .registry import load_plugin, plugin_schemes
         name, source = a.adapter, None
         if a.adapter.endswith(".py"):
-            before = set(SCHEMES); load_plugin(os.path.abspath(a.adapter)); new = sorted(set(SCHEMES) - before)
+            if not os.path.exists(a.adapter):
+                raise FileNotFoundError(f"no such file: {a.adapter}")
+            new = plugin_schemes(load_plugin(os.path.abspath(a.adapter)).__name__)
             if a.name:
                 name = a.name
             elif len(new) == 1:
                 name = new[0]
             else:
-                raise SystemExit(f"{a.adapter} registers {new or 'no scheme'}: pass --name")
+                raise SystemExit(f"{a.adapter} registers {', '.join(new) + ': pass --name' if new else 'no scheme: decorate the class with @mwx.register_scheme'}")
             source = os.path.abspath(a.adapter)
         import contextlib
         with open(os.devnull, "w") as null, contextlib.redirect_stderr(null):   # progress bars, model-load chatter
-            rows = run(name, source=source)
+            rows = run(name, source=source, base=a.base)
         print(report(rows))
         sys.exit(1 if any(s == "FAIL" for _, s, _ in rows) else 0)
     elif a.cmd == "new-scheme":
+        if not a.name.replace("-", "_").isidentifier():
+            raise SystemExit(f"{a.name!r} is not a scheme name: use letters, digits, - and _, not starting with a digit")
         out = a.out or a.name.replace("-", "_") + ".py"
         if os.path.exists(out) and not a.force:
             raise SystemExit(f"{out} exists: pass --force to overwrite, or --out another file")
@@ -230,7 +255,7 @@ def main(argv=None):
             if not a.key:
                 raise SystemExit("keys show needs a key id: see `markweightx keys list`")
             k = _key(a.key)
-            safe = {kk: ("<secret>" if kk == "secret" else v) for kk, v in k.params.items()}
+            safe = {kk: (v if kk in PUBLIC_KEY_FIELDS else "<hidden>") for kk, v in k.params.items()}   # key material stays out of logs
             print(json.dumps({"commitment": k.commitment, "scheme": k.scheme, "base": k.base, "params": safe,
                               "scheme_params": k.scheme_params, "calibrated_n": k.calibration.get("n")}, indent=1))
 

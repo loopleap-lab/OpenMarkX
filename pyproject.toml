@@ -3,10 +3,11 @@ name = "markweightx"
 version = "0.1.0"
 description = "An ecosystem for watermarking open-weight LLMs: learn a text watermark into the weights, edit, detect."
 requires-python = ">=3.10"
-dependencies = ["torch", "transformers>=4.46", "peft>=0.13", "datasets", "scikit-learn", "pyyaml"]
+dependencies = ["torch", "transformers>=4.46", "peft>=0.13", "datasets", "scikit-learn", "scipy", "pyyaml"]
 
 [project.scripts]
 markweightx = "markweightx.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: runs markweightx check end to end (minutes)"]

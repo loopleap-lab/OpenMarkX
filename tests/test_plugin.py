@@ -74,3 +74,36 @@ def test_same_plugin_twice_in_one_process(tmp_path):
     f.write_text(open(os.path.join(os.path.dirname(__file__), "..", "examples", "my_scheme.py")).read()
                  .replace('"my-scheme"', '"twice-scheme"'))
     assert scheme_spec(str(f))[0] == scheme_spec(str(f))[0] == "twice-scheme"
+
+
+def _plugin(path, version):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(open(os.path.join(os.path.dirname(__file__), "..", "examples", "my_scheme.py")).read()
+                    .replace('"my-scheme"', '"versioned"').replace("    name = ", f"    version = {version}\n    name = ", 1))
+    return str(path)
+
+
+def test_each_key_scores_with_its_own_plugin_version(tmp_path):
+    from markweightx.registry import get_scheme
+    a = _plugin(tmp_path / "a" / "pl.py", 1)
+    b = _plugin(tmp_path / "b" / "pl.py", 2)              # same file name, same scheme name, edited code
+    assert get_scheme("versioned", source=a).version == 1
+    assert get_scheme("versioned", source=b).version == 2
+    assert get_scheme("versioned", source=a).version == 1   # loading b did not replace a
+
+
+def test_mistyped_scheme_param_is_refused():
+    from markweightx.api import scheme_spec
+    with pytest.raises(ValueError, match="sigmaa"):
+        scheme_spec("gaussmark:sigmaa=0.1")
+    assert scheme_spec("gaussmark:sigma=0.02")[1] == {"sigma": 0.02}
+
+
+def test_cli_errors_are_one_line(tmp_path):
+    import subprocess
+    env = dict(os.environ, PYTHONPATH=os.path.join(os.path.dirname(__file__), ".."), CUDA_VISIBLE_DEVICES="",
+               MWX_KEYS=str(tmp_path / "keys"))
+    for args in (["describe", "nosuch"], ["embed", "--base", "llama-3.2-1b", "--watermark", "gausmark"],
+                 ["check", "--adapter", str(tmp_path / "missing.py")], ["new-scheme", "2 bad name"]):
+        r = subprocess.run([sys.executable, "-m", "markweightx.cli", *args], capture_output=True, text=True, env=env)
+        assert r.returncode != 0 and "Traceback" not in r.stderr and r.stderr.strip(), (args, r.stderr)

@@ -1,14 +1,19 @@
 """markweightx check --adapter: what a scheme must pass before it joins the leaderboard (CPU, tiny Llama, minutes).
 
-  C1 declared     kind, imprint, access and params are declared, JSON-serializable, and match configs/watermark/*.yaml
+  C1 declared     imprint and access are declared, kind is one embed can train (distill_logit, or none for EDIT),
+                  params are JSON-serializable, and all of it matches configs/watermark/*.yaml
   C2 access       detect() with a grant one level below the scheme's is refused before any model is loaded
   C3 round trip   a fresh process holding only the key (plugin source included, other RNG seed, no model for R0
                   schemes) reproduces the scores exactly
   C4 key          two fresh keys (drawn the way embed draws them) give different scores on the same texts
-  C5 null         schemes with a closed-form pvalue(): over fresh keys, p on human text is ~U(0,1) (KS test)
-  C6 signal       teacher-learned: decoding the tiny model with target_logits() scores above plain decoding;
-                  teacher-free: text from the edited tiny model scores above the null
-  C7 isolation    teacher-free: the release directory holds weights only, the key material stays in the key store
+  C5 null         schemes with a closed-form pvalue(): over fresh keys, p on human text is not below U(0,1) (KS), its
+                  1% and 5% tails are not too heavy (binomial bound), and marked text gets lower p than plain text
+  C6 signal       teacher-learned: decoding the tiny model with target_logits() scores clearly above plain decoding;
+                  teacher-free: text from the edited tiny model scores clearly above text from the base
+  C7 isolation    teacher-free: the release holds only model files (config, safetensors, tokenizer), none of them
+                  equal to key material in the key store
+  C10 positions   teacher-learned: target_logits() on a whole sequence (what training sees) equals target_logits()
+                  on each prefix at its last position (what decoding sees)
   C8 determinism  rebinding the same key gives the same key material and the same scores
   C9 length       not checked here: run exp/learnability.py, whose null is per length bucket in the leaderboard
 Every check runs against a temporary key store and in its own try/except, so a crash is a FAIL row, not a traceback.
@@ -18,6 +23,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -40,6 +46,8 @@ def tiny_model(tok):
     cfg = LlamaConfig(vocab_size=len(tok), hidden_size=64, intermediate_size=128, num_hidden_layers=2,
                       num_attention_heads=4, num_key_value_heads=4)
     m = LlamaForCausalLM(cfg).to(torch.bfloat16).float().eval()
+    with torch.no_grad():                                  # logits spread like a real LM's (sd ~5, not 0.16), so a
+        m.lm_head.weight.mul_(30)                          # weight edit actually changes what gets sampled
     torch.random.set_rng_state(g)
     return m
 
@@ -73,15 +81,22 @@ def _yaml_row(name):
     return yaml.safe_load(open(f)) if os.path.exists(f) else None
 
 
-def run(name: str, source: str | None = None, base: str = "llama-3.2-1b", n_null: int = 100) -> list[tuple]:
+RELEASE_FILES = ("config.json", "generation_config.json", "model.safetensors", "model.safetensors.index.json",
+                 "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json")
+
+
+def run(name: str, source: str | None = None, base: str = "llama-3.2-1b", n_null: int = 200) -> list[tuple]:
     from . import keys as K
-    store_dir = tempfile.mkdtemp(prefix="mwx-check-keys-")
-    old_store, K.STORE = K.STORE, store_dir
+    root = tempfile.mkdtemp(prefix="mwx-check-")             # keys and tiny releases; removed when the check ends
+    store_dir = os.path.join(root, "keys")
+    old_store, old_tmp, K.STORE = K.STORE, tempfile.tempdir, store_dir
+    tempfile.tempdir = root
     os.environ["TQDM_DISABLE"] = "1"
     try:
         return _run(name, source, base, n_null, store_dir)
     finally:
-        K.STORE = old_store
+        K.STORE, tempfile.tempdir = old_store, old_tmp
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def _run(name, source, base, n_null, store_dir):
@@ -108,8 +123,8 @@ def _run(name, source, base, n_null, store_dir):
 
     def c1():
         json.dumps(sch.params)
-        ok = sch.kind in ("distill_logit", "distill_sampling", "none") and isinstance(sch.access, Access) \
-            and isinstance(sch.imprint, Imprint)
+        trainable = sch.kind == "none" if sch.imprint == Imprint.EDIT else sch.kind == "distill_logit"   # what embed runs
+        ok = trainable and isinstance(sch.access, Access) and isinstance(sch.imprint, Imprint)
         msg = f"class={kind_of(sch)} imprint={sch.imprint.value} access={sch.access.name} kind={sch.kind}"
         y = _yaml_row(name)
         if y is not None:
@@ -159,7 +174,7 @@ def _run(name, source, base, n_null, store_dir):
         state.update(key=k1, scores=a, out=out1)
         return a != b, f"two fresh keys: {['%.3f' % x for x in a]} vs {['%.3f' % x for x in b]}"
     if not check("C4 key", c4):
-        return rows
+        return sorted(rows, key=lambda r: int(r[0].split()[0][1:]))
 
     def c8():
         s = new(); k = bind(s, tiny_model(tok), tok, dict(state["key"]))
@@ -195,21 +210,6 @@ print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
         return ok, "a fresh process with only the key reproduced the scores" if ok else f"{got} vs {state['scores']}"
     check("C3 round trip", c3)
 
-    def c5():
-        if sch.pvalue(0.0, 100) is None:
-            return None, "empirical null: calibrate with mwx.calibrate on the real base"
-        from scipy.stats import kstest
-        ps = []
-        for i in range(n_null):
-            s, k, _ = fresh(1000 + i)
-            if edit:
-                s = new(); bind(s, tiny_model(tok), tok, k)
-            stat, n = s.score(TEXTS[i % len(TEXTS)])
-            ps.append(s.pvalue(stat, n))
-        p = kstest(ps, "uniform").pvalue
-        return p > 0.01, f"p on human text over {n_null} fresh keys vs U(0,1): KS p = {p:.3f}"
-    check("C5 null", c5)
-
     def c6():
         if edit:
             from transformers import AutoModelForCausalLM
@@ -221,23 +221,78 @@ print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
             s = new(); bind(s, tiny_model(tok), tok, state["key"])
             marked = _decode(tiny_model(tok), tok, s)
             plain = _decode(tiny_model(tok), tok, None)
-        a = sum(x for x, _ in s.score_batch(marked)) / len(marked)
-        b = sum(x for x, _ in s.score_batch(plain)) / len(plain)
-        return a > b, f"mean score, {'edited model' if edit else 'decoded with target_logits'} {a:.3f} vs plain {b:.3f}"
+        state.update(marked=marked, plain=plain)
+        sa = [x for x, _ in s.score_batch(marked)]; sb = [x for x, _ in s.score_batch(plain)]
+        a, b = sum(sa) / len(sa), sum(sb) / len(sb)
+        sd = (sum((x - b) ** 2 for x in sb) / max(len(sb) - 1, 1)) ** 0.5
+        margin = 2 * sd / len(sb) ** 0.5                   # two standard errors of the plain mean
+        return a - b > margin, (f"mean score, {'edited model' if edit else 'decoded with target_logits'} {a:.3f} "
+                                f"vs plain {b:.3f} (needs a gap > {margin:.3f})")
     check("C6 signal", c6)
+
+    def c5():
+        if sch.pvalue(0.0, 100) is None:
+            return None, "empirical null: calibrate with mwx.calibrate on the real base"
+        from scipy.stats import binom, kstest
+        if "marked" not in state:
+            return False, "needs marked text from C6, which failed"
+        ps = []
+        for i in range(n_null):
+            s, k, out = fresh(1000 + i)
+            if edit:
+                s = new(); bind(s, tiny_model(tok), tok, k)
+                shutil.rmtree(out, ignore_errors=True)
+            ps += [s.pvalue(stat, n) for stat, n in s.score_batch(TEXTS)]
+        ks = kstest(ps, "uniform", alternative="greater").pvalue  # too many small p; a conservative p is allowed
+        tails = {a: sum(p < a for p in ps) for a in (0.01, 0.05)}
+        heavy = [a for a, c in tails.items() if c > binom.ppf(0.999, len(ps), a)]
+        if "marked" not in state:
+            return False, "needs marked text from C6, which failed"
+        s = new(); bind(s, tiny_model(tok), tok, state["key"])
+        pm = sum(s.pvalue(x, n) for x, n in s.score_batch(state["marked"])) / len(state["marked"])
+        pp = sum(s.pvalue(x, n) for x, n in s.score_batch(state["plain"])) / len(state["plain"])
+        ok = ks > 0.01 and not heavy and pm < pp
+        return ok, (f"{len(ps)} p-values on human text: KS p = {ks:.3f}, "
+                    f"p<1%: {tails[0.01]}, p<5%: {tails[0.05]}{' (too many)' if heavy else ''}; "
+                    f"mean p marked {pm:.3f} vs plain {pp:.3f}")
+    check("C5 null", c5)
 
     def c7():
         if not edit:
             return None, "teacher-learned: the release is a LoRA adapter; key material never enters it (P1 tests)"
+        import hashlib
         files = [os.path.relpath(os.path.join(d, f), state["out"]) for d, _, fs in os.walk(state["out"]) for f in fs]
-        extra = [f for f in files if not f.startswith("weights" + os.sep)]
-        return not extra, "the release holds weights only" if not extra else f"extra files in the release: {extra}"
+        extra = [f for f in files if not (f.startswith("weights" + os.sep) and os.path.basename(f) in RELEASE_FILES
+                                          or f.startswith("weights" + os.sep) and f.endswith(".safetensors"))]
+        sha = lambda f: hashlib.sha256(open(f, "rb").read()).hexdigest()
+        blobs = {sha(os.path.join(d, f)) for d, _, fs in os.walk(store_dir) for f in fs}
+        leaked = [f for f in files if sha(os.path.join(state["out"], f)) in blobs]
+        if extra or leaked:
+            return False, f"not model files: {extra}" if extra else f"files equal to key material: {leaked}"
+        return True, f"the release holds model files only ({len(files)}), none equal to key material"
     check("C7 isolation", c7)
+
+    def c10():
+        if edit or not hasattr(sch, "target_logits"):
+            return None, "teacher-free: no Signal to compare"
+        if getattr(sch, "sequence_signal", None):
+            return None, f"declared sequence-level Signal: {sch.sequence_signal}"
+        s = new(); m = tiny_model(tok); bind(s, m, tok, state["key"])
+        ids = tok(TEXTS[0], return_tensors="pt")["input_ids"][:, :32]
+        with torch.no_grad():
+            logits = m(ids).logits.float()
+            whole = s.target_logits(ids, logits)
+            worst = 0.0
+            for t in (1, 5, 12, 20, ids.shape[1] - 1):
+                step = s.target_logits(ids[:, :t + 1], logits[:, :t + 1])[:, -1]
+                worst = max(worst, (whole[:, t] - step).abs().max().item())
+        return worst < 1e-4, f"whole sequence vs each prefix: max |difference| = {worst:.2e}"
+    check("C10 positions", c10)
     rows.append(("C9 length", "SKIP", "run exp/learnability.py on the real base"))
-    return rows
+    return sorted(rows, key=lambda r: int(r[0].split()[0][1:]))
 
 
-def _decode(model, tok, scheme, n=6, new_tokens=40):
+def _decode(model, tok, scheme, n=12, new_tokens=40):
     """Sample from the tiny model; with a scheme, apply its Signal (target_logits) at each step."""
     from transformers import LogitsProcessorList
     procs = None

@@ -14,7 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def test_every_finished_scheme_has_a_matching_yaml():
     from write_configs import row
     get_scheme("nowm")
-    names = [n for n, c in SCHEMES.items() if not getattr(c, "experimental", False)]
+    names = [n for n, c in SCHEMES.items() if not getattr(c, "experimental", False) and c.__module__.startswith("markweightx.")]
     for n in names:
         f = os.path.join(ROOT, "configs", "watermark", f"{n}.yaml")
         assert os.path.exists(f), f"missing {f}: run exp/write_configs.py"
@@ -51,3 +51,10 @@ def test_embed_recipe_matches_the_defaults():
     r = _recipe(os.path.join(ROOT, "configs", "embed.yaml"))
     defaults = {k: p.default for k, p in inspect.signature(embed).parameters.items()}
     assert r and all(defaults[k] == v for k, v in r.items()), "configs/embed.yaml drifted from imprint.embed"
+
+
+def test_example_is_the_template():
+    from markweightx.cli import TEMPLATE
+    assert open(os.path.join(ROOT, "examples", "my_scheme.py")).read() == \
+        TEMPLATE.format(name="my-scheme", cls="MyScheme", file="examples/my_scheme.py"), \
+        "examples/my_scheme.py drifted: regenerate with `markweightx new-scheme my-scheme --out examples/my_scheme.py --force`"

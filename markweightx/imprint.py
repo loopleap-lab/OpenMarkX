@@ -37,6 +37,8 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     scheme_params = dict(scheme_params or {})
     sch = get_scheme(scheme, source=scheme_source, **scheme_params)
     src = scheme_source or _src_of(type(sch))             # where a detector will find a plugin scheme again
+    from .registry import resolved_params
+    scheme_params = resolved_params(sch)                   # defaults included: the key must not follow later defaults
     if src is None and not type(sch).__module__.startswith("markweightx."):
         import warnings
         warnings.warn(f"{scheme} is defined in an interactive session: a detector will not find it again from the "

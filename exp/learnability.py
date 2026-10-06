@@ -72,7 +72,8 @@ def main():
         judge = load_base(a.base, a.device) if rel.weights else model
     s_null = [s for s, _ in scores(sch, base_txt)]
     s_stud = [s for s, _ in scores(sch, stud)]
-    res = {"scheme": a.scheme, "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),
+    from markweightx.registry import resolved_params
+    res = {"scheme": a.scheme, "scheme_params": resolved_params(sch), "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),
            "student": summary(s_stud, s_null), "ppl_student": perplexity(judge, tok, prompts, stud),
            "ppl_base": perplexity(judge, tok, prompts, base_txt)}
     if getattr(sch, "exact_null", False):                  # the closed-form null, checked on the real base texts

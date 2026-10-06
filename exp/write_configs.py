@@ -27,6 +27,6 @@ if __name__ == "__main__":
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "watermark")
     os.makedirs(out, exist_ok=True)
     for n, c in sorted(SCHEMES.items()):
-        if not getattr(c, "experimental", False):
+        if not getattr(c, "experimental", False) and c.__module__.startswith("markweightx."):
             yaml.safe_dump(row(n), open(os.path.join(out, f"{n}.yaml"), "w"), sort_keys=False)
             print("wrote", n)

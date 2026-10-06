@@ -38,21 +38,24 @@ def scheme_spec(watermark: str) -> tuple[str, dict, str | None]:
     """'gaussmark:sigma=1e-3' -> (name, params, None); 'my_scheme.py' or 'my_scheme.py:name' or 'pkg.mod:name'
     (with params after a second ':') -> the plugin is imported and its source returned, so the key can find it."""
     import os
-    from .registry import SCHEMES, load_plugin, scheme_source
+    from .registry import load_plugin, plugin_schemes
     head, _, rest = watermark.partition(":")
     if head.endswith(".py") or ("." in head and not os.path.exists(head) and ":" in watermark and "=" not in rest.split(":")[0]):
         src = os.path.abspath(head) if head.endswith(".py") else head
         mod = load_plugin(src).__name__
-        new = sorted(n for n, c in SCHEMES.items() if c.__module__ == mod)   # the schemes this plugin registers
+        new = plugin_schemes(mod)
         name_part, _, params_part = rest.partition(":")
         if "=" in name_part:                                # 'file.py:k=v' (no name given)
             name_part, params_part = "", name_part
         name = name_part or (new[0] if len(new) == 1 else None)
         if not name:
-            raise ValueError(f"{head} registers {new or 'no new scheme'}: say which, e.g. '{head}:<name>'")
-        return name, _spec(f"x:{params_part}")[1] if params_part else {}, src
-    name, params = _spec(watermark)
-    return name, params, None
+            raise ValueError(f"{head} registers {', '.join(new) + ': say which, e.g. ' + repr(head + ':' + new[0]) if new else 'no scheme: decorate the class with @mwx.register_scheme'}")
+        params = _spec(f"x:{params_part}")[1] if params_part else {}
+    else:
+        (name, params), src = _spec(watermark), None
+    from .registry import get_scheme
+    get_scheme(name, source=src, **params)                  # unknown names or parameters fail here, before any work
+    return name, params, src
 
 
 def _spec(s: str | dict) -> tuple[str, dict]:
