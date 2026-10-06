@@ -156,8 +156,10 @@ def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device:
 
 def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01) -> Detection:
     """Model-level verdict: sample the suspect model on the prompts and count the texts flagged at `fpr`. Under the
-    null each text is flagged with probability <= fpr, so the model's p-value is the binomial tail
-    P(Binom(n, fpr) >= k). Needs a calibrated key, unless the scheme has a closed-form p-value."""
+    null each text is flagged with probability fpr, so the model's p-value is the binomial tail P(Binom(n, fpr) >= k).
+    Exact for schemes with an exact null (GaussMark); with an empirical null the per-text rate is only fpr up to the
+    calibration's sampling error and its prompt distribution, so use the calibration prompts and a large n.
+    Needs a calibrated key, unless the scheme has a closed-form p-value."""
     from scipy.stats import binom
     if not key.calibration.get("null") and build_scheme(key).pvalue(0.0, 1) is None:
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")

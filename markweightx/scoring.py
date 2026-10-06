@@ -26,7 +26,7 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01) -> list[Det
     thr = threshold(ns, fpr) if ns else None
     out = []
     for s, n in scores(scheme, texts):
-        if ns:                                              # a calibrated key: its frozen empirical null
+        if ns and not getattr(scheme, "exact_null", False):  # a calibrated key: its frozen empirical null
             p, flagged = empirical_p(s, ns), s > thr
         else:                                               # otherwise the scheme's closed form, if it has one
             p = scheme.pvalue(s, n)

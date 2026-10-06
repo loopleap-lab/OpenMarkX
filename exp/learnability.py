@@ -58,7 +58,8 @@ def main():
     if os.path.exists(base_cache):
         base_txt = json.load(open(base_cache))
     else:
-        base_txt = generate(model, tok, prompts, adapter=False, seed=1)
+        # null texts must come from the unwatermarked base: for an Imprint.EDIT release the model IS the edited one
+        base_txt = generate(load_base(a.base, a.device) if rel.weights else model, tok, prompts, adapter=False, seed=1)
         json.dump(base_txt, open(base_cache, "w"))
     stud = generate(model, tok, prompts, adapter=True, seed=0)
     teach = generate(model, tok, prompts, adapter=False, seed=2, logits_processor=sch.processor()) \

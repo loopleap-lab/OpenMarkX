@@ -17,6 +17,7 @@ class Scheme:
     teacher: str | None = None    # upstream teacher name, when the scheme distills one
     experimental = False          # hyperparameter variants and unfinished schemes: hidden from describe()
     probe = None                  # a primitives.Probe, set by the SDK before detection (R1/R2 schemes use it)
+    exact_null = False            # True: pvalue() is exact, so it is used even when the key carries an empirical null
 
     @property
     def needs_model_to_detect(self) -> bool:
