@@ -55,25 +55,37 @@ class Probe:
     def model(self):
         self._need(Access.R1, "a forward pass of the base model")
         if self._model is None:
+            import torch
             from .models import load_base
-            self._model = load_base(self.base, self.device)
+            # R2 statistics are inner products with small perturbations: load in fp32 so gradients are not bf16-coarse
+            self._model = load_base(self.base, self.device, dtype=torch.float32 if self.grant == Access.R2 else torch.bfloat16)
+            self._model.requires_grad_(False)
         return self._model
 
-    def grad_seq_logprob(self, text: str, wrt: str):
-        """d/dW log p(text) for the parameter named `wrt` (GaussMark's statistic needs this)."""
+    def grad_seq_logprob(self, texts, wrt):
+        """Gradients of log p(text) w.r.t. the named parameter(s), one dict {name: grad} per text (R2 only).
+        Only the requested parameters track gradients, so the cost is one forward + backward per text."""
         import torch
         self._need(Access.R2, "the gradient of the base model")
-        m = self.model() if self._model is not None else None
-        if m is None:
-            self._need(Access.R1, "the base model"); m = self.model()
-        tok = self.tokenizer()
-        ids = tok(text, return_tensors="pt").input_ids.to(self.device)
-        p = dict(m.named_parameters())[wrt]
-        p.requires_grad_(True)
-        lp = -torch.nn.functional.cross_entropy(m(input_ids=ids).logits[0, :-1].float(), ids[0, 1:], reduction="sum")
-        (g,) = torch.autograd.grad(lp, p)
-        p.requires_grad_(False)
-        return g.float(), ids.shape[1] - 1
+        single, names = isinstance(texts, str), [wrt] if isinstance(wrt, str) else list(wrt)
+        texts = [texts] if single else texts
+        m, tok = self.model(), self.tokenizer()
+        params = dict(m.named_parameters())
+        ps = [params[n] for n in names]
+        out = []
+        with torch.enable_grad():
+            for p in ps:
+                p.requires_grad_(True)
+            try:
+                for t in texts:
+                    ids = tok(t, return_tensors="pt").input_ids.to(self.device)
+                    lp = -torch.nn.functional.cross_entropy(m(input_ids=ids).logits[0, :-1].float(), ids[0, 1:], reduction="sum")
+                    gs = torch.autograd.grad(lp, ps)
+                    out.append({n: g.detach() for n, g in zip(names, gs)})
+            finally:
+                for p in ps:
+                    p.requires_grad_(False)
+        return out[0] if single else out
 
 
 class Imprint(str, Enum):

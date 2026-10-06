@@ -20,6 +20,7 @@ import torch
 from markweightx.scoring import repetition, scores, summary
 from markweightx.sampling import generate, perplexity
 from markweightx.models import load_base, load_tokenizer
+from markweightx.api import build_scheme
 from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
@@ -54,7 +55,7 @@ def main():
     bias[green] = a.delta
     prompts = tx["prompts"][: a.n] if a.n else tx["prompts"]
     forged = generate(model, tok, prompts, adapter=False, seed=3, logits_processor=Bias(bias))
-    sch = get_scheme(rel.scheme); sch.setup(model, tok, a.device, load_key(rel).params)
+    sch = build_scheme(load_key(rel)); sch.setup(model, tok, a.device, load_key(rel).params)
     s = [x for x, _ in scores(sch, forged)]
     row = {"edit": "attack:spoof_unigram", **summary(s, tx["scores"]["null"]), "ppl": perplexity(model, tok, prompts, forged),
            "rep4": sum(map(repetition, forged)) / len(forged), "n_green_estimated": len(green)}

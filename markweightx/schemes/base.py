@@ -16,6 +16,7 @@ class Scheme:
     access: Access = Access.R0    # what the detector needs besides the text
     teacher: str | None = None    # upstream teacher name, when the scheme distills one
     experimental = False          # hyperparameter variants and unfinished schemes: hidden from describe()
+    probe = None                  # a primitives.Probe, set by the SDK before detection (R1/R2 schemes use it)
 
     @property
     def needs_model_to_detect(self) -> bool:

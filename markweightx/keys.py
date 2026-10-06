@@ -42,8 +42,19 @@ def resolve(ref):
     return ref
 
 
+def stage(name: str) -> str:
+    """A private path to write key material to before store() files it (e.g. a mapping, a trained policy, a
+    perturbation). Never inside a release directory."""
+    d = os.path.join(STORE, "tmp")
+    os.makedirs(d, exist_ok=True)
+    return os.path.join(d, f"{os.urandom(8).hex()}-{name}")
+
+
 def store(key: Key) -> str:
-    """Move file-valued params into the blob store, then file the key under its commitment."""
+    """Move file-valued params (and a plugin scheme's source file) into the blob store, then file the key under its
+    commitment. Keys are the owner's own artifacts: a key's plugin source is code that detection imports."""
+    if key.scheme_source and key.scheme_source.endswith(".py") and os.path.isfile(key.scheme_source):
+        key.scheme_source = put_blob(key.scheme_source)
     tmp = os.path.join(STORE, "tmp") + os.sep
     for k, v in list(key.params.items()):
         if isinstance(v, str) and not v.startswith("blob:") and os.path.isfile(v):

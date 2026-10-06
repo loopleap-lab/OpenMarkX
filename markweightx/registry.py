@@ -27,6 +27,9 @@ def load_plugin(source: str):
     import importlib
     import importlib.util
     import os
+    if source.startswith("blob:"):
+        from .keys import resolve
+        source = resolve(source)
     if source.endswith(".py") and os.path.exists(source):
         name = "mwx_plugin_" + os.path.splitext(os.path.basename(source))[0]
         spec = importlib.util.spec_from_file_location(name, source)

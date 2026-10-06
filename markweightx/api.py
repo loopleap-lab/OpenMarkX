@@ -54,7 +54,8 @@ def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=D
     from .keys import load_key
     from .paths import RUNS
     name, sparams = _spec(watermark)                       # "gaussmark:sigma=1e-3" -> scheme params
-    rel = _embed(name, base, out or f"{RUNS}/releases/{base}/{name}", device=device or _auto_device(),
+    tag = name + "".join(f"_{k}{v}" for k, v in sparams.items())
+    rel = _embed(name, base, out or f"{RUNS}/releases/{base}/{tag}", device=device or _auto_device(),
                  scheme_params=sparams, **recipe)
     return rel, load_key(rel)
 
@@ -65,12 +66,12 @@ def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, d
     from .sampling import eval_prompts, generate as _gen
     from .keys import store
     from .models import load_base, load_tokenizer
-    from .registry import get_scheme
     device = device or _auto_device()
     tok = load_tokenizer(base); model = load_base(base, device)
     prompts = prompts or eval_prompts(tok, n=n)
     texts = _gen(model, tok, prompts, adapter=False, seed=seed)
-    sch = get_scheme(key.scheme); sch.setup(model, tok, device, key.params)
+    del model
+    sch = scheme_for(key, base, _detect_device(key, device))
     key.calibration = {"base": base, "null": sorted(s for s, _ in scores(sch, texts)), "n": len(texts)}
     store(key)
     return key
@@ -102,7 +103,13 @@ def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> li
     return _rewrite(texts, op, device=device or _auto_device(), **params)
 
 
-def _scheme_for(key: Key, base: str | None, device: str, grant=None):
+def build_scheme(key: Key):
+    """The key's scheme object with its params (and plugin source), not yet bound to a model."""
+    from .registry import get_scheme
+    return get_scheme(key.scheme, source=key.scheme_source, **key.scheme_params)
+
+
+def scheme_for(key: Key, base: str | None, device: str, grant=None):
     """Rebuild the key's scheme for detection, with a Probe at the granted access level (default: what the scheme
     declares). A grant below the scheme's need raises AccessDenied before anything is loaded."""
     from .models import ConfigOnly
@@ -111,7 +118,7 @@ def _scheme_for(key: Key, base: str | None, device: str, grant=None):
     base = base or key.base or key.calibration.get("base")
     if not base:
         raise ValueError("detect needs the base model name: pass base=, or use a key made by mwx.embed")
-    sch = get_scheme(key.scheme, source=key.scheme_source, **key.scheme_params)
+    sch = build_scheme(key)
     grant = grant or sch.access
     if ORDER[sch.access.name] > ORDER[grant.name]:
         raise AccessDenied(f"{key.scheme} detects with {sch.access.value}; granted only {grant.value}")
@@ -144,16 +151,17 @@ def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device:
     from .scoring import detect as _detect
     texts = [texts] if isinstance(texts, str) else texts
     device = _detect_device(key, device)
-    return _detect(_scheme_for(key, base, device, grant), texts, null=key.calibration.get("null"), fpr=fpr)
+    return _detect(scheme_for(key, base, device, grant), texts, null=key.calibration.get("null"), fpr=fpr)
 
 
-def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE) -> Detection:
-    """Model-level verdict: sample the suspect model on the prompts, combine the per-text empirical p-values with
-    Fisher's method into one p-value for the model."""
-    if not key.calibration.get("null"):
-        raise ValueError("verify_model needs a calibrated key (mwx.calibrate)")
-    dets = detect(generate(release, prompts, device=device or _auto_device()), key)
-    stat = -2 * sum(math.log(d.p_value) for d in dets)
-    from scipy.stats import chi2
-    p = float(chi2.sf(stat, 2 * len(dets)))
-    return Detection(statistic=stat, p_value=p, n_tokens=sum(d.n_tokens for d in dets), flagged=p < 0.01)
+def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE, fpr=0.01) -> Detection:
+    """Model-level verdict: sample the suspect model on the prompts and count the texts flagged at `fpr`. Under the
+    null each text is flagged with probability <= fpr, so the model's p-value is the binomial tail
+    P(Binom(n, fpr) >= k). Needs a calibrated key, unless the scheme has a closed-form p-value."""
+    from scipy.stats import binom
+    if not key.calibration.get("null") and build_scheme(key).pvalue(0.0, 1) is None:
+        raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")
+    dets = detect(generate(release, prompts, device=device or _auto_device()), key, fpr=fpr)
+    k, n = sum(bool(d.flagged) for d in dets), len(dets)
+    p = float(binom.sf(k - 1, n, fpr))
+    return Detection(statistic=float(k), p_value=p, n_tokens=sum(d.n_tokens for d in dets), flagged=p < fpr)

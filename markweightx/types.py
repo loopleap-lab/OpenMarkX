@@ -70,7 +70,9 @@ class Key:
     def commitment(self) -> str:
         """sha256(nonce || scheme || params). The random nonce keeps low-entropy params from being brute-forced from
         the public commitment; files in params are referenced by content hash ("blob:<sha256>"), not by path."""
-        return hashlib.sha256((self.nonce + _canon({"scheme": self.scheme, "params": self.params})).encode()).hexdigest()
+        return hashlib.sha256((self.nonce + _canon({"scheme": self.scheme, "params": self.params,
+                                                    "scheme_params": self.scheme_params,
+                                                    "scheme_source": self.scheme_source})).encode()).hexdigest()
 
     def save(self, path: str) -> str:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)

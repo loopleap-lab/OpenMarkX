@@ -19,6 +19,7 @@ from markweightx.scoring import repetition, scores, summary
 from markweightx.edits import modify, rewrite
 from markweightx.sampling import eval_prompts, generate, perplexity
 from markweightx.models import ConfigOnly, load_base, load_release, load_tokenizer
+from markweightx.api import build_scheme
 from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
@@ -52,7 +53,9 @@ def main():
     partner = rel.base + "-instruct"                      # merge with the instruct model of the same base
     big = "8b" in rel.base
 
-    sch = get_scheme(rel.scheme)
+    sch = build_scheme(load_key(rel))
+    from markweightx.primitives import Probe
+    sch.probe = Probe(rel.base, a.device, sch.access)
     # detectors that run a language model get the base; the others only need its config. On 8B the base used to
     # judge perplexity is loaded per edit and freed, so it never sits next to the edited model on one card.
     resident = load_base(rel.base, a.device) if (sch.needs_model_to_detect or not big) else None

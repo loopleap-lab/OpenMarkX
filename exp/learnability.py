@@ -17,8 +17,9 @@ import torch
 from markweightx.scoring import scores, summary
 from markweightx.imprint import embed
 from markweightx.sampling import eval_prompts, generate, perplexity
-from markweightx.models import load_release, load_tokenizer
+from markweightx.models import load_base, load_release, load_tokenizer
 from markweightx.paths import RUNS
+from markweightx.api import build_scheme
 from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
@@ -37,15 +38,21 @@ def main():
     ap.add_argument("--skip_embed", action="store_true")
     ap.add_argument("--bos", action="store_true", help="start every training chunk with BOS")
     a = ap.parse_args()
-    out = f"{RUNS}/{a.tag}/{a.base}/{a.scheme}"
+    from markweightx.api import _spec
+    sname, sparams = _spec(a.scheme)                       # "gaussmark:sigma=1e-3" -> name + scheme params
+    out = f"{RUNS}/{a.tag}/{a.base}/" + sname + "".join(f"_{k}{v}" for k, v in sparams.items())
     t0 = time.time()
-    rel = Release.open(out) if a.skip_embed else embed(a.scheme, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos)
+    rel = Release.open(out) if a.skip_embed else embed(sname, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos,
+                                                     scheme_params=sparams)
     t_embed = time.time() - t0
     torch.cuda.empty_cache()
 
     tok = load_tokenizer(a.base)
     model = load_release(rel, a.device)
-    sch = get_scheme(a.scheme); sch.setup(model, tok, a.device, load_key(rel).params)
+    sch = build_scheme(load_key(rel))
+    from markweightx.primitives import Probe
+    sch.probe = Probe(rel.base, a.device, sch.access)       # R1/R2 detectors work through the probe
+    sch.setup(model, tok, a.device, load_key(rel).params)
     prompts = eval_prompts(tok, n=a.n)
     base_cache = f"{RUNS}/{a.tag}/{a.base}/base_texts_n{a.n}.json"
     if os.path.exists(base_cache):
@@ -56,14 +63,17 @@ def main():
     stud = generate(model, tok, prompts, adapter=True, seed=0)
     teach = generate(model, tok, prompts, adapter=False, seed=2, logits_processor=sch.processor()) \
         if sch.kind == "distill_logit" else None
+    # quality is judged by the unwatermarked base: the release with its adapter off, or the base itself for
+    # Imprint.EDIT releases (their weights are the edited model, there is no adapter to switch off)
+    judge = load_base(a.base, a.device) if rel.weights else model
     s_null = [s for s, _ in scores(sch, base_txt)]
     s_stud = [s for s, _ in scores(sch, stud)]
     res = {"scheme": a.scheme, "teacher": sch.teacher, "base": a.base, "n": len(prompts), "embed_sec": round(t_embed),
-           "student": summary(s_stud, s_null), "ppl_student": perplexity(model, tok, prompts, stud),
-           "ppl_base": perplexity(model, tok, prompts, base_txt)}
+           "student": summary(s_stud, s_null), "ppl_student": perplexity(judge, tok, prompts, stud),
+           "ppl_base": perplexity(judge, tok, prompts, base_txt)}
     if teach is not None:
         s_teach = [s for s, _ in scores(sch, teach)]
-        res["teacher_decode"] = summary(s_teach, s_null); res["ppl_teacher"] = perplexity(model, tok, prompts, teach)
+        res["teacher_decode"] = summary(s_teach, s_null); res["ppl_teacher"] = perplexity(judge, tok, prompts, teach)
     res["total_sec"] = round(time.time() - t0)
     print(json.dumps(res, indent=1))
     json.dump(res, open(f"{out}/result.json", "w"), indent=1)

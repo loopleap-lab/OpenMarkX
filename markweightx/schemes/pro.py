@@ -58,8 +58,8 @@ class PRO(Scheme):
             import random
             secret = new_secret()
             rng = random.Random(secret)
-            os.makedirs(os.path.join(STORE, "tmp"), exist_ok=True)
-            mpath = os.path.join(STORE, "tmp", f"mapping-{secret}.json")
+            from ..keys import stage
+            mpath = stage("mapping.json")
             json.dump([rng.randrange(300) for _ in range(model.config.vocab_size)], open(mpath, "w"))
             key = {"mapping": mpath}
         tpath = resolve(key.get("transform")) or os.path.join(PRO_CODE, "watermarks/pro/transform_model_cbert.pth")
@@ -118,9 +118,8 @@ class PRO(Scheme):
     def save(self, out, key):
         """The trained policy is part of the key: write it outside the release (the key store takes it from there)."""
         if self.co_opt:
-            from ..keys import STORE
-            os.makedirs(os.path.join(STORE, "tmp"), exist_ok=True)
-            p = os.path.join(STORE, "tmp", f"transform-{os.urandom(8).hex()}.pt")
+            from ..keys import stage
+            p = stage("transform.pt")
             torch.save(self.wm.transform_model.state_dict(), p)
             key = {**key, "transform": p, "spread": self.spread[-1][1] if self.spread else None}
         return key

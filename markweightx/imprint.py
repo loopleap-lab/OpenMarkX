@@ -32,13 +32,18 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
           bos: bool = False, scheme_params: dict | None = None):
     os.makedirs(out, exist_ok=True)
     tok = load_tokenizer(base)
-    model = load_base(base, device)
     from .registry import scheme_source
+    from .primitives import Imprint
     scheme_params = dict(scheme_params or {})
     sch = get_scheme(scheme, **scheme_params)
     src = scheme_source(type(sch))
+    if src is None and not type(sch).__module__.startswith("markweightx."):
+        import warnings
+        warnings.warn(f"{scheme} is defined in an interactive session: a detector will not find it again from the "
+                      "key. Put the scheme in a .py file (or an importable module).")
+    # small weight edits must not be rounded to bf16: Imprint.EDIT schemes get an fp32 model
+    model = load_base(base, device, dtype=torch.float32 if sch.imprint == Imprint.EDIT else torch.bfloat16)
     key = sch.setup(model, tok, device, key)
-    from .primitives import Imprint
     if sch.imprint == Imprint.EDIT:                        # teacher-free: the scheme writes the weights itself
         from .types import Key
         from .keys import store
@@ -47,7 +52,8 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         k = Key(scheme=scheme, params=sch.save(out, key), base=base, scheme_params=scheme_params, scheme_source=src)
         store(k)
         return Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, weights=weights,
-                       lineage=[vars(Step("embed", {"scheme": scheme, "imprint": "edit", "base": base}))]).save()
+                       lineage=[vars(Step("embed", {"scheme": scheme, "imprint": "edit", "base": base,
+                                                    "scheme_params": scheme_params}))]).save()
     if sch.kind != "distill_logit":
         raise NotImplementedError(f"{scheme}: recipe {sch.kind} is not implemented yet")
     from peft import LoraConfig, get_peft_model
