@@ -1,7 +1,7 @@
 """GaussMark (Block et al., 2025): a teacher-free watermark written straight into the weights.
 
 Imprint.edit: add xi ~ N(0, sigma^2 I), drawn from the key's secret, to one weight matrix W, and save the release in
-              bf16 (the format users load). The realized change delta = W_saved - W_base goes into the key store.
+              the base checkpoint's dtype (bf16 for Llama: the format users load). The realized change delta = W_saved - W_base goes into the key store.
 Score (R2):   g = d/dW log p_theta0(y) at the base weights; psi = <delta, g> / (sigma_eff * ||g||), with
               sigma_eff = ||delta|| / sqrt(numel). For text that does not depend on delta, psi ~ N(0, 1) up to the
               bf16 rounding in delta (delta is Gaussian and independent of g), so the p-value is closed form. Text
@@ -117,7 +117,8 @@ class GaussMark(Scheme):
                                  "hash mismatch): load the same base snapshot")
             d = self._realize(base, dtype)
             if self._sha(d) != self.delta_sha:
-                raise ValueError("rebuilt delta does not match the key (different torch RNG?)")
+                raise ValueError(f"rebuilt delta does not match the key: the key says the release is stored in "
+                                 f"{self.dtype}; keys made before the dtype was recorded need exp/migrate_keys.py")
             self._delta = d.to(W.device)
             self._sigma_eff = d.norm().item() / math.sqrt(d.numel())
         return self._delta

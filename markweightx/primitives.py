@@ -105,13 +105,27 @@ class Imprint(str, Enum):
 PRIMITIVES = ("Key", "Signal", "Imprint", "Perturb", "Probe", "Score")
 
 
+def kind_of(scheme) -> str:
+    """The two classes of the appendix (§0, §1.1): teacher-learned schemes learn a teacher into the weights through
+    Signal (the teacher comes from MarkLLM, or the scheme owns it, like PRO's policy); teacher-free schemes write the
+    weights directly and never use Signal (GaussMark)."""
+    return "teacher-free" if getattr(scheme, "imprint", Imprint.DISTILL) == Imprint.EDIT else "teacher-learned"
+
+
 def composition(scheme) -> dict:
     """Which primitives a scheme uses, and how (one row of the Scheme x Primitive matrix, appendix §1.3)."""
     teacher = getattr(scheme, "teacher", None)
     imprint = getattr(scheme, "imprint", Imprint.DISTILL)
+    if teacher:
+        key = "teacher config + secret"
+    elif imprint == Imprint.EDIT:
+        key = "secret -> weight perturbation"
+    else:
+        key = "secret -> scheme's own teacher"
     return {
-        "Key": "teacher config + secret" if teacher else "secret (scheme-owned)",
-        "Signal": (f"MarkLLM {teacher}" if teacher else "scheme-owned policy") if imprint == Imprint.DISTILL else "—",
+        "Class": kind_of(scheme),
+        "Key": key,
+        "Signal": (f"MarkLLM {teacher}" if teacher else "scheme's own teacher") if imprint == Imprint.DISTILL else "— (none)",
         "Imprint": imprint.value if isinstance(imprint, Imprint) else str(imprint),
         "Perturb": "FPL step in training" if getattr(scheme, "booster", None) else "attacks only",
         "Probe": scheme.access.value.split(":")[0] if hasattr(scheme, "access") else "R0",
@@ -126,7 +140,7 @@ def describe(names: list[str] | None = None) -> str:
     names = names or sorted(n for n, c in SCHEMES.items() if n != "nowm" and not getattr(c, "experimental", False))
     rows = [(n, composition(get_scheme(n))) for n in names]
     w = max(len(n) for n, _ in rows)
-    cols = list(PRIMITIVES)
+    cols = ["Class", *PRIMITIVES]
     widths = {c: max(len(c), *(len(r[c]) for _, r in rows)) for c in cols}
     head = "scheme".ljust(w) + "  " + "  ".join(c.ljust(widths[c]) for c in cols)
     lines = [head, "-" * len(head)]
