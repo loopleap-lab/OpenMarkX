@@ -340,5 +340,8 @@ class MarkLLMDistill(Scheme):
         return s, n
 
 
+NOT_INCLUDED = {"EXPGumbel"}    # upstream builds a (V·prefix)×V noise table: 128 GB at V = 128k
+
 for _k in TEACHERS:
-    register_scheme(type(f"MarkLLM_{_k}", (MarkLLMDistill,), {"teacher": _k, "name": f"markllm-{_k.lower()}-d"}))
+    register_scheme(type(f"MarkLLM_{_k}", (MarkLLMDistill,), {"teacher": _k, "name": f"markllm-{_k.lower()}-d",
+                                                              "experimental": _k in NOT_INCLUDED}))

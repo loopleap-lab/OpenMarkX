@@ -26,8 +26,13 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01) -> list[Det
     thr = threshold(ns, fpr) if ns else None
     out = []
     for s, n in scores(scheme, texts):
-        out.append(Detection(statistic=s, p_value=empirical_p(s, ns) if ns else None, n_tokens=n,
-                             flagged=(s > thr) if thr is not None else None))
+        closed = scheme.pvalue(s, n)                        # a closed-form null, when the scheme has one
+        if closed is not None:
+            p, flagged = closed, closed < fpr
+        else:
+            p = empirical_p(s, ns) if ns else None
+            flagged = (s > thr) if thr is not None else None
+        out.append(Detection(statistic=s, p_value=p, n_tokens=n, flagged=flagged))
     return out
 
 

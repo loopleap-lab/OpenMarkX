@@ -44,9 +44,12 @@ def resolve(ref):
 
 def store(key: Key) -> str:
     """Move file-valued params into the blob store, then file the key under its commitment."""
+    tmp = os.path.join(STORE, "tmp") + os.sep
     for k, v in list(key.params.items()):
         if isinstance(v, str) and not v.startswith("blob:") and os.path.isfile(v):
             key.params[k] = put_blob(v)
+            if os.path.abspath(v).startswith(tmp):        # staged key material: the blob is now the only copy
+                os.remove(v)
     return key.save(key_path(key.commitment))
 
 

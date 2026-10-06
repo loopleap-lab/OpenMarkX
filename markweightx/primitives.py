@@ -23,6 +23,59 @@ class Access(str, Enum):
     R2 = "R2: the base model, gradients"
 
 
+ORDER = {"R0": 0, "R0_AUX": 1, "R1": 2, "R2": 3}
+
+
+class AccessDenied(PermissionError):
+    pass
+
+
+class Probe:
+    """What a detector may touch, granted at a level. Detectors ask the probe instead of holding a model, so a
+    detector that needs more than it was granted fails loudly instead of quietly loading weights.
+
+      probe.tokenizer()                 always
+      probe.model()                     R1 and up: the base model (no gradients)
+      probe.grad_seq_logprob(text, wrt) R2: gradient of the text's log-likelihood w.r.t. a named parameter
+    """
+
+    def __init__(self, base: str, device: str, grant: "Access"):
+        self.base, self.device, self.grant = base, device, grant
+        self._tok = self._model = None
+
+    def _need(self, level: "Access", what: str):
+        if ORDER[level.name] > ORDER[self.grant.name]:
+            raise AccessDenied(f"{what} needs {level.value}; the detector was granted {self.grant.value}")
+
+    def tokenizer(self):
+        from .models import load_tokenizer
+        self._tok = self._tok or load_tokenizer(self.base)
+        return self._tok
+
+    def model(self):
+        self._need(Access.R1, "a forward pass of the base model")
+        if self._model is None:
+            from .models import load_base
+            self._model = load_base(self.base, self.device)
+        return self._model
+
+    def grad_seq_logprob(self, text: str, wrt: str):
+        """d/dW log p(text) for the parameter named `wrt` (GaussMark's statistic needs this)."""
+        import torch
+        self._need(Access.R2, "the gradient of the base model")
+        m = self.model() if self._model is not None else None
+        if m is None:
+            self._need(Access.R1, "the base model"); m = self.model()
+        tok = self.tokenizer()
+        ids = tok(text, return_tensors="pt").input_ids.to(self.device)
+        p = dict(m.named_parameters())[wrt]
+        p.requires_grad_(True)
+        lp = -torch.nn.functional.cross_entropy(m(input_ids=ids).logits[0, :-1].float(), ids[0, 1:], reduction="sum")
+        (g,) = torch.autograd.grad(lp, p)
+        p.requires_grad_(False)
+        return g.float(), ids.shape[1] - 1
+
+
 class Imprint(str, Enum):
     DISTILL = "distill"      # learn a Signal into LoRA weights (logit distillation)
     EDIT = "edit"            # write the mark into the weights directly (teacher-free)
@@ -49,7 +102,7 @@ def describe(names: list[str] | None = None) -> str:
     """The Scheme x Primitive matrix as a text table."""
     from .registry import SCHEMES, get_scheme
     get_scheme("nowm")
-    names = names or sorted(n for n in SCHEMES if n != "nowm")
+    names = names or sorted(n for n, c in SCHEMES.items() if n != "nowm" and not getattr(c, "experimental", False))
     rows = [(n, composition(get_scheme(n))) for n in names]
     w = max(len(n) for n, _ in rows)
     cols = list(PRIMITIVES)

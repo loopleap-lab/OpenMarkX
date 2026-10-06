@@ -53,7 +53,9 @@ def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=D
     from .imprint import embed as _embed
     from .keys import load_key
     from .paths import RUNS
-    rel = _embed(watermark, base, out or f"{RUNS}/releases/{base}/{watermark}", device=device or _auto_device(), **recipe)
+    name, sparams = _spec(watermark)                       # "gaussmark:sigma=1e-3" -> scheme params
+    rel = _embed(name, base, out or f"{RUNS}/releases/{base}/{name}", device=device or _auto_device(),
+                 scheme_params=sparams, **recipe)
     return rel, load_key(rel)
 
 
@@ -79,7 +81,7 @@ def modify(release: Release, edits: str | dict, out: str | None = None, *, devic
     from .edits import modify as _modify
     op, params = _spec(edits)
     if op == "merge" and "partner" not in params:
-        params["partner"] = release.base + "-instruct"
+        raise ValueError("merge needs an explicit partner model, e.g. 'merge:partner=llama-3.2-1b-instruct,ratio=0.4'")
     if op == "quantize":
         params.setdefault("bits", 4)
     tag = op + "".join(f"_{k}{v}" for k, v in params.items() if k != "partner")
@@ -100,15 +102,23 @@ def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> li
     return _rewrite(texts, op, device=device or _auto_device(), **params)
 
 
-def _scheme_for(key: Key, base: str | None, device: str):
-    from .models import ConfigOnly, load_base, load_tokenizer
+def _scheme_for(key: Key, base: str | None, device: str, grant=None):
+    """Rebuild the key's scheme for detection, with a Probe at the granted access level (default: what the scheme
+    declares). A grant below the scheme's need raises AccessDenied before anything is loaded."""
+    from .models import ConfigOnly
+    from .primitives import ORDER, AccessDenied, Probe
     from .registry import get_scheme
-    base = base or key.calibration.get("base")
+    base = base or key.base or key.calibration.get("base")
     if not base:
-        raise ValueError("detect needs the base name: calibrate the key first, or pass base=")
-    sch = get_scheme(key.scheme)
-    model = load_base(base, device) if sch.needs_model_to_detect else ConfigOnly(base, device)
-    sch.setup(model, load_tokenizer(base), device, key.params)
+        raise ValueError("detect needs the base model name: pass base=, or use a key made by mwx.embed")
+    sch = get_scheme(key.scheme, source=key.scheme_source, **key.scheme_params)
+    grant = grant or sch.access
+    if ORDER[sch.access.name] > ORDER[grant.name]:
+        raise AccessDenied(f"{key.scheme} detects with {sch.access.value}; granted only {grant.value}")
+    probe = Probe(base, device, grant)
+    model = probe.model() if sch.needs_model_to_detect else ConfigOnly(base, device)
+    sch.probe = probe
+    sch.setup(model, probe.tokenizer(), device, key.params)
     return sch
 
 
@@ -128,13 +138,13 @@ def _detect_device(key: Key, device: str | None) -> str:
 
 
 def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device: str | None = None,
-           fpr=0.01) -> list[Detection]:
+           fpr=0.01, grant=None) -> list[Detection]:
     """Score texts with the key alone (plus the base model for detectors that need one). With a calibrated key,
     p-values and flags come from the frozen null. The device defaults to the one the key was made on."""
     from .scoring import detect as _detect
     texts = [texts] if isinstance(texts, str) else texts
     device = _detect_device(key, device)
-    return _detect(_scheme_for(key, base or key.base, device), texts, null=key.calibration.get("null"), fpr=fpr)
+    return _detect(_scheme_for(key, base, device, grant), texts, null=key.calibration.get("null"), fpr=fpr)
 
 
 def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAULT_DEVICE) -> Detection:

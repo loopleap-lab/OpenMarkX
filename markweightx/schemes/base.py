@@ -15,6 +15,7 @@ class Scheme:
     imprint: Imprint = Imprint.DISTILL
     access: Access = Access.R0    # what the detector needs besides the text
     teacher: str | None = None    # upstream teacher name, when the scheme distills one
+    experimental = False          # hyperparameter variants and unfinished schemes: hidden from describe()
 
     @property
     def needs_model_to_detect(self) -> bool:
@@ -61,7 +62,25 @@ class Scheme:
     def score_batch(self, texts) -> list[tuple[float, int]]:
         return [self.score(t) for t in texts]
 
+    def pvalue(self, statistic: float, n_tokens: int) -> float | None:
+        """A closed-form p-value under the null, if the scheme has one; None = use the key's empirical null."""
+        return None
+
+    # ---- Imprint.EDIT (teacher-free schemes) ----------------------------------------------------
+    def imprint_edit(self, model, tokenizer, out: str) -> str | None:
+        """Write the mark into `model`'s weights directly and save the edited model under `out/weights`; return
+        that directory (None = the release is the base itself). Key material (e.g. the perturbation) must be
+        returned through save() as a file outside `out`, so it lands in the key store, never in the release."""
+        raise NotImplementedError(f"{self.name}: imprint=EDIT schemes must implement imprint_edit()")
+
 
 class NoWatermark(Scheme):
+    """The unwatermarked base: a control row in every comparison."""
     name, kind = "nowm", "none"
     imprint = Imprint.EDIT
+
+    def imprint_edit(self, model, tokenizer, out):
+        return None
+
+    def score(self, text):
+        return 0.0, len(self.tok(text, add_special_tokens=False)["input_ids"])

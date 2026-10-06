@@ -29,11 +29,14 @@ def kl_teacher_student(t_logits, s_logits):
 
 def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_len=128, lr=2e-4, rank=64,
           device="cuda:0", key: dict | None = None, data: str | None = None, save_every=500, seed=0, log_every=10,
-          bos: bool = False):
+          bos: bool = False, scheme_params: dict | None = None):
     os.makedirs(out, exist_ok=True)
     tok = load_tokenizer(base)
     model = load_base(base, device)
-    sch = get_scheme(scheme)
+    from .registry import scheme_source
+    scheme_params = dict(scheme_params or {})
+    sch = get_scheme(scheme, **scheme_params)
+    src = scheme_source(type(sch))
     key = sch.setup(model, tok, device, key)
     from .primitives import Imprint
     if sch.imprint == Imprint.EDIT:                        # teacher-free: the scheme writes the weights itself
@@ -41,7 +44,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         from .keys import store
         os.makedirs(out, exist_ok=True)
         weights = sch.imprint_edit(model, tok, out)
-        k = Key(scheme=scheme, params={**sch.save(out, key), "rng_device": str(device).split(":")[0]}, base=base)
+        k = Key(scheme=scheme, params=sch.save(out, key), base=base, scheme_params=scheme_params, scheme_source=src)
         store(k)
         return Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, weights=weights,
                        lineage=[vars(Step("embed", {"scheme": scheme, "imprint": "edit", "base": base}))]).save()
@@ -142,7 +145,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     # MarkLLM's KGW-family teachers draw their green lists from a generator on the model's device; CUDA and CPU give
     # different lists, so the detector must use the device type the key was made on (fork change A2).
     key = {**key, "rng_device": str(device).split(":")[0]}
-    k = Key(scheme=scheme, params=key, base=base)
+    k = Key(scheme=scheme, params=key, base=base, scheme_params=scheme_params, scheme_source=src)
     store(k)                                               # the key goes to the key store, not into the release
     rel = Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, adapter=f"{out}/adapter",
                   lineage=[vars(Step("embed", cfg))])

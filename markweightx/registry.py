@@ -22,8 +22,41 @@ def register_edit(fn=None, *, name: str | None = None):
     return wrap(fn) if fn is not None else wrap
 
 
-def get_scheme(name: str, **params):
+def load_plugin(source: str):
+    """Import a scheme defined outside the package: a module name ("bob_lab.mark") or a .py file."""
+    import importlib
+    import importlib.util
+    import os
+    if source.endswith(".py") and os.path.exists(source):
+        name = "mwx_plugin_" + os.path.splitext(os.path.basename(source))[0]
+        spec = importlib.util.spec_from_file_location(name, source)
+        mod = importlib.util.module_from_spec(spec)
+        import sys
+        sys.modules[name] = mod                            # so the scheme's source file can be found again
+        spec.loader.exec_module(mod)
+        return mod
+    return importlib.import_module(source)
+
+
+def scheme_source(cls) -> str | None:
+    """Where a registered scheme class lives, if outside markweightx (so a key can find it again)."""
+    import os
+    import sys
+    mod = cls.__module__
+    if mod.startswith("markweightx."):
+        return None
+    if mod.startswith("mwx_plugin_") or mod == "__main__":
+        f = getattr(sys.modules.get(mod), "__file__", None)
+        return os.path.abspath(f) if f else None
+    return mod
+
+
+def get_scheme(name: str, *, source: str | None = None, **params):
     from . import schemes  # noqa: F401  (registers the built-ins)
+    if name not in SCHEMES and source:
+        load_plugin(source)
     if name not in SCHEMES:
-        raise KeyError(f"unknown scheme {name!r}; known: {sorted(SCHEMES)}")
+        known = sorted(n for n, c in SCHEMES.items() if not getattr(c, "experimental", False))
+        raise KeyError(f"unknown scheme {name!r}; available: {', '.join(known)} "
+                       f"(a plugin scheme must be imported first, or passed as source=)")
     return SCHEMES[name](**params)

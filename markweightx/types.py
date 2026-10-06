@@ -63,6 +63,8 @@ class Key:
     calibration: dict = field(default_factory=dict)
     nonce: str = field(default_factory=lambda: os.urandom(16).hex())
     base: str | None = None       # the base model the key was made for (the detector's tokenizer)
+    scheme_params: dict = field(default_factory=dict)   # constructor params, e.g. {"sigma": 1e-3}
+    scheme_source: str | None = None                    # module name or .py file of a plugin scheme
 
     @property
     def commitment(self) -> str:

@@ -152,6 +152,7 @@ class PROCoopt(PRO):
     """Co-optimized policy (mapping model M trained with the student), with the paper's regularizer weight
     (lambda = 1, arXiv 2510.23891 Eq. 4). The code default 1e-3 let M collapse in our first runs."""
     name = "pro-coopt"
+    experimental = True                                # a step in reproducing PRO; see the dev plan
 
     def __init__(self, **params):
         params.setdefault("co_opt", True)
@@ -164,6 +165,7 @@ class PROBooster(PRO):
     """PRO + Booster robust training (PRO code: train_logit_distill_robust.py, robustness_mode=booster): each step
     simulates one fine-tuning step on clean text and penalizes how much it would move the model."""
     name = "pro-booster"
+    experimental = True                                # a step in reproducing PRO; see the dev plan
     booster = {"alpha": 0.1, "lamb": 1.0}
 
 
@@ -173,6 +175,7 @@ class PROFPL(PRO):
     one fine-tuning step toward the anti-watermarked distribution and penalizes how much it moves the model,
     with the paper's alpha = 0.1 and beta = 5."""
     name = "pro-fpl"
+    experimental = True                                # a step in reproducing PRO; see the dev plan
     booster = {"alpha": 0.1, "lamb": 5.0, "attack": "anti"}
 
 
@@ -180,6 +183,7 @@ class PROFPL(PRO):
 class PROCooptCentered(PROCoopt):
     """Co-optimized policy with the non-vanishing term on the centered output (closes the shift loophole)."""
     name = "pro-coopt-c"
+    experimental = True                                # a step in reproducing PRO; see the dev plan
 
     def __init__(self, **params):
         params.setdefault("centered_range", True)
@@ -190,6 +194,7 @@ class PROCooptCentered(PROCoopt):
 class PROFPLSmall(PRO):
     """FPL with beta = 0.5: tests whether beta = 5 pulls a LoRA student toward the anti-watermark optimum."""
     name = "pro-fpl-b05"
+    experimental = True                                # a step in reproducing PRO; see the dev plan
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
 
 
@@ -198,6 +203,7 @@ class PROCooptCentered100(PROCooptCentered):
     """pro-coopt-c with lambda = 100: the centered term averages over every violating entry (~5k per batch), so at
     lambda = 1 each entry gets ~1e-4 of gradient and the KL pull still flattens M (seen 2026-10-05)."""
     name = "pro-coopt-c100"
+    experimental = False
 
     def __init__(self, **params):
         params.setdefault("transform_loss_weight", 100.0)
@@ -209,6 +215,7 @@ class PROFull(PROCooptCentered100):
     """Full PRO as in the paper: co-optimized policy (centered non-vanishing term, lambda = 100) + FPL (beta = 0.5;
     beta = 5 pulled our LoRA student to the inverted mark)."""
     name = "pro-full"
+    experimental = True                                # a step in reproducing PRO; see the dev plan
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
 
 
@@ -216,4 +223,5 @@ class PROFull(PROCooptCentered100):
 class PROFullB01(PROFull):
     """pro-full with beta = 0.1 (beta 0.5 cut the learned share from 0.97 to 0.15)."""
     name = "pro-full-b01"
+    experimental = False
     booster = {"alpha": 0.1, "lamb": 0.1, "attack": "anti"}
