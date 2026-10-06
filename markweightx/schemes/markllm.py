@@ -195,6 +195,7 @@ def _pos_score(text):
 
 class MarkLLMDistill(Scheme):
     teacher = "KGW"
+    key_fields = ("secret", "rng_device")
 
     def __init__(self, **params):
         super().__init__(**params)

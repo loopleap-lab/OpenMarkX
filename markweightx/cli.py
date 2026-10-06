@@ -8,7 +8,8 @@
               markweightx generate RELEASE --prompts prompts.jsonl --out texts.jsonl
               markweightx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
   Detector    markweightx detect texts.jsonl --key KEY [--grant R0|R0_AUX|R1|R2] [--fpr 0.01]
-              markweightx verify RELEASE --key KEY --prompts prompts.jsonl
+              markweightx verify RELEASE --key KEY --prompts prompts.jsonl [--sequential --budget 200]
+              markweightx detect texts.jsonl --key KEY --null wrong_key       (no calibration needed)
   Researcher  markweightx describe [NAME ...]          markweightx check --adapter NAME|file.py
               markweightx new-scheme NAME [--out my_scheme.py]
               markweightx bench configs/arena/1b.yaml [--dry-run | --queue HOST]
@@ -166,6 +167,7 @@ def main(argv=None):
     p.add_argument("--base", required=True, help="the base model the checkpoint was made from")
     p.add_argument("--out", help="release directory (default: <model_dir>-mwx)")
     p.add_argument("--public", action="store_true", help="the key was shipped with the checkpoint (anyone can use it)")
+    p.add_argument("--force", action="store_true", help="replace a release already in the output directory")
     p = sub.add_parser("calibrate", help="Owner: freeze the null for a key")
     p.add_argument("key", help=KEY_HELP)
     p.add_argument("--base", help="base model whose texts form the null (default: the key's base)")
@@ -237,8 +239,8 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         _run(a)
-    except (KeyError, ValueError, TypeError, ImportError, FileNotFoundError, SyntaxError, PermissionError,
-            NotImplementedError) as e:
+    except (KeyError, ValueError, TypeError, ImportError, FileNotFoundError, FileExistsError, SyntaxError,
+            PermissionError, NotImplementedError, RuntimeError) as e:
         if os.environ.get("MWX_DEBUG"):
             raise
         msg = e.args[0] if isinstance(e, KeyError) and e.args else str(e)
@@ -256,7 +258,11 @@ def _run(a):
         rel, key = mwx.embed(a.base, a.watermark, a.out, device=a.device, **recipe)
         print(json.dumps({"release": rel.path, "key": key.commitment}))
     elif a.cmd == "port":
-        rel, key = mwx.port(a.model_dir, a.watermark, json.load(open(a.key_file)), a.base, a.out, key_public=a.public)
+        fields = json.load(open(a.key_file))
+        here = os.path.dirname(os.path.abspath(a.key_file))   # file paths in the key file are relative to it
+        fields = {k: (os.path.join(here, v) if isinstance(v, str) and not os.path.isabs(v)
+                      and os.path.exists(os.path.join(here, v)) else v) for k, v in fields.items()}
+        rel, key = mwx.port(a.model_dir, a.watermark, fields, a.base, a.out, key_public=a.public, force=a.force)
         print(json.dumps({"release": rel.path, "key": key.commitment}))
     elif a.cmd == "calibrate":
         k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, _read_texts(a.prompts) if a.prompts else None,

@@ -31,7 +31,7 @@ class Detection:
 
 @dataclass
 class Step:
-    op: str                       # embed | modify
+    op: str                       # embed | modify | port
     params: dict
 
 

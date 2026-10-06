@@ -88,6 +88,8 @@ def markdown(rows, base, ppl_base):
     table([r for r in rows if r["main"]], ppl_base)
     print("\nforged ↓: share of texts an attacker forges without Alice's model or key (token counts from her 311 texts, then a biased base model); lower is safer.")
     print("\n\\* degenerate text (4-gram repetition > 0.3); the score is inflated by looping, not by the watermark.")
+    print("\n† more than 2% false positives on texts cut to 50 or 100 tokens at this threshold: see the C9 table; "
+          "mwx.calibrate keeps a null per length for this.")
     for k, why in NOT_INCLUDED.items():
         print(f"\nNot included: {k}: {why}.")
     main = [r for r in rows if r["main"]]
@@ -150,7 +152,9 @@ def table(rows, ppl_base):
             e = r["edits"].get(k)
             cells.append("" if e is None else f(e["tpr_at_1fpr"]) + ("*" if e.get("rep4", 0) > 0.3 else ""))
         rep = r["edits"].get("none", {}).get("rep4")
-        print(f'| {label(r)} | {f(r["learned"])} | {f(r["ceiling"])} | {r["auc"]:.3f} | ' + " | ".join(cells) +
+        c9 = r.get("by_length") or {}
+        mark = " †" if any(v.get("fpr", 0) > 0.02 for v in c9.values()) else ""
+        print(f'| {label(r)}{mark} | {f(r["learned"])} | {f(r["ceiling"])} | {r["auc"]:.3f} | ' + " | ".join(cells) +
               f' | {r["ppl"]:.1f} | {f(rep)} |')
 
 

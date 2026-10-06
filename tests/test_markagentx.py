@@ -38,7 +38,7 @@ def test_empty_text_is_a_vacuous_answer(tmp_path, monkeypatch):
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     k = mwx.Key(scheme="markllm-unigram-d", params={"rng_device": "cpu"}, base="llama-3.2-1b")
     d = mwx.detect([""], k, device="cpu")[0]
-    assert d.n_evidence == 0 and d.p_value == 1.0 and d.flagged is False
+    assert d.n_evidence == 0 and d.p_value == 1.0 and d.flagged is None
 
 
 def test_wrong_key_null_is_reproducible_and_valid(tmp_path, monkeypatch):

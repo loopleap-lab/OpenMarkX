@@ -55,7 +55,7 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01, by_length: 
     for e, length in zip(empty, lengths):
         s, n = (0.0, 0) if e else next(scored)
         if not n:                                           # nothing scored: a vacuous answer, as in MarkAgentX
-            out.append(Detection(statistic=s, p_value=1.0, n_tokens=0, flagged=False))
+            out.append(Detection(statistic=s, p_value=1.0, n_tokens=0, flagged=None))
             continue
         if ns and not getattr(scheme, "exact_null", False):  # a calibrated key: its frozen empirical null
             null_l = _null_for(length, ns, by_length, null_len)

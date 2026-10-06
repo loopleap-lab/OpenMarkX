@@ -17,6 +17,7 @@ class Scheme:
     teacher: str | None = None    # upstream teacher name, when the scheme distills one
     experimental = False          # hyperparameter variants and unfinished schemes: hidden from describe()
     probe = None                  # a primitives.Probe, set by the SDK before detection (R1/R2 schemes use it)
+    key_fields = None             # the key's field names, if fixed (port checks them); None: any
     rng_bound = True              # randomness drawn on the model's device: detect on the device type the key was made on
     exact_null = False            # True: pvalue() is exact, so it is used even when the key carries an empirical null
 

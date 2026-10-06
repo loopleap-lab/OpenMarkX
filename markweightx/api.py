@@ -1,13 +1,15 @@
-"""The public facade: five calls for the threat-model roles, plus verify_model.
+"""The public facade: the calls of the threat-model roles.
 
     import markweightx as mwx
     rel, key = mwx.embed("llama-3.2-1b", watermark="pro", out="runs/alice")         # owner
+    rel, key = mwx.port("their_lora/", "pro", {"mapping": ...}, "llama-3.2-1b")      # owner: made elsewhere
     key      = mwx.calibrate(key, "llama-3.2-1b")                                    # owner: freeze the null
     edited   = mwx.modify(rel, "finetune:steps=800", out="runs/dana")               # downstream (weights)
     texts    = mwx.generate(edited, prompts)                                         # downstream (use)
     texts    = mwx.rewrite(texts, "synonym:ratio=0.3")                               # downstream (text)
     dets     = mwx.detect(texts, key)                                                # detector: text + key only
-    verdict  = mwx.verify_model(edited, key, prompts)                                # detector with query access
+    verdict  = mwx.verify_model(edited, key, prompts, sequential=True)               # detector with query access
+    dets     = mwx.detect(texts, key, null="wrong_key")                              # ... without a calibration
 """
 from __future__ import annotations
 
@@ -91,7 +93,7 @@ def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=D
 
 
 def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None = None, *,
-         key_public: bool = False) -> tuple[Release, Key]:
+         key_public: bool = False, force: bool = False) -> tuple[Release, Key]:
     """Import a watermarked checkpoint made elsewhere, without retraining: its weights (a LoRA adapter directory or
     full weights) plus the key material it was made with, as a Release and a Key in the key store.
       key: the scheme's key fields, e.g. {"secret": 123} for a markllm-*-d scheme, {"mapping": "map.json",
@@ -112,6 +114,14 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
     if not is_adapter and not os.path.exists(os.path.join(model_dir, "config.json")):
         raise ValueError(f"{model_dir} is neither a LoRA adapter (adapter_config.json) nor a model (config.json)")
     params = dict(key)
+    known = getattr(sch, "key_fields", None)
+    if known is not None and set(params) - set(known):
+        raise ValueError(f"{name} keys have no field {', '.join(sorted(set(params) - set(known)))}; "
+                         f"they take: {', '.join(known)}")
+    if name.startswith("pro") and "mapping" in params and "transform" not in params:
+        import warnings
+        warnings.warn("this PRO key has no 'transform': detection uses the public initial policy, which is right "
+                      "only if the checkpoint was trained with it")
     for k, v in params.items():                            # key files are copied in; a missing one fails here
         if isinstance(v, str) and (v.endswith((".json", ".pt", ".pth", ".bin", ".npy")) or os.sep in v):
             if not os.path.isfile(v):
@@ -122,6 +132,8 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
     k = Key(scheme=name, params=params, base=base, scheme_params=resolved_params(sch), scheme_source=src)
     store(k)
     out = out or model_dir.rstrip("/") + "-mwx"
+    if os.path.exists(os.path.join(out, "release.json")) and not force:
+        raise FileExistsError(f"{out} already holds a release; pass force=True (CLI --force) to replace it")
     from .types import Step
     rel = Release(path=out, base=base, scheme=name, key_commitment=k.commitment,
                   adapter=model_dir if is_adapter else None, weights=None if is_adapter else model_dir,
@@ -341,7 +353,6 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
 def sequential_p(k: int, n: int, fpr: float, p1: float) -> float:
     """An always-valid p-value after k flags in n texts: 1 / LR, LR the likelihood ratio of flag rate p1 against fpr.
     Under the null LR is a martingale, so P(1/LR ever <= a) <= a however often it is looked at (Ville)."""
-    import math
     llr = k * math.log(p1 / fpr) + (n - k) * math.log((1 - p1) / (1 - fpr))
     return min(1.0, math.exp(-llr))
 
@@ -357,7 +368,8 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
         texts are generated and the fixed test decides, so weak watermarks (flag rates well below p1) keep the fixed
         test's power. Each part runs at alpha/2 and p_value is twice the deciding part's p, so the verdict is flagged
         exactly when p_value <= alpha, with false accusations <= alpha.
-    Texts too short to be judged are not counted. n_queries is how many texts were generated. Exact for schemes with
+    Texts too short to be judged are left out of the test (statistic counts flags among the judged); n_queries is how
+    many texts were generated. Exact for schemes with
     an exact null (GaussMark). With an empirical null the per-text rate is fpr up to the calibration's sampling error
     (a 500-text null makes alpha = 0.01 behave like ~0.016); prompts disjoint from the calibration's are the clean
     choice."""
@@ -381,16 +393,17 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     model, tok = load_release(release, device), load_tokenizer(release.base)
     c = key.calibration
     size = batch if sequential else max(len(prompts), 1)
-    k = n = n_tok = 0
+    k = n = n_tok = asked = 0                              # asked: texts generated; n: texts judged
     for i in range(0, len(prompts), size):
         texts = _gen(model, tok, prompts[i:i + size], seed=i)
+        asked += len(texts)
         dets = [d for d in _detect(bound, texts, null=c.get("null"), fpr=fpr, by_length=c.get("by_length"),
                                    null_len=c.get("n_tokens")) if d.flagged is not None]   # unjudged: not counted
         k += sum(d.flagged for d in dets); n += len(dets); n_tok += sum(d.n_tokens for d in dets)
         if sequential and n and 2 * sequential_p(k, n, fpr, p1) <= alpha:      # accused early
             return Detection(statistic=float(k), p_value=2 * sequential_p(k, n, fpr, p1), n_tokens=n_tok,
-                             flagged=True, n_queries=n)
+                             flagged=True, n_queries=asked)
     p = float(binom.sf(k - 1, n, fpr)) if n else 1.0
     if sequential:
         p = min(1.0, 2 * p)
-    return Detection(statistic=float(k), p_value=p, n_tokens=n_tok, flagged=bool(n) and p <= alpha, n_queries=n)
+    return Detection(statistic=float(k), p_value=p, n_tokens=n_tok, flagged=bool(n) and p <= alpha, n_queries=asked)

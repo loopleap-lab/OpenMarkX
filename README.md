@@ -35,7 +35,7 @@ import markweightx as mwx
 from markweightx.models import load_tokenizer
 from markweightx.sampling import eval_prompts
 
-prompts = eval_prompts(load_tokenizer("llama-3.2-1b"), n=50)  # held-out C4 prompts (exp/prepare_data.py)
+prompts = eval_prompts(load_tokenizer("llama-3.2-1b"), n=500)  # held-out C4 prompts (exp/prepare_data.py)
 release, key = mwx.embed("llama-3.2-1b", "gaussmark")        # Owner: mark the weights; the key stays private
 key = mwx.calibrate(key, "llama-3.2-1b")                     # freeze the null on the base model's own texts
 
@@ -44,8 +44,8 @@ texts = mwx.generate(child, prompts)                         # ...and write with
 texts = mwx.rewrite(texts, "synonym:ratio=0.3")              # ...and reword
 
 hits = mwx.detect(texts, key)                                # Detector: [Detection(statistic, p_value, n_tokens, flagged)]
-verdict = mwx.verify_model(child, key, prompts)              # one binomial test over the flags
-verdict = mwx.verify_model(child, key, prompts, sequential=True, budget=200)   # stop once decisive (SPRT)
+verdict = mwx.verify_model(child, key, prompts[:100])        # one binomial test over the flags
+verdict = mwx.verify_model(child, key, prompts, sequential=True, budget=200)   # accuse as soon as it is clear
 ```
 
 `examples/quickstart.py` runs this end to end on one GPU in a few minutes.
@@ -58,7 +58,8 @@ markweightx calibrate KEY --base llama-3.2-1b
 markweightx modify RELEASE --edit finetune:steps=200 --out edited/
 markweightx generate edited/ --prompts prompts.jsonl --out texts.jsonl
 markweightx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
-markweightx detect texts.jsonl --key KEY
+markweightx detect texts.jsonl --key KEY                                 # --null wrong_key: no calibration needed
+markweightx port their_lora/ --watermark pro --key-file key.json --base llama-3.2-1b   # a checkpoint made elsewhere
 markweightx verify edited/ --key KEY --prompts prompts.jsonl            # one verdict for the model
 markweightx verify edited/ --key KEY --prompts prompts.jsonl --sequential --budget 200   # as few texts as needed
 markweightx --help                                                       # every command, with examples
@@ -222,7 +223,7 @@ The steps are these scripts, which can also be run one at a time:
 
 | Script | What it runs |
 |---|---|
-| `exp/learnability.py --scheme NAME` | E2: embed, sample 500 C4 prompts, TPR at 1% FPR against the base model's texts, PPL |
+| `exp/learnability.py --scheme NAME` | E2: embed, sample the held-out C4 prompts (311 of the first 500 documents are long enough), TPR at 1% FPR against the base model's texts, PPL |
 | `exp/robustness.py --release DIR` | E4: every weight and text edit on one release, with the same ruler |
 | `exp/spoof.py --release DIR` | forgery: count tokens in the owner's texts, bias the base model, measure how much is flagged |
 | `exp/leaderboard.py` | one row per method; experimental variants and sweeps go under Ablations |
@@ -247,8 +248,10 @@ are on Llama-3.2-1B.
 `verify_model(..., sequential=True)` asks the suspect model for 20 texts at a time. It accuses the model as soon as
 an always-valid test (flag rate `p1` against `fpr`) is decisive, so a strongly marked model is settled in about 20
 texts; it never clears a model early, so a weakly marked one (after edits) gets the full `budget` and the power of
-the fixed test (simulated at a 5% flag rate: 87% vs 88%). False accusations stay below `alpha`, the p-value stays
-valid despite the early stop, and `n_queries` says how many texts were used.
+the fixed test (`exp/verify_power.py`: at a 5% flag rate 87% vs 88%). With an exact null (GaussMark) false
+accusations stay below `alpha` and the p-value stays valid despite the early stop; with an empirical null they are
+below `alpha` up to the calibration's own error (a 500-text null makes 1% behave like ~1.6%), and verifying on
+prompts disjoint from the calibration's is the clean choice. `n_queries` says how many texts were generated.
 
 Not built yet: importing the published checkpoints of other papers (`port` takes the checkpoint and its key files;
 fetching and converting them is per paper, and they are 7B-8B), `TP-*` grants (prompt
@@ -258,7 +261,7 @@ and a grant axis.
 ## Layout
 
 ```
-markweightx/        api.py (the facade) · cli.py · check.py · keys.py · registry.py · primitives.py · types.py
+markweightx/        api.py (the facade) · cli.py · bench.py · check.py · keys.py · registry.py · primitives.py · types.py
   schemes/          base.py (Scheme) · markllm.py · pro.py · gaussmark.py
   edits/            weights.py (finetune, merge, prune, quantize) · text.py (synonym, word_deletion)
   imprint.py · sampling.py · scoring.py · models.py · paths.py
