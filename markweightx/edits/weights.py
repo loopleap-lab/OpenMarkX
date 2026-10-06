@@ -118,4 +118,6 @@ def quantize(rel: Release, out: str, *, bits=4, device="cuda:0"):
 
 def modify(rel: Release, edit: str, out: str, **params) -> Release:
     from ..registry import EDITS
+    if edit not in EDITS:
+        raise ValueError(f"unknown weight edit {edit!r}; available: {', '.join(sorted(EDITS))}")
     return EDITS[edit](rel, out, **params)

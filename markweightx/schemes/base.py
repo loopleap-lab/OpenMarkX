@@ -3,12 +3,22 @@ from __future__ import annotations
 
 import torch
 
+from ..primitives import Access, Imprint
+
 
 class Scheme:
+    """A watermarking method, composed from the six primitives (see markweightx.primitives):
+    Key (setup), Signal (target_logits), Imprint (`imprint`), Perturb (edits; `booster` for training-time steps),
+    Probe (`access`), Score (score / score_batch). Subclass it in one file and decorate with @register_scheme."""
     name: str = "base"
-    kind: str = "none"            # distill_logit | distill_sampling | none
+    kind: str = "distill_logit"   # distill_logit | distill_sampling | none
+    imprint: Imprint = Imprint.DISTILL
+    access: Access = Access.R0    # what the detector needs besides the text
     teacher: str | None = None    # upstream teacher name, when the scheme distills one
-    needs_model_to_detect = False # True when the detector runs a language model (access level: weights)
+
+    @property
+    def needs_model_to_detect(self) -> bool:
+        return self.access in (Access.R1, Access.R2)
 
     def __init__(self, **params):
         self.params = params
@@ -54,3 +64,4 @@ class Scheme:
 
 class NoWatermark(Scheme):
     name, kind = "nowm", "none"
+    imprint = Imprint.EDIT

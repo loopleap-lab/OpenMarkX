@@ -204,7 +204,8 @@ class MarkLLMDistill(Scheme):
         self.gamma_p = meta.get("gamma_p", False)
         self.positional = meta.get("positional", False)
         self.p_value = meta.get("p_value", False)
-        self.needs_model_to_detect = meta.get("model_detect", False)
+        from ..primitives import Access
+        self.access = Access.R1 if meta.get("model_detect", False) else Access.R0
 
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)

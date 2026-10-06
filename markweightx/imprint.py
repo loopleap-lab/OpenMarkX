@@ -35,6 +35,16 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     model = load_base(base, device)
     sch = get_scheme(scheme)
     key = sch.setup(model, tok, device, key)
+    from .primitives import Imprint
+    if sch.imprint == Imprint.EDIT:                        # teacher-free: the scheme writes the weights itself
+        from .types import Key
+        from .keys import store
+        os.makedirs(out, exist_ok=True)
+        weights = sch.imprint_edit(model, tok, out)
+        k = Key(scheme=scheme, params={**sch.save(out, key), "rng_device": str(device).split(":")[0]}, base=base)
+        store(k)
+        return Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, weights=weights,
+                       lineage=[vars(Step("embed", {"scheme": scheme, "imprint": "edit", "base": base}))]).save()
     if sch.kind != "distill_logit":
         raise NotImplementedError(f"{scheme}: recipe {sch.kind} is not implemented yet")
     from peft import LoraConfig, get_peft_model

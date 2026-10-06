@@ -20,6 +20,7 @@ import torch
 
 from ..paths import PRO_CODE, RUNS
 from ..registry import register_scheme
+from ..primitives import Access
 from .base import Scheme
 
 EMBEDDER = "perceptiveshawty/compositional-bert-large-uncased"
@@ -28,7 +29,7 @@ EMBEDDER = "perceptiveshawty/compositional-bert-large-uncased"
 @register_scheme
 class PRO(Scheme):
     name, kind = "pro", "distill_logit"
-    needs_model_to_detect = False
+    access = Access.R0_AUX                                 # the detector runs the BERT embedder and the policy
 
     def __init__(self, gamma=0.5, delta=1.0, chunk_size=10, transform_loss_weight=1e-3, tau_init=10.0, tau_max=1000.0,
                  co_opt=False, transform_lr=1e-5, transform_wd=0.01, centered_range=False, **params):

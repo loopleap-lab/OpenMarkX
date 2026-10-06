@@ -15,23 +15,36 @@ import math
 
 from .types import Detection, Key, Release
 
-DEFAULT_DEVICE = "cuda:0"
+def _auto_device() -> str:
+    import torch
+    return "cuda:0" if torch.cuda.is_available() else "cpu"
+
+
+DEFAULT_DEVICE = None   # None = the first GPU if there is one, else CPU
+
+
+def _value(v: str):
+    v = v.strip()
+    if v.lower() in ("true", "false"):
+        return v.lower() == "true"
+    try:
+        f = float(v)
+    except ValueError:
+        return v
+    return int(f) if f.is_integer() and "." not in v and "e-" not in v.lower() else f
 
 
 def _spec(s: str | dict) -> tuple[str, dict]:
-    """'finetune:steps=800,lr=1e-4' -> ('finetune', {'steps': 800, 'lr': 0.0001})."""
+    """'finetune:steps=800,lr=1e-4' -> ('finetune', {'steps': 800, 'lr': 0.0001}); '8e2' -> 800, 'true' -> True."""
     if isinstance(s, dict):
         s = dict(s); return s.pop("op"), s
     op, _, rest = s.partition(":")
     params = {}
-    for kv in filter(None, rest.split(",")):
+    for kv in filter(None, (x.strip() for x in rest.split(","))):
+        if "=" not in kv:
+            raise ValueError(f"edit spec {s!r}: expected key=value after ':', got {kv!r} (e.g. 'finetune:steps=800')")
         k, v = kv.split("=", 1)
-        for cast in (int, float):
-            try:
-                v = cast(v); break
-            except ValueError:
-                pass
-        params[k.strip()] = v
+        params[k.strip()] = _value(v)
     return op.strip(), params
 
 
@@ -40,7 +53,7 @@ def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=D
     from .imprint import embed as _embed
     from .keys import load_key
     from .paths import RUNS
-    rel = _embed(watermark, base, out or f"{RUNS}/releases/{base}/{watermark}", device=device, **recipe)
+    rel = _embed(watermark, base, out or f"{RUNS}/releases/{base}/{watermark}", device=device or _auto_device(), **recipe)
     return rel, load_key(rel)
 
 
@@ -51,6 +64,7 @@ def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, d
     from .keys import store
     from .models import load_base, load_tokenizer
     from .registry import get_scheme
+    device = device or _auto_device()
     tok = load_tokenizer(base); model = load_base(base, device)
     prompts = prompts or eval_prompts(tok, n=n)
     texts = _gen(model, tok, prompts, adapter=False, seed=seed)
@@ -68,21 +82,22 @@ def modify(release: Release, edits: str | dict, out: str | None = None, *, devic
         params["partner"] = release.base + "-instruct"
     if op == "quantize":
         params.setdefault("bits", 4)
-    return _modify(release, op, out or f"{release.path}/edits/{op}", device=device, **params)
+    tag = op + "".join(f"_{k}{v}" for k, v in params.items() if k != "partner")
+    return _modify(release, op, out or f"{release.path}/edits/{tag}", device=device or _auto_device(), **params)
 
 
 def generate(release: Release, prompts: list[str], *, device=DEFAULT_DEVICE, new_tokens=200, seed=0) -> list[str]:
     from .sampling import generate as _gen
     from .models import load_release, load_tokenizer
     tok = load_tokenizer(release.base)
-    return _gen(load_release(release, device), tok, prompts, new_tokens=new_tokens, seed=seed)
+    return _gen(load_release(release, device or _auto_device()), tok, prompts, new_tokens=new_tokens, seed=seed)
 
 
 def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> list[str]:
     """Text edits through MarkLLM's text editors: 'synonym:ratio=0.3', 'word_deletion:ratio=0.3'."""
     from .edits import rewrite as _rewrite
     op, params = _spec(edits)
-    return _rewrite(texts, op, device=device, **params)
+    return _rewrite(texts, op, device=device or _auto_device(), **params)
 
 
 def _scheme_for(key: Key, base: str | None, device: str):
@@ -127,7 +142,7 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     Fisher's method into one p-value for the model."""
     if not key.calibration.get("null"):
         raise ValueError("verify_model needs a calibrated key (mwx.calibrate)")
-    dets = detect(generate(release, prompts, device=device), key)
+    dets = detect(generate(release, prompts, device=device or _auto_device()), key)
     stat = -2 * sum(math.log(d.p_value) for d in dets)
     from scipy.stats import chi2
     p = float(chi2.sf(stat, 2 * len(dets)))

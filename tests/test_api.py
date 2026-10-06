@@ -33,3 +33,23 @@ def test_key_is_not_in_the_release(tmp_path, monkeypatch):
 def test_legacy_release_key_still_loads(tmp_path):
     rel = mwx.Release(path=str(tmp_path / "old"), base="llama-3.2-1b", scheme="markllm-kgw-d", key={"key": 7}).save()
     assert mwx.load_key(rel.path).params == {"key": 7}
+
+
+def test_spec_values_and_errors():
+    import pytest
+    assert _spec("finetune:steps=8e2") == ("finetune", {"steps": 800})
+    assert _spec("x:flag=true,lr=0.5") == ("x", {"flag": True, "lr": 0.5})
+    with pytest.raises(ValueError, match="key=value"):
+        _spec("finetune:steps")
+
+
+def test_unknown_edit_lists_the_options():
+    import pytest
+    from markweightx.edits import modify
+    with pytest.raises(ValueError, match="available: .*finetune"):
+        modify(mwx.Release(path="x", base="b", scheme="s"), "shrink", "out")
+
+
+def test_describe_shows_primitives_and_access():
+    t = mwx.describe(["pro", "markllm-kgw-d", "markllm-sweet-d"])
+    assert "Imprint" in t and "R0+aux" in t and "R1" in t

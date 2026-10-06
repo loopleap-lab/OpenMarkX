@@ -21,5 +21,5 @@ def rewrite(texts, kind: str, *, ratio=0.3, seed=0, device="cuda:0"):
         ed = te.ContextAwareSynonymSubstitution(ratio=ratio, tokenizer=BertTokenizer.from_pretrained("bert-large-uncased"),
                                                 model=BertForMaskedLM.from_pretrained("bert-large-uncased").to(device), device=device)
     else:
-        raise KeyError(f"unknown text edit {kind!r}")
+        raise ValueError(f"unknown text edit {kind!r}; available: word_deletion, synonym, context_synonym")
     return [ed.edit(t) for t in texts]
