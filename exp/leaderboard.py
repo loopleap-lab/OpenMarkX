@@ -8,9 +8,11 @@ looping text inflates some detectors.
 """
 import argparse
 import glob
+import sys
 import json
 import os
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 R = os.environ.get("MWX_RUNS", "/mnt/data/jiaq/mwx-runs")
 COLS = [("finetune_steps200", "FT 200"), ("finetune_steps800", "FT 800"), ("finetune_steps2400", "FT 2400"),
         ("merge_ratio0.2", "merge .2"), ("merge_ratio0.4", "merge .4"), ("merge_ratio0.6", "merge .6"),
@@ -39,10 +41,31 @@ def main():
                      "auc": res["student"]["auc"], "ceiling": (res.get("teacher_decode") or {}).get("tpr_at_1fpr"),
                      "ppl": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": edits})
     rows.sort(key=lambda r: -r["learned"])
+    for r in rows:
+        r["main"] = is_main(r["scheme"])
     json.dump({"base": a.base, "tag": a.tag, "rows": rows, "not_included": NOT_INCLUDED}, open(f"{root}/leaderboard.json", "w"), indent=1)
-    f = lambda x: "–" if x is None else f"{x:.2f}"
+    ppl_base = rows[0]["ppl_base"] if rows else 0
     print(f"## Leaderboard · {a.base} · TPR at 1% FPR (empirical null)\n")
-    print("| method | learned | ceiling | AUC | " + " | ".join(c for _, c in COLS) + " | PPL (base {:.1f}) | rep4 |".format(rows[0]["ppl_base"] if rows else 0))
+    table([r for r in rows if r["main"]], ppl_base)
+    print("\nforged ↓: share of texts an attacker forges without Alice's model or key (token counts from her 311 texts, then a biased base model); lower is safer.")
+    print("\n\\* degenerate text (4-gram repetition > 0.3); the score is inflated by looping, not by the watermark.")
+    for k, why in NOT_INCLUDED.items():
+        print(f"\nNot included: {k}: {why}.")
+    print("\n### Ablations: experimental variants and parameter sweeps (not methods you would pick)\n")
+    table([r for r in rows if not r["main"]], ppl_base)
+
+
+def is_main(name: str) -> bool:
+    """A leaderboard method is a registered, non-experimental scheme at its default parameters."""
+    from markweightx.registry import SCHEMES
+    import markweightx.schemes  # noqa: F401  (registers the built-in schemes)
+    c = SCHEMES.get(name)
+    return c is not None and not getattr(c, "experimental", False)
+
+
+def table(rows, ppl_base):
+    f = lambda x: "–" if x is None else f"{x:.2f}"
+    print("| method | learned | ceiling | AUC | " + " | ".join(c for _, c in COLS) + f" | PPL (base {ppl_base:.1f}) | rep4 |")
     print("|" + "---|" * (len(COLS) + 6))
     for r in rows:
         cells = []
@@ -52,10 +75,6 @@ def main():
         rep = r["edits"].get("none", {}).get("rep4")
         print(f'| {r["scheme"]} | {f(r["learned"])} | {f(r["ceiling"])} | {r["auc"]:.3f} | ' + " | ".join(cells) +
               f' | {r["ppl"]:.1f} | {f(rep)} |')
-    print("\nforged ↓: share of texts an attacker forges without Alice's model or key (token counts from her 311 texts, then a biased base model); lower is safer.")
-    print("\n\\* degenerate text (4-gram repetition > 0.3); the score is inflated by looping, not by the watermark.")
-    for k, why in NOT_INCLUDED.items():
-        print(f"\nNot included: {k}: {why}.")
 
 
 if __name__ == "__main__":
