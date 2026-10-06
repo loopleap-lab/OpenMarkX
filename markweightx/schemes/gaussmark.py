@@ -37,6 +37,10 @@ class GaussMark(Scheme):
         super().__init__(sigma=sigma, layer=layer, matrix=matrix, **params)
         self.sigma, self.layer, self.matrix = float(sigma), int(layer), matrix
 
+    def fit_tiny(self, n_layers: int):
+        """markweightx check runs on a 2-layer model: point at a layer it has."""
+        self.layer = min(self.layer, n_layers - 1)
+
     @property
     def param(self) -> str:
         return f"model.layers.{self.layer}.{self.matrix}.weight"

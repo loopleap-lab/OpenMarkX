@@ -10,7 +10,7 @@ from .paths import DATA
 
 def eval_prompts(tok, n=500, prompt_len=50, new_tokens=200, data: str | None = None):
     """The first held-out C4 documents that are long enough, cut to prompt_len tokens."""
-    texts = torch.load(data or DATA["llama3"])["eval_texts"]
+    texts = torch.load(data or DATA["llama3"], weights_only=True)["eval_texts"]
     out = []
     for t in texts:
         ids = tok(t, add_special_tokens=False)["input_ids"]

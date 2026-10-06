@@ -1,0 +1,11 @@
+# Training recipe for teacher-learned schemes (`markweightx embed --recipe configs/embed.yaml`).
+# These are the defaults; teacher-free schemes (gaussmark, R2 edits) ignore them. Flags on the command line win.
+steps: 1500        # optimizer steps
+bs: 16             # sequences per step
+accum: 1           # gradient accumulation
+seq_len: 128       # tokens per training sequence
+lr: 2.0e-4
+rank: 64           # LoRA rank of the student
+save_every: 500
+seed: 0
+bos: false         # prepend BOS to training sequences (pro-full needs it)

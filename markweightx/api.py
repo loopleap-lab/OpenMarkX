@@ -34,6 +34,27 @@ def _value(v: str):
     return int(f) if f.is_integer() and "." not in v and "e-" not in v.lower() else f
 
 
+def scheme_spec(watermark: str) -> tuple[str, dict, str | None]:
+    """'gaussmark:sigma=1e-3' -> (name, params, None); 'my_scheme.py' or 'my_scheme.py:name' or 'pkg.mod:name'
+    (with params after a second ':') -> the plugin is imported and its source returned, so the key can find it."""
+    import os
+    from .registry import SCHEMES, load_plugin, scheme_source
+    head, _, rest = watermark.partition(":")
+    if head.endswith(".py") or ("." in head and not os.path.exists(head) and ":" in watermark and "=" not in rest.split(":")[0]):
+        src = os.path.abspath(head) if head.endswith(".py") else head
+        mod = load_plugin(src).__name__
+        new = sorted(n for n, c in SCHEMES.items() if c.__module__ == mod)   # the schemes this plugin registers
+        name_part, _, params_part = rest.partition(":")
+        if "=" in name_part:                                # 'file.py:k=v' (no name given)
+            name_part, params_part = "", name_part
+        name = name_part or (new[0] if len(new) == 1 else None)
+        if not name:
+            raise ValueError(f"{head} registers {new or 'no new scheme'}: say which, e.g. '{head}:<name>'")
+        return name, _spec(f"x:{params_part}")[1] if params_part else {}, src
+    name, params = _spec(watermark)
+    return name, params, None
+
+
 def _spec(s: str | dict) -> tuple[str, dict]:
     """'finetune:steps=800,lr=1e-4' -> ('finetune', {'steps': 800, 'lr': 0.0001}); '8e2' -> 800, 'true' -> True."""
     if isinstance(s, dict):
@@ -53,10 +74,10 @@ def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=D
     from .imprint import embed as _embed
     from .keys import load_key
     from .paths import RUNS
-    name, sparams = _spec(watermark)                       # "gaussmark:sigma=1e-3" -> scheme params
+    name, sparams, src = scheme_spec(watermark)            # "gaussmark:sigma=1e-3", or a plugin file
     tag = name + "".join(f"_{k}{v}" for k, v in sparams.items())
     rel = _embed(name, base, out or f"{RUNS}/releases/{base}/{tag}", device=device or _auto_device(),
-                 scheme_params=sparams, **recipe)
+                 scheme_params=sparams, scheme_source=src, **recipe)
     return rel, load_key(rel)
 
 

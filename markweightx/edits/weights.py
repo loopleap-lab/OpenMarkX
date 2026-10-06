@@ -53,7 +53,7 @@ def finetune(rel: Release, out: str, *, steps=800, lr=1e-4, bs=8, seq_len=256, r
     model.gradient_checkpointing_enable(); model.enable_input_require_grads()
     model = get_peft_model(model, LoraConfig(r=rank, lora_alpha=2 * rank, lora_dropout=0.0, task_type="CAUSAL_LM",
                                              target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]))
-    corpus = torch.load(data or DATA["llama3"])["train"][offset:, :seq_len]
+    corpus = torch.load(data or DATA["llama3"], weights_only=True)["train"][offset:, :seq_len]
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=lr)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 20) * 0.5 * (1 + math.cos(math.pi * s / steps)))

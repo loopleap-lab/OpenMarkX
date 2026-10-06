@@ -38,12 +38,12 @@ def main():
     ap.add_argument("--skip_embed", action="store_true")
     ap.add_argument("--bos", action="store_true", help="start every training chunk with BOS")
     a = ap.parse_args()
-    from markweightx.api import _spec
-    sname, sparams = _spec(a.scheme)                       # "gaussmark:sigma=1e-3" -> name + scheme params
+    from markweightx.api import scheme_spec
+    sname, sparams, ssrc = scheme_spec(a.scheme)           # "gaussmark:sigma=1e-3", or a plugin "my_scheme.py"
     out = f"{RUNS}/{a.tag}/{a.base}/" + sname + "".join(f"_{k}{v}" for k, v in sparams.items())
     t0 = time.time()
     rel = Release.open(out) if a.skip_embed else embed(sname, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos,
-                                                     scheme_params=sparams)
+                                                     scheme_params=sparams, scheme_source=ssrc)
     t_embed = time.time() - t0
     torch.cuda.empty_cache()
 

@@ -66,3 +66,11 @@ def test_r1_probe_gets_no_gradients():
     from markweightx.primitives import Probe
     with pytest.raises(AccessDenied):
         Probe("llama-3.2-1b", "cpu", mwx.Access.R1).grad_seq_logprob("text", "model.layers.0.mlp.up_proj.weight")
+
+
+def test_same_plugin_twice_in_one_process(tmp_path):
+    from markweightx.api import scheme_spec
+    f = tmp_path / "twice_mark.py"
+    f.write_text(open(os.path.join(os.path.dirname(__file__), "..", "examples", "my_scheme.py")).read()
+                 .replace('"my-scheme"', '"twice-scheme"'))
+    assert scheme_spec(str(f))[0] == scheme_spec(str(f))[0] == "twice-scheme"

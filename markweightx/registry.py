@@ -8,7 +8,8 @@ EDITS: dict = {}
 def register_scheme(cls=None, *, name: str | None = None):
     def wrap(c):
         n = name or c.name
-        if n in SCHEMES and SCHEMES[n] is not c:
+        old = SCHEMES.get(n)
+        if old is not None and old is not c and (old.__module__, old.__qualname__) != (c.__module__, c.__qualname__):
             raise ValueError(f"scheme {n!r} already registered")
         SCHEMES[n] = c
         return c
@@ -32,9 +33,12 @@ def load_plugin(source: str):
         source = resolve(source)
     if source.endswith(".py") and os.path.exists(source):
         name = "mwx_plugin_" + os.path.splitext(os.path.basename(source))[0]
+        import sys
+        loaded = sys.modules.get(name)
+        if loaded is not None and os.path.abspath(getattr(loaded, "__file__", "")) == os.path.abspath(source):
+            return loaded
         spec = importlib.util.spec_from_file_location(name, source)
         mod = importlib.util.module_from_spec(spec)
-        import sys
         sys.modules[name] = mod                            # so the scheme's source file can be found again
         spec.loader.exec_module(mod)
         return mod

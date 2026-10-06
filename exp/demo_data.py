@@ -68,7 +68,7 @@ def marks(sch, text):
 
 
 def human_continuation(tok, prompt, n_new=200):
-    for t in torch.load(DATA["llama3"])["eval_texts"]:
+    for t in torch.load(DATA["llama3"], weights_only=True)["eval_texts"]:
         ids = tok(t, add_special_tokens=False)["input_ids"]
         if len(ids) >= 250 and tok.decode(ids[:50]) == prompt:
             return tok.decode(ids[50:50 + n_new])

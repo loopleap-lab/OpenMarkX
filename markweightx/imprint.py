@@ -29,14 +29,14 @@ def kl_teacher_student(t_logits, s_logits):
 
 def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_len=128, lr=2e-4, rank=64,
           device="cuda:0", key: dict | None = None, data: str | None = None, save_every=500, seed=0, log_every=10,
-          bos: bool = False, scheme_params: dict | None = None):
+          bos: bool = False, scheme_params: dict | None = None, scheme_source: str | None = None):
     os.makedirs(out, exist_ok=True)
     tok = load_tokenizer(base)
-    from .registry import scheme_source
+    from .registry import scheme_source as _src_of
     from .primitives import Imprint
     scheme_params = dict(scheme_params or {})
-    sch = get_scheme(scheme, **scheme_params)
-    src = scheme_source(type(sch))
+    sch = get_scheme(scheme, source=scheme_source, **scheme_params)
+    src = scheme_source or _src_of(type(sch))             # where a detector will find a plugin scheme again
     if src is None and not type(sch).__module__.startswith("markweightx."):
         import warnings
         warnings.warn(f"{scheme} is defined in an interactive session: a detector will not find it again from the "
@@ -61,7 +61,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False}); model.enable_input_require_grads()
     model = get_peft_model(model, LoraConfig(r=rank, lora_alpha=2 * rank, lora_dropout=0.0, task_type="CAUSAL_LM",
                                              target_modules=LORA_TARGETS.split(",")))
-    corpus = torch.load(data or DATA["llama3"])["train"][:, :seq_len]
+    corpus = torch.load(data or DATA["llama3"], weights_only=True)["train"][:, :seq_len]
     if bos:   # start every chunk with BOS, as real prompts do: otherwise the position after BOS is never trained, and
               # FPL's perturbations broke it once (pro-full generated " Ur Ur Ur ..." only after BOS, 2026-10-05)
         corpus = torch.cat([torch.full((len(corpus), 1), tok.bos_token_id, dtype=corpus.dtype), corpus[:, :-1]], 1)

@@ -62,6 +62,10 @@ class PRO(Scheme):
             mpath = stage("mapping.json")
             json.dump([rng.randrange(300) for _ in range(model.config.vocab_size)], open(mpath, "w"))
             key = {"mapping": mpath}
+        if "mapping" not in key:
+            # never fall back to the mapping shipped with the PRO code: it is public, so it cannot be a key
+            raise ValueError("this PRO key has no 'mapping': a PRO key must carry its own secret mapping "
+                             "(pass key=None to draw a new one)")
         tpath = resolve(key.get("transform")) or os.path.join(PRO_CODE, "watermarks/pro/transform_model_cbert.pth")
         mpath = resolve(key.get("mapping")) or os.path.join(PRO_CODE, f"watermarks/pro/300_mapping_{model.config.vocab_size}.json")
         self.wm = PROWatermark(device=device, tokenizer=tokenizer, delta=self.delta, gamma=self.gamma,

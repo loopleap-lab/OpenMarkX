@@ -1,6 +1,7 @@
 """The `markweightx` command line: the five calls for the threat-model roles, plus the researcher's tools.
 
   Owner       markweightx embed --base llama-3.2-1b --watermark gaussmark            -> release dir + key id
+              markweightx embed --base llama-3.2-1b --watermark pro --recipe configs/embed.yaml
               markweightx calibrate KEY --base llama-3.2-1b
   Downstream  markweightx modify RELEASE --edit finetune:steps=800 --out DIR
               markweightx generate RELEASE --prompts prompts.jsonl --out texts.jsonl
@@ -35,6 +36,21 @@ def _read_texts(path: str) -> list[str]:
     return out
 
 
+def _recipe(path: str | None) -> dict:
+    if not path:
+        return {}
+    import inspect
+    import yaml
+    from .imprint import embed
+    r = yaml.safe_load(open(path)) or {}
+    allowed = [k for k, p in inspect.signature(embed).parameters.items() if p.kind == p.KEYWORD_ONLY
+               and k not in ("device", "key", "scheme_params", "scheme_source")]
+    bad = sorted(set(r) - set(allowed))
+    if bad:
+        raise SystemExit(f"{path}: unknown recipe field(s) {bad}; allowed: {allowed}")
+    return r
+
+
 def _write_jsonl(path: str | None, rows):
     f = open(path, "w") if path else sys.stdout
     for r in rows:
@@ -51,8 +67,10 @@ def _key(ref: str):
     if os.path.isfile(ref):
         return Key.open(ref)
     hits = [f for f in os.listdir(STORE) if f.endswith(".json") and f.startswith(ref)] if os.path.isdir(STORE) else []
-    if len(hits) != 1:
-        raise SystemExit(f"key {ref!r}: {'no match' if not hits else 'ambiguous prefix'} in {STORE}")
+    if not hits:
+        raise SystemExit(f"key {ref!r}: no key with that id in {STORE} (see `markweightx keys list`)")
+    if len(hits) > 1:
+        raise SystemExit(f"key {ref!r} is ambiguous: " + ", ".join(h[:16] for h in hits[:8]))
     return Key.open(os.path.join(STORE, hits[0]))
 
 
@@ -99,18 +117,25 @@ class {cls}(mwx.Scheme):
         return (g - 0.5 * n) / (0.25 * n) ** 0.5, len(ids)
 
     def pvalue(self, statistic, n_tokens):
-        """Optional closed-form null; return None to use the key's calibrated empirical null."""
+        """Optional closed-form null; return None to use the key's calibrated empirical null. A calibrated key's
+        empirical null takes precedence unless the class sets exact_null = True (the closed form is exact)."""
         import math
         return 0.5 * math.erfc(statistic / math.sqrt(2))
 '''
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="markweightx", description="Watermarks learned into open-weight LLMs.")
+    ap = argparse.ArgumentParser(prog="markweightx", description="Watermarks learned into open-weight LLMs.",
+                                 epilog=__doc__.split("\n", 1)[1], formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("embed", help="Owner: learn a watermark into a base model")
-    p.add_argument("--base", required=True); p.add_argument("--watermark", default="pro")
-    p.add_argument("--out"); p.add_argument("--steps", type=int); p.add_argument("--device")
+    p.add_argument("--base", required=True, help="base model name (e.g. llama-3.2-1b) or a local path")
+    p.add_argument("--watermark", default="pro", help="scheme, with params: gaussmark:sigma=0.01 ; or a plugin "
+                   "file: my_scheme.py[:name]  (see `markweightx describe`)")
+    p.add_argument("--out", help="release directory (default: RUNS/releases/<base>/<scheme>)")
+    p.add_argument("--recipe", help="training recipe YAML for teacher-learned schemes (see configs/embed.yaml)")
+    p.add_argument("--steps", type=int, help="training steps for teacher-learned schemes (overrides the recipe)")
+    p.add_argument("--device", help="default: the first GPU, else CPU")
     p = sub.add_parser("calibrate", help="Owner: freeze the null for a key")
     p.add_argument("key"); p.add_argument("--base"); p.add_argument("--n", type=int, default=500); p.add_argument("--device")
     p = sub.add_parser("modify", help="Downstream: edit the weights of a release")
@@ -120,7 +145,10 @@ def main(argv=None):
     p = sub.add_parser("rewrite", help="Downstream: reword texts")
     p.add_argument("texts"); p.add_argument("--edit", required=True); p.add_argument("--out")
     p = sub.add_parser("detect", help="Detector: score texts with a key")
-    p.add_argument("texts"); p.add_argument("--key", required=True); p.add_argument("--grant")
+    p.add_argument("texts", help=".jsonl ({\"text\": ...} per line) or .txt (one text per line)")
+    p.add_argument("--key", required=True, help="key id (or unique prefix) from `markweightx keys list`, or a release dir")
+    p.add_argument("--grant", choices=["R0", "R0_AUX", "R1", "R2"], help="what this detector may access "
+                   "(default: what the scheme needs); a lower grant is refused")
     p.add_argument("--fpr", type=float, default=0.01); p.add_argument("--device"); p.add_argument("--out")
     p = sub.add_parser("verify", help="Detector: model-level verdict on a suspect release")
     p.add_argument("release"); p.add_argument("--key", required=True); p.add_argument("--prompts", required=True)
@@ -131,14 +159,17 @@ def main(argv=None):
     p.add_argument("--adapter", required=True, help="a registered scheme name, or a .py file defining one")
     p.add_argument("--name", help="scheme name inside the file (default: the file's only new scheme)")
     p = sub.add_parser("new-scheme", help="Researcher: write a one-file scheme template")
-    p.add_argument("name"); p.add_argument("--out")
+    p.add_argument("name"); p.add_argument("--out"); p.add_argument("--force", action="store_true", help="overwrite")
     p = sub.add_parser("keys", help="the key store")
     p.add_argument("action", choices=["list", "show"]); p.add_argument("key", nargs="?")
     a = ap.parse_args(argv)
 
     import markweightx as mwx
     if a.cmd == "embed":
-        rel, key = mwx.embed(a.base, a.watermark, a.out, device=a.device, **({"steps": a.steps} if a.steps else {}))
+        recipe = _recipe(a.recipe)
+        if a.steps:
+            recipe["steps"] = a.steps
+        rel, key = mwx.embed(a.base, a.watermark, a.out, device=a.device, **recipe)
         print(json.dumps({"release": rel.path, "key": key.commitment}))
     elif a.cmd == "calibrate":
         k = mwx.calibrate(_key(a.key), a.base or _key(a.key).base, n=a.n, device=a.device)
@@ -175,11 +206,15 @@ def main(argv=None):
             else:
                 raise SystemExit(f"{a.adapter} registers {new or 'no scheme'}: pass --name")
             source = os.path.abspath(a.adapter)
-        rows = run(name, source=source)
+        import contextlib
+        with open(os.devnull, "w") as null, contextlib.redirect_stderr(null):   # progress bars, model-load chatter
+            rows = run(name, source=source)
         print(report(rows))
         sys.exit(1 if any(s == "FAIL" for _, s, _ in rows) else 0)
     elif a.cmd == "new-scheme":
         out = a.out or a.name.replace("-", "_") + ".py"
+        if os.path.exists(out) and not a.force:
+            raise SystemExit(f"{out} exists: pass --force to overwrite, or --out another file")
         cls = "".join(w.capitalize() for w in a.name.replace("_", "-").split("-"))
         open(out, "w").write(TEMPLATE.format(name=a.name, cls=cls, file=out))
         print(f"wrote {out}: edit it, then run `markweightx check --adapter {out}`")
@@ -192,6 +227,8 @@ def main(argv=None):
                     k = Key.open(os.path.join(STORE, f))
                     print(f"{f[:12]}  {k.scheme:<22} base={k.base}  calibrated={bool(k.calibration.get('null'))}")
         else:
+            if not a.key:
+                raise SystemExit("keys show needs a key id: see `markweightx keys list`")
             k = _key(a.key)
             safe = {kk: ("<secret>" if kk == "secret" else v) for kk, v in k.params.items()}
             print(json.dumps({"commitment": k.commitment, "scheme": k.scheme, "base": k.base, "params": safe,
