@@ -63,16 +63,21 @@ class Probe:
         return self._model
 
     def grad_seq_logprob(self, texts, wrt):
-        """Gradients of log p(text) w.r.t. the named parameter(s), one dict {name: grad} per text (R2 only).
-        Only the requested parameters track gradients, so the cost is one forward + backward per text."""
+        """Gradients of log p(text) w.r.t. the named parameter(s) (R2 only). One text -> {name: grad}; a list ->
+        a generator of {name: grad}, one text at a time, so a caller reducing each gradient (an inner product, a
+        norm) never holds more than one: a 1B layer's gradient is ~64 MB in fp32. Only the requested parameters
+        track gradients, so the cost is one forward + backward per text."""
+        if isinstance(texts, str):
+            return next(self._grads([texts], wrt))
+        return self._grads(list(texts), wrt)
+
+    def _grads(self, texts, wrt):
         import torch
         self._need(Access.R2, "the gradient of the base model")
-        single, names = isinstance(texts, str), [wrt] if isinstance(wrt, str) else list(wrt)
-        texts = [texts] if single else texts
+        names = [wrt] if isinstance(wrt, str) else list(wrt)
         m, tok = self.model(), self.tokenizer()
         params = dict(m.named_parameters())
         ps = [params[n] for n in names]
-        out = []
         with torch.enable_grad():
             for p in ps:
                 p.requires_grad_(True)
@@ -81,11 +86,10 @@ class Probe:
                     ids = tok(t, return_tensors="pt").input_ids.to(self.device)
                     lp = -torch.nn.functional.cross_entropy(m(input_ids=ids).logits[0, :-1].float(), ids[0, 1:], reduction="sum")
                     gs = torch.autograd.grad(lp, ps)
-                    out.append({n: g.detach() for n, g in zip(names, gs)})
+                    yield {n: g.detach() for n, g in zip(names, gs)}
             finally:
                 for p in ps:
                     p.requires_grad_(False)
-        return out[0] if single else out
 
 
 class Imprint(str, Enum):
