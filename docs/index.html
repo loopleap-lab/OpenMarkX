@@ -29,6 +29,8 @@
   --code-ink: #e2e8f0;
   --code-dim: #64748b;
   --code-hi: #67e8f9;
+  --sim: #b45309; --sim-soft: #fef3c7; --mark: #047857; --mark-soft: #d1fae5; --nomark: #be123c; --paper: #ffffff;
+  --skin: #f1c7a2; --hair: #3a2a25; --hair-b: #b5622f; --hood: #4b5563; --wood: #8a6a4f;
   --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -36,14 +38,14 @@
     --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
     --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --rose: #fb7185;
     --good: #34d399; --good-soft: #022c22; --mid: #fbbf24; --mid-soft: #2a1d05; --bad: #fb7185; --bad-soft: #2a0a12;
-    --code-bg: #0b1222; color-scheme: dark;
+    --code-bg: #0b1222; color-scheme: dark; --sim: #fbbf24; --sim-soft: #2a1d05; --mark: #34d399; --mark-soft: #022c22; --nomark: #fb7185; --paper: #e2e8f0;
   }
 }
 :root[data-theme="dark"] {
   --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
   --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --rose: #fb7185;
   --good: #34d399; --good-soft: #022c22; --mid: #fbbf24; --mid-soft: #2a1d05; --bad: #fb7185; --bad-soft: #2a0a12;
-  --code-bg: #0b1222; color-scheme: dark;
+  --code-bg: #0b1222; color-scheme: dark; --sim: #fbbf24; --sim-soft: #2a1d05; --mark: #34d399; --mark-soft: #022c22; --nomark: #fb7185; --paper: #e2e8f0;
 }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.65; }
@@ -88,27 +90,41 @@ section.band + section.band { border-top: 1px solid var(--line); }
 .ctas { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
 
 /* motivation */
-.flows { display: grid; gap: 14px; }
-.flow { display: grid; grid-template-columns: 17em minmax(0, 1fr); gap: 16px; align-items: center; }
-.flow-l { font-size: 13px; font-weight: 700; color: var(--ink); }
-.fsteps { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.fs { display: grid; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--solid); font-size: 13px; }
-.fs small { font-size: 11px; color: var(--faint); }
-.fs.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
-.fs.ok { border-color: color-mix(in srgb, var(--good) 40%, transparent); background: var(--good-soft); color: var(--good); }
-.fs.no { border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: var(--bad-soft); color: var(--bad); }
-.ar, .car { color: var(--faint); font-size: 18px; }
-@media (max-width: 760px) { .flow { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
-.case-h { font-size: 18px; margin: 36px 0 14px; }
-.case { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: stretch; }
-.car { align-self: center; }
-.cs { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 6px; align-content: start; border-top: 3px solid var(--c); min-width: 0; }
-.cs .who { font-size: 11px; color: var(--c); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.cs b { font-size: 15px; }
-.cs p { margin: 0; font-size: 13px; color: var(--muted); }
-.cs code { font-size: 12px; color: var(--accent-ink); }
-.cs.own { --c: var(--accent); } .cs.edit { --c: var(--mid); } .cs.use { --c: #6366f1; } .cs.det { --c: var(--good); }
-@media (max-width: 960px) { .case { grid-template-columns: minmax(0, 1fr); } .car { transform: rotate(90deg); justify-self: center; } }
+.case-h { display: block; font-size: 18px; margin: 44px 0 14px; }
+.cmp { padding: 0; overflow: hidden; display: grid; }
+.cmp-r { display: grid; grid-template-columns: 13em minmax(0, 1fr) minmax(0, 1fr); }
+.cmp-r > span { padding: 14px 18px; font-size: 14px; }
+.cmp-r + .cmp-r { border-top: 1px solid var(--line); }
+.cmp-h > span { display: grid; gap: 2px; font-size: 12px; color: var(--muted); background: color-mix(in srgb, var(--line) 35%, transparent); }
+.cmp-h b { font-size: 17px; color: var(--ink); }
+.cmp .k { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); align-self: center; }
+.cmp .hard { color: var(--bad); background: var(--bad-soft); font-weight: 500; }
+@media (max-width: 760px) { .cmp-r { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .cmp-h > span:first-child { display: none; } .cmp .k { grid-column: 1 / -1; padding-bottom: 0; } }
+.tmcard { padding: 18px; }
+.tm { overflow-x: auto; }
+.tm svg { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--font); }
+.arch { display: grid; gap: 10px; }
+.arow { display: grid; grid-template-columns: 12em minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.alab { display: grid; align-content: center; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.alab b { font-size: 15px; color: var(--ink); }
+.alab .lk { display: inline; width: 13px; height: 13px; vertical-align: -2px; margin-right: 3px; }
+.acells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.am, .aa { display: grid; gap: 2px; justify-items: center; text-align: center; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--solid); min-width: 0; }
+.am b { font-size: 15px; }
+.am span, .aa span { font-size: 12px; color: var(--muted); }
+.aa { position: relative; background: color-mix(in srgb, var(--line) 30%, transparent); }
+.aa::before { content: ""; position: absolute; top: -11px; left: 50%; height: 10px; border-left: 2px solid var(--line); }
+.aa code { font-size: 13px; }
+.am.new { border: 2px dashed var(--rose); color: var(--rose); }
+.am.new span { color: var(--rose); }
+.aa.new { border: 2px solid var(--rose); background: color-mix(in srgb, var(--rose) 10%, transparent); color: var(--rose); }
+.aa.new span { color: var(--rose); font-weight: 700; }
+.aa.new::before { border-color: var(--rose); }
+.aiface { margin-left: calc(12em + 14px); font-size: 12px; color: var(--muted); }
+.aiface code { color: var(--accent-ink); font-weight: 700; }
+.acore { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--line) 30%, transparent); border: 1px solid var(--line); }
+.acore span { padding: 6px 12px; border-radius: 8px; background: var(--solid); border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+@media (max-width: 760px) { .arow { grid-template-columns: minmax(0, 1fr); } .acells { grid-template-columns: repeat(2, minmax(0, 1fr)); } .aiface { margin-left: 0; } .aa::before { content: none; } }
 
 /* overview */
 .roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
@@ -224,25 +240,117 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
 <section class="band" id="motivation">
   <div class="wrap">
     <div class="head"><div><h2><span class="hl">Motivation</span></h2><p>A closed model's provider controls decoding and can add the watermark there. Releasing the weights hands decoding to the user, who can drop that step. The watermark therefore has to be learned into the weights, so that any decoding produces watermarked text.</p></div></div>
-    <div class="card flows" aria-label="Where the watermark is added">
-      <div class="flow"><span class="flow-l">Closed-source LLM</span>
-        <div class="fsteps"><span class="fs">Model</span><span class="ar">→</span><span class="fs on">Decoding + watermark<small>run by the provider</small></span><span class="ar">→</span><span class="fs ok">Watermarked text</span></div></div>
-      <div class="flow"><span class="flow-l">Open weights, decoding-time watermark</span>
-        <div class="fsteps"><span class="fs">Released weights</span><span class="ar">→</span><span class="fs no">User's own decoding<small>watermark step left out</small></span><span class="ar">→</span><span class="fs no">Unmarked text</span></div></div>
-      <div class="flow"><span class="flow-l">Open weights, watermark in the weights</span>
-        <div class="fsteps"><span class="fs on">Weights carry the mark<small>PRO, Gu et al., GaussMark, ...</small></span><span class="ar">→</span><span class="fs">Any decoding</span><span class="ar">→</span><span class="fs ok">Watermarked text</span></div></div>
+    <div class="card cmp" role="table" aria-label="Closed and open models">
+      <div class="cmp-r cmp-h" role="row"><span role="columnheader"></span><span role="columnheader"><b>Closed model</b>served by its provider</span><span role="columnheader"><b>Open model</b>e.g. Llama, anyone can download it</span></div>
+      <div class="cmp-r" role="row"><span class="k" role="rowheader">Who runs it</span><span role="cell">The provider's servers</span><span role="cell" class="hard">Anyone, on their own machine</span></div>
+      <div class="cmp-r" role="row"><span class="k" role="rowheader">How the mark gets in</span><span role="cell">The server biases word choices with a secret key</span><span role="cell" class="hard">No server does it: the weights must write the mark</span></div>
+      <div class="cmp-r" role="row"><span class="k" role="rowheader">What can remove it</span><span role="cell">Rewording the text</span><span role="cell" class="hard">Rewording the text, and changing the weights: fine-tune, merge, prune, quantize</span></div>
     </div>
-    <h3 class="case-h">A use case</h3>
-    <div class="case" aria-label="Use case: a released model is edited, used, and its text traced">
-      <div class="cs own"><span class="who">Alice · model owner</span><b>Releases a model</b><p>Trains the watermark into Llama weights, uploads them to Hugging Face, keeps the key.</p><code>mwx.embed</code></div>
-      <span class="car">→</span>
-      <div class="cs edit"><span class="who">Dana · developer</span><b>Edits and re-uploads</b><p>Fine-tunes it on her data, merges it with another model, quantizes it to 4 bits, uploads it under a new name.</p><code>mwx.modify</code></div>
-      <span class="car">→</span>
-      <div class="cs use"><span class="who">Charlie · end user</span><b>Writes with it</b><p>Runs Dana's copy locally, generates an essay, rewords a few sentences, submits it.</p><code>mwx.generate · rewrite</code></div>
-      <span class="car">→</span>
-      <div class="cs det"><span class="who">Reviewer · detector</span><b>Traces the text</b><p>Has only the essay and Alice's key, and finds that it came from Alice's model.</p><code>mwx.detect</code></div>
-    </div>
-    <p class="foot-note">What MarkWeightX measures: after Dana's edits and Charlie's rewording, how often the text is still traced, and how often a human text is wrongly flagged.</p>
+    <h3 class="case-h">Threat model</h3>
+    <div class="card tmcard"><div class="tm"><svg viewBox="0 0 1436 410" role="img" aria-label="Threat model: Alice ships a watermarked model and keeps the key. Anyone downstream can change the weights and reword the text. The detector sees only the text and the key, and still traces it to Alice.">
+<defs><marker id="tm-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker><marker id="tm-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--sim)"/></marker></defs>
+<rect x="0" y="0" width="1436" height="130" rx="14" fill="var(--accent-soft)" opacity=".75"/>
+<text x="18" y="52" font-size="18" font-weight="700" fill="var(--accent)" font-family="var(--font)">Owner</text>
+<text x="18" y="78" font-size="13" fill="var(--muted)">ships the model,</text><text x="18" y="98" font-size="13" fill="var(--muted)">keeps the key</text>
+<rect x="0" y="140" width="1436" height="130" rx="14" fill="var(--sim-soft)" opacity=".75"/>
+<text x="18" y="192" font-size="18" font-weight="700" fill="var(--sim)" font-family="var(--font)">Downstream</text>
+<text x="18" y="218" font-size="13" fill="var(--muted)">anyone with the</text><text x="18" y="238" font-size="13" fill="var(--muted)">weights or text</text>
+<rect x="0" y="280" width="1436" height="130" rx="14" fill="var(--mark-soft)" opacity=".75"/>
+<text x="18" y="332" font-size="18" font-weight="700" fill="var(--mark)" font-family="var(--font)">Detector</text>
+<text x="18" y="358" font-size="13" fill="var(--muted)">sees only</text><text x="18" y="378" font-size="13" fill="var(--muted)">text + key</text>
+<line x1="372" y1="65" x2="408" y2="65" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#tm-a)"/>
+<line x1="523.0" y1="113" x2="523.0" y2="153" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#tm-a)"/>
+<text x="533.0" y="140.0" text-anchor="start" font-size="14" fill="var(--muted)">download</text>
+<line x1="634" y1="205" x2="670" y2="205" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#tm-a)"/>
+<path d="M896 205 H918 V345 H932" fill="none" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#tm-a)"/>
+<text x="910" y="280.0" text-anchor="end" font-size="14" fill="var(--muted)">text found</text>
+<line x1="1047.0" y1="113" x2="1047.0" y2="293" stroke="var(--sim)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#tm-k)"/>
+<text x="1057.0" y="210" text-anchor="start" font-size="14" fill="var(--sim)">key</text>
+<line x1="1158" y1="345" x2="1194" y2="345" stroke="var(--muted)" stroke-width="1.8" marker-end="url(#tm-a)"/>
+<rect x="150" y="17" width="222" height="96" rx="12" fill="var(--surface)" stroke="var(--line)" stroke-width="1.8"/>
+<svg x="162" y="40" width="50" height="50" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="58" fill="var(--accent-soft)"/>
+<path d="M22 118 C22 90 38 80 60 80 C82 80 98 90 98 118 Z" fill="var(--accent)"/>
+<rect x="54" y="66" width="12" height="16" rx="5" fill="var(--skin)"/>
+<path d="M39 54 C36 30 48 26 60 26 C73 26 85 31 81 56 L83 78 L74 74 L74 50 L46 50 L46 74 L37 78 Z" fill="var(--hair)"/><circle cx="60" cy="50" r="19" fill="var(--skin)"/>
+<path d="M41 49 C41 33 51 29 60 29 C70 29 79 34 79 47 C71 41 62 39 54 42 C49 44 45 46 41 49 Z" fill="var(--hair)"/><circle cx="53" cy="51" r="2.2" fill="var(--ink)"/><circle cx="67" cy="51" r="2.2" fill="var(--ink)"/>
+<circle cx="49" cy="57" r="2.6" fill="var(--nomark)" opacity=".18"/><circle cx="71" cy="57" r="2.6" fill="var(--nomark)" opacity=".18"/><path d="M54 58 Q60 63.5 66 58" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+<rect x="66" y="84" width="32" height="26" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="2.5"/>
+<path d="M82 89 L90 92 L90 98 C90 103 86 106 82 107 C78 106 74 103 74 98 L74 92 Z" fill="var(--accent)"/>
+<path d="M78.5 98 L81.5 101 L86 95.5" fill="none" stroke="var(--paper)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="68" cy="99" r="5" fill="var(--skin)"/>
+<circle cx="24" cy="92" r="6.5" fill="none" stroke="var(--sim)" stroke-width="3"/><path d="M30 92 L44 92 M39 92 L39 97 M43 92 L43 96" stroke="var(--sim)" stroke-width="3" stroke-linecap="round"/>
+<circle cx="45" cy="95" r="5" fill="var(--skin)"/></svg>
+<text x="222" y="52" font-size="16" font-weight="700" fill="var(--ink)" font-family="var(--font)">Alice</text>
+<text x="222" y="77" font-size="14" fill="var(--muted)">embeds the mark</text>
+<circle cx="152" cy="19" r="13" fill="var(--accent)"/><text x="152" y="24.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--surface)" font-family="var(--font)">1</text>
+<rect x="412" y="17" width="222" height="96" rx="12" fill="var(--surface)" stroke="var(--line)" stroke-width="1.8"/>
+<circle cx="433" cy="45" r="5" fill="var(--mark)"/>
+<text x="444" y="52" font-size="16" font-weight="700" fill="var(--ink)" font-family="var(--font)" >Alice-8B</text>
+<text x="428" y="77" font-size="14" fill="var(--muted)">watermarked</text>
+<text x="428" y="97" font-size="14" fill="var(--muted)">public weights</text>
+<rect x="936" y="17" width="222" height="96" rx="12" fill="var(--surface)" stroke="var(--sim)" stroke-width="1.8" stroke-dasharray="6 5"/>
+<circle cx="958" cy="45" r="5.5" fill="none" stroke="var(--sim)" stroke-width="2.6"/><path d="M963 45 h13 m-4 0 v5 m-4 -5 v4" stroke="var(--sim)" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+<text x="982" y="52" font-size="16" font-weight="700" fill="var(--ink)" font-family="var(--font)">Alice's key</text>
+<text x="952" y="77" font-size="14" fill="var(--muted)">never shipped</text>
+<rect x="412" y="157" width="222" height="96" rx="12" fill="var(--surface)" stroke="var(--sim)" stroke-width="1.8"/>
+<svg x="424" y="180" width="50" height="50" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="58" fill="var(--sim-soft)"/>
+<path d="M22 118 C22 90 38 80 60 80 C82 80 98 90 98 118 Z" fill="var(--hood)"/>
+<rect x="54" y="66" width="12" height="16" rx="5" fill="var(--skin)"/>
+<path d="M35 62 C31 32 46 23 60 23 C75 23 89 32 85 62 C83 72 78 77 75 80 L45 80 C42 77 37 72 35 62 Z" fill="var(--hood)"/><circle cx="60" cy="50" r="19" fill="var(--skin)"/>
+<path d="M41 44 C44 34 52 31 60 31 C68 31 76 34 79 44 C72 39 66 38 60 38 C54 38 48 39 41 44 Z" fill="var(--hood)"/><circle cx="53" cy="51" r="2.2" fill="var(--ink)"/><circle cx="67" cy="51" r="2.2" fill="var(--ink)"/>
+<circle cx="49" cy="57" r="2.6" fill="var(--nomark)" opacity=".18"/><circle cx="71" cy="57" r="2.6" fill="var(--nomark)" opacity=".18"/><path d="M54 58 Q60 63.5 66 58" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+<g transform="rotate(-35 86 96)"><rect x="83" y="86" width="7" height="28" rx="3" fill="var(--muted)"/>
+<path d="M78 80 C78 74 83 71 86.5 71 C90 71 95 74 95 80 L91 84 L91 78 L82 78 L82 84 Z" fill="var(--muted)"/></g>
+<circle cx="80" cy="103" r="5" fill="var(--skin)"/>
+<rect x="15" y="86" width="28" height="22" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="2.2"/>
+<path d="M29 103 V92 M24 97 L29 92 L34 97" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="42" cy="104" r="5" fill="var(--skin)"/></svg>
+<text x="484" y="192" font-size="16" font-weight="700" fill="var(--ink)" font-family="var(--font)">Edit weights</text>
+<text x="484" y="217" font-size="14" fill="var(--muted)">fine-tune, merge,</text>
+<text x="484" y="237" font-size="14" fill="var(--muted)">prune, quantize</text>
+<circle cx="414" cy="159" r="13" fill="var(--accent)"/><text x="414" y="164.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--surface)" font-family="var(--font)">2</text>
+<rect x="674" y="157" width="222" height="96" rx="12" fill="var(--surface)" stroke="var(--sim)" stroke-width="1.8"/>
+<svg x="686" y="180" width="50" height="50" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="58" fill="var(--accent-soft)"/>
+<path d="M22 118 C22 90 38 80 60 80 C82 80 98 90 98 118 Z" fill="var(--sim)"/>
+<rect x="54" y="66" width="12" height="16" rx="5" fill="var(--skin)"/><circle cx="60" cy="50" r="19" fill="var(--skin)"/>
+<path d="M40 47 C40 31 50 26 60 26 C70 26 80 31 80 47 Z" fill="var(--accent)"/>
+<rect x="38" y="42" width="44" height="7" rx="3.5" fill="var(--ink)" opacity=".85"/>
+<circle cx="60" cy="25" r="4" fill="var(--accent)"/><circle cx="53" cy="51" r="2.2" fill="var(--ink)"/><circle cx="67" cy="51" r="2.2" fill="var(--ink)"/>
+<circle cx="49" cy="57" r="2.6" fill="var(--nomark)" opacity=".18"/><circle cx="71" cy="57" r="2.6" fill="var(--nomark)" opacity=".18"/><path d="M54 58 Q60 63.5 66 58" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+<rect x="16" y="82" width="38" height="20" rx="7" fill="var(--paper)" stroke="var(--line)" stroke-width="1.5"/>
+<path d="M24 102 L22 109 L31 102 Z" fill="var(--paper)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M23 89 H47 M23 95 H40" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>
+<rect x="70" y="84" width="20" height="32" rx="4" fill="var(--ink)"/>
+<rect x="72.5" y="88" width="15" height="22" rx="1.5" fill="var(--paper)"/>
+<path d="M75 93 H85 M75 98 H83 M75 103 H85" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/>
+<circle cx="70" cy="108" r="5" fill="var(--skin)"/></svg>
+<text x="746" y="192" font-size="16" font-weight="700" fill="var(--ink)" font-family="var(--font)">Reword text</text>
+<text x="746" y="217" font-size="14" fill="var(--muted)">edit, paraphrase</text>
+<circle cx="676" cy="159" r="13" fill="var(--accent)"/><text x="676" y="164.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--surface)" font-family="var(--font)">3</text>
+<rect x="936" y="297" width="222" height="96" rx="12" fill="var(--surface)" stroke="var(--mark)" stroke-width="1.8"/>
+<svg x="948" y="320" width="50" height="50" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="58" fill="var(--mark-soft)"/>
+<path d="M22 118 C22 90 38 80 60 80 C82 80 98 90 98 118 Z" fill="var(--mark)"/>
+<rect x="54" y="66" width="12" height="16" rx="5" fill="var(--skin)"/><circle cx="60" cy="50" r="19" fill="var(--skin)"/>
+<path d="M41 47 C41 32 51 28 60 28 C71 28 80 33 79 47 C76 41 70 38 63 39 C56 40 49 42 41 47 Z" fill="var(--hair-b)"/>
+<circle cx="53" cy="51" r="5.5" fill="none" stroke="var(--ink)" stroke-width="1.8"/><circle cx="67" cy="51" r="5.5" fill="none" stroke="var(--ink)" stroke-width="1.8"/>
+<path d="M58.5 51 H61.5" stroke="var(--ink)" stroke-width="1.8"/>
+<circle cx="53" cy="51" r="1.9" fill="var(--ink)"/><circle cx="67" cy="51" r="1.9" fill="var(--ink)"/><path d="M54 58 Q60 63.5 66 58" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+<rect x="20" y="82" width="34" height="34" rx="3" fill="var(--paper)" stroke="var(--line)" stroke-width="1.5"/>
+<path d="M25 89 H48 M25 95 H44 M25 101 H47 M25 107 H40" stroke="var(--mark)" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="80" cy="94" r="11" fill="var(--paper)" fill-opacity=".55" stroke="var(--ink)" stroke-width="3"/>
+<path d="M88 102 L98 112" stroke="var(--wood)" stroke-width="5" stroke-linecap="round"/>
+<path d="M75 94 L79 98 L86 90" fill="none" stroke="var(--mark)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="96" cy="110" r="5" fill="var(--skin)"/></svg>
+<text x="1008" y="332" font-size="16" font-weight="700" fill="var(--ink)" font-family="var(--font)">Detector</text>
+<text x="1008" y="357" font-size="14" fill="var(--muted)">text + key</text>
+<text x="1008" y="377" font-size="14" fill="var(--muted)">no model access</text>
+<circle cx="938" cy="299" r="13" fill="var(--accent)"/><text x="938" y="304.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--surface)" font-family="var(--font)">4</text>
+<rect x="1198" y="297" width="222" height="96" rx="12" fill="var(--mark-soft)" stroke="var(--mark)" stroke-width="1.8"/>
+<text x="1214" y="332" font-size="16" font-weight="700" fill="var(--mark)" font-family="var(--font)">✓ Alice's model</text>
+<text x="1214" y="357" font-size="14" fill="var(--muted)">traced after</text>
+<text x="1214" y="377" font-size="14" fill="var(--muted)">most edits</text>
+</svg></div></div>
+    <p class="foot-note">Alice releases the weights and keeps the key; anyone downstream may edit the weights and reword the text; the detector sees only the text and the key. MarkWeightX measures how often the text is still traced after both changes, and how often a human text is wrongly flagged.</p>
   </div>
 </section>
 
@@ -269,6 +377,14 @@ mwx.verify_model(edited, key, prompts,
   <div class="wrap">
     <div class="head"><div><h2>Supported <span class="hl">Methods</span></h2><p>Each method is a scheme with a key, a training signal, a way of writing it into the weights, and a detector. The leaderboard reports the methods evaluated in the PRO paper; the others can be evaluated with the same benchmark.</p></div></div>
     <div class="mgrid" id="mgrid"></div>
+    <h3 class="case-h">Adding a method</h3>
+    <div class="card"><div class="arch" aria-label="Architecture: methods on top, one adapter each, a fixed shared core below">
+        <div class="arow"><span class="alab"><b>Methods</b>own code, any size</span><div class="acells"><div class="am"><b>PRO</b><span>own repo</span></div><div class="am"><b>KGW-D</b><span>MarkLLM teacher</span></div><div class="am"><b>GaussMark</b><span>weight edit</span></div><div class="am new"><b>bob-mark</b><span>new method</span></div></div></div>
+        <div class="arow"><span class="alab"><b>Adapters</b>one file each</span><div class="acells"><div class="aa"><code>pro.py</code><span>adapter</span></div><div class="aa"><code>markllm.py</code><span>adapter</span></div><div class="aa"><code>gaussmark.py</code><span>adapter</span></div><div class="aa new"><code>bob_mark.py</code><span>+ you add</span></div></div></div>
+        <div class="aiface">each adapter is one <code>mwx.Scheme</code> subclass: <code>setup</code> (key) · <code>target_logits</code> (training signal) · <code>score</code> (detector) · <code>access</code></div>
+        <div class="arow"><span class="alab"><b>MarkWeightX core</b><span><svg class="lk" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg> fixed, shared by all</span></span>
+          <div class="acore"><span>load models</span><span>edit weights</span><span>generate</span><span>edit text</span><span>calibrate thresholds</span><span>scoreboard</span></div></div>
+      </div>
   </div>
 </section>
 
