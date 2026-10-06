@@ -14,11 +14,12 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.detect import scores, summary
-from markweightx.embed import embed
-from markweightx.generate import eval_prompts, generate, perplexity
+from markweightx.scoring import scores, summary
+from markweightx.imprint import embed
+from markweightx.sampling import eval_prompts, generate, perplexity
 from markweightx.models import load_release, load_tokenizer
 from markweightx.paths import RUNS
+from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
 
@@ -44,7 +45,7 @@ def main():
 
     tok = load_tokenizer(a.base)
     model = load_release(rel, a.device)
-    sch = get_scheme(a.scheme); sch.setup(model, tok, a.device, rel.key)
+    sch = get_scheme(a.scheme); sch.setup(model, tok, a.device, load_key(rel).params)
     prompts = eval_prompts(tok, n=a.n)
     base_cache = f"{RUNS}/{a.tag}/{a.base}/base_texts_n{a.n}.json"
     if os.path.exists(base_cache):

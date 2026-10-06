@@ -15,10 +15,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.detect import repetition, scores, summary
+from markweightx.scoring import repetition, scores, summary
 from markweightx.edits import modify, rewrite
-from markweightx.generate import eval_prompts, generate, perplexity
+from markweightx.sampling import eval_prompts, generate, perplexity
 from markweightx.models import ConfigOnly, load_base, load_release, load_tokenizer
+from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
 
@@ -55,7 +56,7 @@ def main():
     # detectors that run a language model get the base; the others only need its config. On 8B the base used to
     # judge perplexity is loaded per edit and freed, so it never sits next to the edited model on one card.
     resident = load_base(rel.base, a.device) if (sch.needs_model_to_detect or not big) else None
-    sch.setup(resident if resident is not None else ConfigOnly(rel.base, a.device), tok, a.device, rel.key)
+    sch.setup(resident if resident is not None else ConfigOnly(rel.base, a.device), tok, a.device, load_key(rel).params)
 
     def ppl_of(texts):
         if resident is not None:

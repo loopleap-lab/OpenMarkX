@@ -29,7 +29,8 @@ def materialize(rel: Release, device: str):
 
 def _child(rel: Release, out: str, op: str, params: dict, **kw) -> Release:
     lin = list(rel.lineage) + [vars(Step(op, params))]
-    return Release(path=out, base=rel.base, scheme=rel.scheme, key=rel.key, lineage=lin, **kw)
+    return Release(path=out, base=rel.base, scheme=rel.scheme, key=rel.key, key_commitment=rel.key_commitment,
+                   lineage=lin, **kw)
 
 
 def _save_weights(model, tok, out):

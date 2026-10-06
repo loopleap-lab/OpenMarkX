@@ -17,9 +17,10 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.detect import repetition, scores, summary
-from markweightx.generate import generate, perplexity
+from markweightx.scoring import repetition, scores, summary
+from markweightx.sampling import generate, perplexity
 from markweightx.models import load_base, load_tokenizer
+from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
 
@@ -53,7 +54,7 @@ def main():
     bias[green] = a.delta
     prompts = tx["prompts"][: a.n] if a.n else tx["prompts"]
     forged = generate(model, tok, prompts, adapter=False, seed=3, logits_processor=Bias(bias))
-    sch = get_scheme(rel.scheme); sch.setup(model, tok, a.device, rel.key)
+    sch = get_scheme(rel.scheme); sch.setup(model, tok, a.device, load_key(rel).params)
     s = [x for x, _ in scores(sch, forged)]
     row = {"edit": "attack:spoof_unigram", **summary(s, tx["scores"]["null"]), "ppl": perplexity(model, tok, prompts, forged),
            "rep4": sum(map(repetition, forged)) / len(forged), "n_green_estimated": len(green)}

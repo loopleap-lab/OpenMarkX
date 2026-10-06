@@ -15,10 +15,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.detect import empirical_p, repetition, threshold
+from markweightx.scoring import empirical_p, repetition, threshold
 from markweightx.edits import rewrite
 from markweightx.models import ConfigOnly, load_tokenizer
 from markweightx.paths import DATA, RUNS
+from markweightx.keys import load_key
 from markweightx.registry import get_scheme
 from markweightx.types import Release
 
@@ -75,7 +76,7 @@ def human_continuation(tok, prompt, n_new=200):
 
 def method_block(rel_dir, tok, pick=None):
     rel = Release.open(rel_dir)
-    sch = get_scheme(rel.scheme); sch.setup(ConfigOnly(rel.base, "cpu"), tok, "cpu", rel.key)
+    sch = get_scheme(rel.scheme); sch.setup(ConfigOnly(rel.base, "cpu"), tok, "cpu", load_key(rel).params)
     tx = json.load(open(f"{rel_dir}/texts.json")); res = json.load(open(f"{rel_dir}/result.json"))
     null = sorted(tx["scores"]["null"]); thr = threshold(null, 0.01)
     rows = {}

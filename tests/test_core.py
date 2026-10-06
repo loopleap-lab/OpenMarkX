@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from markweightx.detect import empirical_p, repetition, summary, threshold
+from markweightx.scoring import empirical_p, repetition, summary, threshold
 from markweightx.registry import SCHEMES, get_scheme
 from markweightx.types import Release
 

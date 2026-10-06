@@ -127,6 +127,10 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
             sch.save(f"{out}/adapter_step{step + 1}", key)
     model.save_pretrained(f"{out}/adapter")
     key = sch.save(out, key)
-    rel = Release(path=out, base=base, scheme=scheme, key=key, adapter=f"{out}/adapter",
+    from .keys import store
+    from .types import Key
+    k = Key(scheme=scheme, params=key)
+    store(k)                                               # the key goes to the key store, not into the release
+    rel = Release(path=out, base=base, scheme=scheme, key_commitment=k.commitment, adapter=f"{out}/adapter",
                   lineage=[vars(Step("embed", cfg))])
     return rel.save()
