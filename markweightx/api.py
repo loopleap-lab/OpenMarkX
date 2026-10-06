@@ -122,10 +122,17 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
         import warnings
         warnings.warn("this PRO key has no 'transform': detection uses the public initial policy, which is right "
                       "only if the checkpoint was trained with it")
-    from .keys import resolve
+    import re
+    from .keys import STORE, resolve
     for k, v in list(params.items()):                      # a key exported from a store: blob refs become its files
         if isinstance(v, str) and v.startswith("blob:"):
+            if not re.fullmatch(r"blob:[0-9a-f]{64}(\.\w+)?", v):
+                raise ValueError(f"key field {k}: {v!r} is not a blob reference")
+            if not os.path.isfile(resolve(v)):
+                raise FileNotFoundError(f"key field {k}: {v} is not in this key store ({STORE}); copy its blobs/ too")
             params[k] = resolve(v)
+        elif isinstance(v, str) and not os.sep in v and not v.endswith((".json", ".pt", ".pth", ".bin", ".npy")):
+            params[k] = _value(v)                          # "0.5" -> 0.5, so the commitment matches embed's
     for k, v in params.items():                            # key files are copied in; a missing one fails here
         if isinstance(v, str) and (v.endswith((".json", ".pt", ".pth", ".bin", ".npy")) or os.sep in v):
             if not os.path.isfile(v):
@@ -363,18 +370,21 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
 
 def sequential_p(k: int, n: int, fpr: float, p1: float, null_ab: tuple | None = None) -> float:
     """An always-valid p-value after k flags in n texts: 1 / LR, LR the likelihood ratio of the flag sequence under
-    rate p1 against the null. The null is rate fpr (an exact null), or with null_ab = (a, b) the Beta-binomial
-    predictive of an empirical null (a Polya urn: texts exchangeable with the calibration's). Either way LR is a
-    martingale under the null, so P(1/LR ever <= x) <= x however often it is looked at (Ville)."""
+    the alternative against the null. The alternative is an even mixture of flag rates p1, 2*p1, 4*p1, ... (< 1), so
+    a strongly marked model is caught however high its rate. The null is rate fpr (an exact null), or with
+    null_ab = (a, b) the Beta-binomial predictive of an empirical null (a Polya urn: texts exchangeable with the
+    calibration's). Either way LR is a martingale under the null, so P(1/LR ever <= x) <= x however often it is looked
+    at (Ville)."""
     import math
-    from scipy.special import betaln
-    log_alt = k * math.log(p1) + (n - k) * math.log(1 - p1)
+    from scipy.special import betaln, logsumexp
+    rates = [p1 * 2 ** i for i in range(8) if p1 * 2 ** i < 1]
+    log_alt = logsumexp([k * math.log(r) + (n - k) * math.log(1 - r) for r in rates]) - math.log(len(rates))
     if null_ab:
         a, b = null_ab
         log_null = betaln(a + k, b + n - k) - betaln(a, b)
     else:
         log_null = k * math.log(fpr) + (n - k) * math.log(1 - fpr)
-    return min(1.0, math.exp(log_null - log_alt))
+    return math.exp(min(0.0, log_null - log_alt))         # capped before exp: no overflow on long runs
 
 
 def null_ab(n_null: int, fpr: float) -> tuple[int, int]:
@@ -390,8 +400,8 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
                  budget: int | None = None, sequential: bool = False, p1: float = 0.2, batch: int = 20,
                  trust_plugin: bool = False) -> Detection:
     """Model-level verdict on a suspect model: sample it on the prompts (at most `budget`), flag each text at `fpr`,
-    and test the flag rate; under the null each text is flagged with probability fpr.
-      fixed (default): p = P(Binom(n, fpr) >= k) over all n texts; flagged when p <= alpha.
+    and test how many are flagged.
+      fixed (default): p = the null's tail P(K >= k) over all n judged texts; flagged when p <= alpha.
       sequential=True: `batch` texts at a time. The model is accused early once an always-valid test against flag
         rate p1 is decisive (strong watermarks settle in a batch or two); it is never cleared early: otherwise all
         texts are generated and the fixed test decides, so weak watermarks (flag rates well below p1) keep the fixed
@@ -400,7 +410,9 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
     Texts too short to be judged are left out of the test (statistic counts flags among the judged, n_judged);
     n_queries is how many texts were generated. With an exact null (GaussMark) the flags are Binomial(n, fpr). With an
     empirical null of N texts the suspect's unmarked texts are exchangeable with the calibration's, so the flags are
-    exactly Beta-binomial (null_ab), which accounts for the threshold's own uncertainty at no cost in alpha. p_value is
+    Beta-binomial (null_ab), which accounts for the threshold's own uncertainty at no cost in alpha. That is exact for
+    texts judged against a null of their own length; across the per-length nulls it is conservative when false
+    positives fall with length, the same assumption as the length rule (C9; simulated sizes 0.1-0.5% at alpha 1%). p_value is
     the p of the deciding test (doubled in sequential mode), so flagged iff p_value <= alpha. Prompts disjoint from the
     calibration's are the clean choice."""
     from scipy.stats import betabinom, binom

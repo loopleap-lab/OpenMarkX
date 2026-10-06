@@ -102,3 +102,10 @@ def test_empirical_null_beta_binomial_test_is_exact_and_powerful():
     assert binom.sf(crit - 1, n, 0.05) > 0.5                       # power at a 5% flag rate
     early = [sequential_p(kk, 20, fpr, 0.2, (a, b)) for kk in range(21)]
     assert all(x >= y for x, y in zip(early, early[1:]))           # more flags: smaller p
+
+
+def test_sequential_p_falls_with_more_flags_even_at_the_top():
+    from markweightx.api import null_ab, sequential_p
+    ab = null_ab(311, 0.01)
+    ps = [sequential_p(k, 200, 0.01, 0.2, ab) for k in range(0, 201, 10)]
+    assert all(x >= y for x, y in zip(ps, ps[1:])) and sequential_p(0, 5000, 0.01, 0.2, ab) == 1.0   # no overflow

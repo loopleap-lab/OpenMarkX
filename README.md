@@ -249,14 +249,15 @@ an always-valid test (flag rate `p1` against `fpr`) is decisive, so a strongly m
 texts; it never clears a model early, so a weakly marked one (after edits) gets the full `budget` and the power of
 the fixed test. False accusations stay below `alpha` despite the early stop, and the verdict is flagged exactly when
 `p_value <= alpha`. With an exact null (GaussMark) the flags of an unmarked model are Binomial(n, fpr); with an
-empirical null of N texts they are exactly Beta-binomial, because the suspect's texts are exchangeable with the
-calibration's, which accounts for the threshold's own uncertainty (1.3% on average for 311 texts). Found at a 5% flag
+empirical null of N texts they are Beta-binomial, because the suspect's texts are exchangeable with the
+calibration's, which accounts for the threshold's own uncertainty (1.3% on average for 311 texts). That is exact for
+texts judged against a null of their own length and conservative across the per-length nulls. Found at a 5% flag
 rate with a budget of 200 (`exp/verify_power.py [--null-n 311]`):
 
 | null | sequential | fixed |
 |---|---|---|
-| exact | 87% | 88% |
-| empirical, 311 texts | 43% | 55% |
+| exact | 86% | 88% |
+| empirical, 311 texts | 42% | 55% |
 
 A larger calibration narrows the gap. Prompts disjoint from the calibration's are the clean choice (the bundled C4
 split has only 311 usable prompts, so the quickstart reuses them; GaussMark's exact null is unaffected). `n_queries` says how many texts were generated.

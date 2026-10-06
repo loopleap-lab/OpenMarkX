@@ -18,7 +18,20 @@ STORE = os.environ.get("MWX_KEYS", os.path.join(RUNS, "keys"))
 PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256", "public"}    # key fields that are not secret (shown by `keys show`)
 
 
-_TEST_RNG = None                 # markweightx check sets a seeded random.Random here so its verdict is reproducible
+_TEST_RNG = None                 # set only inside reproducible_secrets()
+
+
+@contextlib.contextmanager
+def reproducible_secrets(seed: int):
+    """Inside, new_secret() draws from random.Random(seed): markweightx check uses it so its verdict does not depend on
+    the run. Never around a real embed: the keys would be predictable."""
+    import random
+    global _TEST_RNG
+    saved, _TEST_RNG = _TEST_RNG, random.Random(seed)
+    try:
+        yield
+    finally:
+        _TEST_RNG = saved
 
 
 def new_secret(bits: int = 40) -> int:
