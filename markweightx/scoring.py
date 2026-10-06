@@ -22,16 +22,16 @@ def empirical_p(stat: float, null_sorted: list[float]) -> float:
 
 
 def _null_for(length: int, full: list[float], by_length: dict | None, full_len: int | None) -> list[float]:
-    """The calibrated null for a text of `length` tokens: the one calibrated at the largest length not above it (the
-    shortest, for a text shorter than all). Nulls calibrated on shorter texts are the conservative side for detectors
-    whose false positives fall with length."""
+    """The calibrated null for a text of `length` tokens: the one calibrated at the largest length not above it, or
+    None for a text shorter than every calibrated length (it cannot be judged). Nulls calibrated on shorter texts are
+    the conservative side for detectors whose false positives fall with length (C9)."""
     nulls = {int(n): v for n, v in (by_length or {}).items()}
     if full_len:
         nulls[full_len] = full
     if not nulls:
         return full
     fit = [n for n in nulls if n <= length]
-    return nulls[max(fit) if fit else min(nulls)]
+    return nulls[max(fit)] if fit else None                 # shorter than every calibrated length: no valid null
 
 
 def detect(scheme, texts, null: list[float] | None = None, fpr=0.01, by_length: dict | None = None,
@@ -42,6 +42,13 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01, by_length: 
     lengths = [len(scheme.tok(t, add_special_tokens=False)["input_ids"]) for t in texts]
     empty = [not n for n in lengths]
     scored = iter(scores(scheme, [t for t, e in zip(texts, empty) if not e]) if not all(empty) else [])
+    if ns and not getattr(scheme, "exact_null", False):
+        import warnings
+        if not by_length:
+            warnings.warn("this key was calibrated with one null for every length: short texts can be over-flagged "
+                          "(C9); calibrate it again with mwx.calibrate")
+        elif null_len and max(lengths, default=0) > 1.5 * null_len:
+            warnings.warn(f"some texts are much longer than the {null_len}-token texts the null was calibrated on")
     for e, length in zip(empty, lengths):
         s, n = (0.0, 0) if e else next(scored)
         if not n:                                           # nothing scored: a vacuous answer, as in MarkAgentX
@@ -49,6 +56,9 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01, by_length: 
             continue
         if ns and not getattr(scheme, "exact_null", False):  # a calibrated key: its frozen empirical null
             null_l = _null_for(length, ns, by_length, null_len)
+            if null_l is None:                              # too short to judge against any calibrated null
+                out.append(Detection(statistic=s, p_value=1.0, n_tokens=n, flagged=False))
+                continue
             p, flagged = empirical_p(s, null_l), s > (thr if null_l is ns else threshold(null_l, fpr))
         else:                                               # otherwise the scheme's closed form, if it has one
             p = scheme.pvalue(s, n)
@@ -71,7 +81,7 @@ def summary(wm_stats, null_stats, fpr=0.01):
             "median_wm": med(wm_stats), "median_null": med(ns), "n_wm": len(wm_stats), "n_null": len(ns)}
 
 
-LENGTHS = (50, 100)             # C9: the evaluation texts are 200 tokens; how does the threshold hold on shorter ones?
+LENGTHS = (20, 50, 100)         # C9: the evaluation texts are 200 tokens; how does the threshold hold on shorter ones?
 
 
 def cut(tok, texts, n):

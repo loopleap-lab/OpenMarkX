@@ -23,20 +23,6 @@ def new_secret(bits: int = 40) -> int:
     return secrets.randbits(bits)
 
 
-@contextlib.contextmanager
-def seeded_secrets(seed: int = 0xC0FFEE):
-    """Inside, new_secret() draws from random.Random(seed): the reproducible wrong keys of a wrong-key null (the
-    seed MarkAgentX's wrong_key_detect uses)."""
-    import random
-    global new_secret
-    rng, real = random.Random(seed), new_secret
-    new_secret = lambda bits=40: rng.getrandbits(bits)    # noqa: E731
-    try:
-        yield
-    finally:
-        new_secret = real
-
-
 def key_path(commitment: str) -> str:
     return os.path.join(STORE, f"{commitment}.json")
 

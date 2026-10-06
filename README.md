@@ -112,8 +112,11 @@ refused before any model is loaded.
 `d.n_evidence` and `d.to_markagentx()` give its fields, and as there an empty text answers `p_value = 1.0` with no
 evidence. `detect(..., null="wrong_key")` (CLI `--null wrong_key`) is MarkAgentX's wrong-key null: each text is
 scored under `n_null` keys drawn from `random.Random(0xC0FFEE)`, and `p = (1 + #{wrong keys >= S}) / (n_null + 1)`.
-It needs no calibration but costs `n_null` rebindings of the scheme; teacher-free schemes use their exact closed form
-instead. `tests/test_markagentx.py` checks the field names against a MarkAgentX checkout (`refs/MarkAgentX`).
+A wrong key is the true key with only its secret redrawn (`Scheme.wrong_key`; PRO redraws its mapping and keeps
+its policy). It needs no calibration but costs `n_null` rebindings of the scheme; teacher-free schemes are refused,
+since their closed-form null is already exact. The draws are reproducible but are not MarkAgentX's keys: each scheme
+draws its own kind of secret. `tests/test_markagentx.py` checks the fields against a MarkAgentX checkout
+(`refs/MarkAgentX`) and builds its `Detection` from `to_markagentx()`.
 
 ## Keys
 
@@ -121,9 +124,10 @@ Keys never ship with a release. `release.json` holds only the key's commitment, 
 scheme, its parameters and the plugin source. The key lives in the key store, `$MWX_KEYS` (default
 `$MWX_RUNS/keys`). Each key carries its own fresh secret: MarkLLM's public default hash keys are replaced, and PRO
 draws its own token mapping. A calibrated key carries a frozen empirical null, so `detect` returns calibrated
-p-values. The null also holds nulls for the texts cut to 50 and 100 tokens: a short text is judged against the null
-of its length, because some detectors' false positives grow on short texts (C9: PRO reaches 14% at 50 tokens
-against a 200-token threshold). Schemes with an exact closed-form null (`exact_null = True`, e.g. GaussMark) use it
+p-values. The calibration also holds nulls for the texts cut to 20, 50 and 100 tokens: a text is judged against the
+null calibrated at the largest length not above its own, because some detectors' false positives grow on short texts
+(C9: PRO reaches 14% at 50 tokens against a 200-token threshold). A text shorter than 20 tokens is not flagged; keys
+calibrated before this change warn until calibrated again. Schemes with an exact closed-form null (`exact_null = True`, e.g. GaussMark) use it
 directly.
 
 ```bash

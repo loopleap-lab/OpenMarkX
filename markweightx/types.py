@@ -24,7 +24,9 @@ class Detection:
 
     def to_markagentx(self) -> dict:
         """The fields of markagentx.base.Detection, in its order (pass as markagentx.base.Detection(**d))."""
-        return {"statistic": self.statistic, "p_value": self.p_value, "n_evidence": self.n_tokens}
+        no_p = self.p_value is None                       # MarkAgentX's p is always a number: unknown is vacuous
+        return {"statistic": self.statistic, "p_value": 1.0 if no_p else self.p_value,
+                "n_evidence": 0 if no_p else self.n_tokens}
 
 
 @dataclass
@@ -47,8 +49,9 @@ class Release:
     lineage: list = field(default_factory=list)
 
     def save(self):
+        from .files import write_json
         os.makedirs(self.path, exist_ok=True)
-        json.dump(asdict(self), open(os.path.join(self.path, "release.json"), "w"), indent=1)
+        write_json(os.path.join(self.path, "release.json"), asdict(self), indent=1)
         return self
 
     @staticmethod
@@ -87,8 +90,9 @@ class Key:
                                                     "scheme_source": self.scheme_source})).encode()).hexdigest()
 
     def save(self, path: str) -> str:
+        from .files import write_json
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-        json.dump(asdict(self), open(path, "w"), indent=1)
+        write_json(path, asdict(self), indent=1)          # a half-written key would lose its secret
         return path
 
     @staticmethod

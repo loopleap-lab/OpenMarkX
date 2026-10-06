@@ -11,6 +11,8 @@
 """
 from __future__ import annotations
 
+import os
+
 import math
 
 from .types import Detection, Key, Release
@@ -233,38 +235,62 @@ def detect(texts: list[str] | str, key: Key, *, base: str | None = None, device:
 
 def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, device: str | None = None, fpr=0.01,
                      grant=None, n_null: int = 200, trust_plugin: bool = False) -> list[Detection]:
-    """p-values from wrong keys, as in MarkAgentX: each text's statistic under the true key against its statistics
-    under n_null keys drawn reproducibly (random.Random(0xC0FFEE)), the true key excluded. Needs no calibration and
-    no base texts; costs n_null rebindings of the scheme. Teacher-free (EDIT) schemes have an exact null instead."""
-    import os
-    from .imprint import _drop_if_empty
-    from .keys import seeded_secrets
+    """p-values from wrong keys, as in MarkAgentX's wrong_key_detect: each text's statistic under the true key against
+    its statistics under n_null wrong keys, p = (1 + #{wrong >= S}) / (n_null + 1). A wrong key is the true key with
+    only its secret redrawn (Scheme.wrong_key), from random.Random(0xC0FFEE) so the null is reproducible; the true key
+    is excluded. Needs no calibration and no base texts; costs n_null rebindings of the scheme. Teacher-free (EDIT)
+    schemes are refused: a wrong key needs another release, and their closed-form null is exact."""
+    import random
+    import warnings
+    from .keys import STORE
     from .primitives import Imprint
     from .scoring import scores
+    if n_null < 1:
+        raise ValueError(f"n_null must be at least 1 (got {n_null})")
+    if 1 / (n_null + 1) > fpr:
+        warnings.warn(f"with n_null={n_null} the smallest possible p-value is {1 / (n_null + 1):.3f} > fpr={fpr}: "
+                      f"nothing can be flagged; use n_null >= {int(1 / fpr)}")
     sch = scheme_for(key, base, device or _detect_device(key, None), grant, trust_plugin)
     if sch.imprint == Imprint.EDIT:
         raise ValueError(f"{key.scheme} writes its mark into the weights: a wrong key needs another release. Use its "
                          f"closed-form null (exact_null) or mwx.calibrate instead")
-    true = [s for s, _ in scores(sch, texts)]
-    null = [[] for _ in texts]
-    with seeded_secrets():
-        drawn = 0
+    live = [i for i, t in enumerate(texts) if sch.tok(t, add_special_tokens=False)["input_ids"]]
+    true = dict(zip(live, scores(sch, [texts[i] for i in live])))
+    null = {i: [] for i in live}
+    rng = random.Random(0xC0FFEE)
+    made = os.path.join(STORE, "configs"), os.path.join(STORE, "tmp")
+    before = {d: set(os.listdir(d)) if os.path.isdir(d) else set() for d in made}
+    try:
+        drawn = attempts = 0
         while drawn < n_null:
+            attempts += 1
+            if attempts > 3 * n_null + 10:
+                raise ValueError(f"{key.scheme}: could not draw {n_null} wrong keys different from the true key")
+            params = sch.wrong_key(dict(key.params), rng)
+            if params is None:
+                raise ValueError(f"{key.scheme} has no secret to redraw (Scheme.wrong_key): use mwx.calibrate instead")
+            if params == key.params:                       # the true key: excluded
+                continue
             w = build_scheme(key, trust_plugin=trust_plugin)
             w.probe = sch.probe
-            material = w.setup(sch.model, sch.tok, device, None)   # the model (or config) scheme_for bound
-            for v in (material or {}).values():           # staged files of a wrong key (e.g. a PRO mapping)
-                if isinstance(v, str) and os.path.isfile(v) and os.sep + "tmp" + os.sep in v:
-                    os.remove(v); _drop_if_empty(os.path.dirname(v))
-            if material == key.params:                     # the true key: excluded
-                continue
-            for i, (s, _) in enumerate(scores(w, texts)):
+            w.setup(sch.model, sch.tok, sch.device, params)    # the model (or config) scheme_for bound
+            for i, (s, _) in zip(live, scores(w, [texts[i] for i in live])):
                 null[i].append(s)
             drawn += 1
+    finally:                                               # only what this call created in the key store
+        for d in made:
+            for f in (set(os.listdir(d)) if os.path.isdir(d) else set()) - before[d]:
+                p = os.path.join(d, f)
+                if os.path.isfile(p):
+                    os.remove(p)
     out = []
-    for s, ns, (_, n) in zip(true, null, scores(sch, texts)):
-        p = 1.0 if not n else (1 + sum(x >= s for x in ns)) / (n_null + 1)
-        out.append(Detection(statistic=s, p_value=p, n_tokens=n, flagged=bool(n) and p < fpr))
+    for i in range(len(texts)):
+        if i not in true or not true[i][1]:                # nothing scored: a vacuous answer
+            out.append(Detection(statistic=true[i][0] if i in true else 0.0, p_value=1.0, n_tokens=0, flagged=False))
+            continue
+        s, n = true[i]
+        p = (1 + sum(x >= s for x in null[i])) / (n_null + 1)
+        out.append(Detection(statistic=s, p_value=p, n_tokens=n, flagged=p < fpr))
     return out
 
 

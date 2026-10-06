@@ -53,7 +53,11 @@ def main():
     state = json.load(open(sf)) if os.path.exists(sf) else {}
     procs = {}                                             # jobs started by this instance (poll() reaps zombies)
     while True:
-        queue = json.load(open(qf)) if os.path.exists(qf) else []
+        try:
+            queue = json.load(open(qf)) if os.path.exists(qf) else []
+        except json.JSONDecodeError:                       # being rewritten by hand: try again next round
+            time.sleep(5)
+            continue
         for jid, st in state.items():                      # reap finished jobs
             finished = procs[jid].poll() is not None if jid in procs else not alive(st["pid"])
             if st.get("status") == "running" and finished:
@@ -77,7 +81,9 @@ def main():
             state[jid] = {"status": "running", "pid": p.pid, "gpu": g, "start": time.strftime("%Y-%m-%d %H:%M")}
             busy.add(g)
             time.sleep(90)                                     # let it allocate before measuring free memory again
-        json.dump(state, open(sf, "w"), indent=1)
+        tmp = f"{sf}.tmp"
+        json.dump(state, open(tmp, "w"), indent=1)
+        os.replace(tmp, sf)                                # readers (markweightx bench) never see half a file
         time.sleep(a.every)
 
 

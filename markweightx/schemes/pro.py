@@ -26,6 +26,11 @@ from .base import Scheme
 EMBEDDER = "perceptiveshawty/compositional-bert-large-uncased"
 
 
+def resolve_path(ref):
+    from ..keys import resolve
+    return resolve(ref)
+
+
 @register_scheme
 class PRO(Scheme):
     name, kind = "pro", "distill_logit"
@@ -125,6 +130,19 @@ class PRO(Scheme):
             print({"pro_spread": c, "step": step}, flush=True)
         if self.co_opt:
             self.wm.set_tanh_temperature(self.tau0 + min(step / steps, 1.0) * (self.tau1 - self.tau0))
+
+    def wrong_key(self, params, rng):
+        """PRO's secret is the token -> policy-dimension mapping: redraw it, keep the policy (trained or not)."""
+        if "mapping" not in params:
+            return None
+        import json
+        import random
+        from ..keys import stage
+        r = random.Random(rng.getrandbits(64))
+        n = len(json.load(open(resolve_path(params["mapping"]))))
+        path = stage("wrong-mapping.json")
+        json.dump([r.randrange(300) for _ in range(n)], open(path, "w"))
+        return {**params, "mapping": path}
 
     def save(self, key_dir, key):
         """The trained policy is part of the key: write it outside the release (the key store takes it from there)."""

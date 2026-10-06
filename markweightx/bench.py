@@ -58,6 +58,8 @@ def _rows(d: str) -> set:
 def parse_edit(spec: str) -> tuple[str, dict]:
     """'finetune:steps=800' -> ("finetune", {"steps": 800}); 'text:synonym:ratio=0.3' -> ("text:synonym", {...})."""
     from .api import _spec
+    if not isinstance(spec, str):
+        raise ValueError(f"an edit is written as a string like 'finetune:steps=800', not {spec!r}")
     if spec.startswith("text:"):
         op, params = _spec(spec[5:])
         return "text:" + op, params
@@ -94,7 +96,8 @@ def load_arena(path: str) -> dict:
             if op.startswith("text:"):
                 if op[5:] not in texts:
                     raise ValueError(f"{path}: unknown text edit {op[5:]!r}; available: {', '.join(texts)}")
-                check_params(rewrite, op[5:], params, {}, skip=("texts", "kind", "device"))
+                ratio = {op[5:]: {"ratio": (lambda v: 0 < v <= 1, "in (0, 1]")}}
+                check_params(rewrite, op[5:], params, ratio, skip=("texts", "kind", "device"))
             elif op not in EDITS:
                 raise ValueError(f"{path}: unknown edit {op!r}; available: {', '.join(sorted(EDITS))}, text:<kind>")
             else:
@@ -139,6 +142,7 @@ def plan(arena: dict, python: str = sys.executable) -> list[dict]:
         seen[d] = m
         name = os.path.basename(d)
         result = f"{d}/result.json"
+        _same_code(m, result)
         rows = _rows(d)
         learn = " ".join(f"--{k}" if v is True else f"--{k} {v}" for k, v in arena["learn"].items() if v is not False)
         steps = {
@@ -153,6 +157,19 @@ def plan(arena: dict, python: str = sys.executable) -> list[dict]:
             jobs.append({"id": f"bench:{s}:{name}", "cmd": cmd, "requires": req, "done": done, "mem_gb": 14,
                          "method": name})
     return jobs
+
+
+def _same_code(m: str, result: str) -> None:
+    """A finished run of a plugin scheme must have been made by this file's code, or its results are someone else's."""
+    head = m.partition(":")[0]
+    if not head.endswith(".py") or not os.path.exists(result):
+        return
+    import hashlib
+    src = json.load(open(result)).get("scheme_source") or ""
+    sha = hashlib.sha256(open(head, "rb").read()).hexdigest()
+    if src.startswith("blob:") and not src[5:].startswith(sha):
+        raise ValueError(f"{os.path.dirname(result)} holds results made by other code than {head} (an earlier version, "
+                         f"or another file registering the same scheme name): rename the scheme, or move that run away")
 
 
 def check_plugins(arena: dict) -> list[str]:

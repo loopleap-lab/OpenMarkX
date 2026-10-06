@@ -60,7 +60,8 @@ def main():
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         markdown(rows, a.base, ppl_base)
-    open(f"{root}/leaderboard.md", "w").write(buf.getvalue())
+    from markweightx.files import write_text
+    write_text(f"{root}/leaderboard.md", buf.getvalue())
     print(buf.getvalue(), end="")
 
 
@@ -91,17 +92,20 @@ def markdown(rows, base, ppl_base):
         print(f"\nNot included: {k}: {why}.")
     main = [r for r in rows if r["main"]]
     if any(r.get("by_length") for r in main):
-        cols = list(next(r for r in main if r.get("by_length"))["by_length"])
+        cols = sorted({c for r in main for c in (r.get("by_length") or {})}, key=int)
         print("\n### C9 · texts cut short, scored at the 200-token threshold (false positives should not exceed ~1%)\n")
         print("| method | " + " | ".join(f"FPR @{c} tok | TPR @{c} tok (recalibrated)" for c in cols) + " |")
         print("|" + "---|" * (2 * len(cols) + 1))
         for r in main:
             bl = r.get("by_length") or {}
-            cell = lambda c: ("– | –" if c not in bl else
-                              f"{'**' if bl[c]['fpr'] > 0.02 else ''}{100 * bl[c]['fpr']:.1f}%{'**' if bl[c]['fpr'] > 0.02 else ''}"
-                              f" | {bl[c]['tpr_recal']:.2f}" if "tpr_recal" in bl[c] else " | –")
+            def cell(c):
+                if c not in bl:
+                    return "– | –"
+                bold = "**" if bl[c]["fpr"] > 0.02 else ""
+                recal = f"{bl[c]['tpr_recal']:.2f}" if "tpr_recal" in bl[c] else "–"
+                return f"{bold}{100 * bl[c]['fpr']:.1f}%{bold} | {recal}"
             print(f"| {r['scheme']} | " + " | ".join(cell(c) for c in cols) + " |")
-        n = next(r for r in main if r.get("by_length"))["by_length"][cols[0]]["n"]
+        n = next(v["n"] for r in main for v in (r.get("by_length") or {}).values())
         print(f"\n{n} texts per cell (1% = {max(1, round(n / 100))} texts); **bold**: more than 2% false positives. "
               "The TPR column uses the 1% threshold of the cut null (what mwx.calibrate now does per length); "
               "– : not measured yet (exp/length_check.py).")
