@@ -74,15 +74,37 @@ pre { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; p
 .drop.over { background: var(--accent-soft); }
 .drop b { color: var(--ink); }
 .locked { opacity: .45; pointer-events: none; }
-.phases { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 16px; }
-.ph { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--faint); }
-.ph.cur { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
-.ph.done { color: var(--good); border-color: color-mix(in srgb, var(--good) 40%, transparent); }
-.ph.fail { color: var(--bad); border-color: var(--bad); }
+.track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 18px 0 20px; }
+.st { position: relative; display: grid; gap: 2px; padding-right: 8px; min-width: 0; }
+.st::before { content: ""; position: absolute; top: 13px; left: 28px; right: 0; height: 2px; background: var(--line); }
+.st:last-child::before { display: none; }
+.st.done::before { background: var(--good); }
+.st .nd { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; border: 2px solid var(--line); background: var(--solid); color: var(--faint); }
+.st.done .nd { border-color: var(--good); background: var(--good); color: var(--solid); }
+.st.cur .nd { border-color: var(--accent); color: var(--accent-ink); animation: pulse 1.6s ease-in-out infinite; }
+.st.fail .nd { border-color: var(--bad); background: var(--bad); color: var(--solid); }
+.st b { font-size: 13px; margin-top: 6px; }
+.st span { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.st:not(.done):not(.cur):not(.fail) b { color: var(--faint); }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
+@media (prefers-reduced-motion: reduce) { .st.cur .nd, .prog.ind i { animation: none; } }
+.now { border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; margin-bottom: 18px; display: grid; gap: 12px; }
+.now h3 { font-size: 15px; }
+.now h3 small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.prog { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; position: relative; }
+.prog i { display: block; height: 100%; background: var(--accent); border-radius: 5px; transition: width .6s; }
+.prog.ind i { width: 30%; position: absolute; animation: slide 1.4s ease-in-out infinite; }
+@keyframes slide { from { left: -30%; } to { left: 100%; } }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.kpis div { font-size: 11px; color: var(--muted); }
+.kpis b { display: block; font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+@media (max-width: 560px) { .st span { display: none; } .st:not(.cur):not(.fail) b { visibility: hidden; } .st b { white-space: nowrap; } }
 .jobs { display: grid; gap: 6px; }
 .job { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-size: 12px; background: none; color: var(--ink); font-family: var(--font); text-align: left; flex-wrap: wrap; }
 .job.sel { border-color: var(--accent); }
-.tag { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--line); color: var(--muted); }
+.tag { align-self: start; line-height: 1.6; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--line); color: var(--muted); }
 .tag.done { background: var(--good-soft); color: var(--good); }
 .tag.failed, .tag.cancelled { background: var(--bad-soft); color: var(--bad); }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
@@ -317,15 +339,31 @@ async function poll() {
   else if (document.querySelector(`.job[data-id="${id}"] .tag`)?.textContent !== j.phase) refreshJobs();
 }
 
+const STEPS = [
+  ["tokenize", "Prepare data", "split and tokenize"],
+  ["train", "Train", "learn the watermark"],
+  ["calibrate", "Calibrate", "base-model null"],
+  ["evaluate", "Evaluate", "generate and detect"],
+  ["done", "Done", "results"]];
+const dur = s => s < 90 ? `${Math.round(s)}s` : s < 5400 ? `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, "0")}s` : `${(s / 3600).toFixed(1)}h`;
+
 function renderJob(j) {
-  const r = j.request, at = PHASES.indexOf(j.phase), end = ["failed", "cancelled"].includes(j.phase);
+  const r = j.request, end = ["failed", "cancelled"].includes(j.phase), fin = end || j.phase === "done";
   const last = S.log[S.log.length - 1];
-  const ph = PHASES.slice(0, -1).map((p, i) => `<span class="ph ${i < at || j.phase === "done" ? "done" : i === at ? "cur" : ""}">${p === "train" && j.phase === "train" && last ? `train ${last.step}/${r.steps}` : p}</span>`).join("")
-    + (end ? `<span class="ph fail">${j.phase}</span>` : "");
-  let h = `<div class="row" style="justify-content:space-between;align-items:center"><div><b>${esc(r.scheme)}</b> on ${esc(r.base)} <span class="muted small">&middot; ${esc(r.device)} &middot; ${r.steps} steps &middot; lr ${r.lr}</span></div>`
-    + (["done", "failed", "cancelled"].includes(j.phase) ? "" : `<button class="btn sm" id="cancel">Cancel</button>`) + `</div><div class="phases" style="margin-top:10px">${ph}</div>`;
-  if (j.error) h += `<div class="msg err">${esc(j.error)}</div><details style="margin-top:8px"><summary>output</summary><pre>${esc(j.output)}</pre></details>`;
-  if (S.log.length) h += chart();
+  // which step failed: the last one that started
+  const started = STEPS.filter(([k]) => j["t_" + k]).map(([k]) => k);
+  const at = j.phase === "done" ? 4 : end ? Math.max(0, STEPS.findIndex(([k]) => k === started[started.length - 1])) : Math.max(0, STEPS.findIndex(([k]) => k === j.phase));
+  const t0 = k => j["t_" + k], next = i => STEPS.slice(i + 1).map(([k]) => t0(k)).find(Boolean);
+  const track = STEPS.map(([k, name, what], i) => {
+    const cls = j.phase === "done" || i < at ? "done" : i === at ? (end ? "fail" : "cur") : "";
+    const took = k !== "done" && t0(k) ? dur((next(i) || (fin ? j["t_" + j.phase] : j.now)) - t0(k)) : "";
+    return `<div class="st ${cls}"><div class="nd">${cls === "done" ? "&#10003;" : cls === "fail" ? "!" : i + 1}</div><b>${name}</b><span>${took || what}</span></div>`;
+  }).join("");
+  let h = `<div class="row" style="justify-content:space-between;align-items:center"><div><b>${esc(r.scheme)}</b> on ${esc(r.base)} <span class="muted small">&middot; ${esc(r.device)} &middot; ${r.steps} steps &middot; lr ${r.lr} &middot; batch ${r.bs}</span></div>`
+    + (fin ? "" : `<button class="btn sm" id="cancel">Cancel</button>`) + `</div><div class="track">${track}</div>`;
+  if (!fin) h += nowPanel(j, last);
+  if (j.error) h += `<div class="msg err">${esc(j.error)}</div>`;
+  if (S.log.length) h += chart(r.steps);
   const R = j.result;
   if (R) {
     const pct = x => x == null ? "–" : (100 * x).toFixed(0) + "%";
@@ -334,9 +372,8 @@ function renderJob(j) {
       + `<div class="stat"><b>${R.n_null}</b><span>base-model texts in the null</span></div></div>`
       + `<div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="marked">Watermarked model</button><button role="tab" aria-selected="false" data-t="human">Human text</button></div><div class="texts" id="texts"></div>`
       + `<p class="small muted" style="margin:12px 0 0">Release <code>${esc(R.release)}</code><br>Key <code>${esc(R.key.slice(0, 16))}</code> in this machine's key store (<code>markweightx keys show ${esc(R.key.slice(0, 12))}</code>)</p>`;
-  } else if (!j.error) {
-    h += `<p class="muted small">${j.phase === "train" && last ? `${last.sec}s elapsed &middot; ${last.mem_gb} GB GPU memory` : j.phase === "queued" ? "Loading the model..." : ""}</p>`;
   }
+  if (j.output) h += `<details style="margin-top:14px" ${j.error ? "open" : ""}><summary>Process output</summary><pre style="max-height:260px">${esc(j.output)}</pre></details>`;
   $("#detail").innerHTML = h;
   $("#cancel")?.addEventListener("click", async () => { await api(`/api/jobs/${j.id}/cancel`, { method: "POST" }).catch(() => {}); refreshJobs(); });
   if (R) {
@@ -347,13 +384,38 @@ function renderJob(j) {
   }
 }
 
-function chart() {
-  const L = S.log.filter(x => isFinite(x.kl)), W = 600, H = 180, p = { l: 52, r: 12, t: 12, b: 26 };
+function nowPanel(j, last) {
+  const r = j.request, since = k => j["t_" + k] ? dur(j.now - j["t_" + k]) : "";
+  const bar = f => f == null ? `<div class="prog ind"><i></i></div>` : `<div class="prog"><i style="width:${(100 * f).toFixed(1)}%"></i></div>`;
+  const kpi = (v, l) => `<div><b>${v}</b>${l}</div>`;
+  if (j.phase === "train" && last) {
+    const rate = last.sec / last.step, left = (r.steps - last.step) * rate;
+    return `<div class="now"><h3>Training &middot; step ${last.step} / ${r.steps} <small>${(100 * last.step / r.steps).toFixed(0)}%</small></h3>${bar(last.step / r.steps)}<div class="kpis">`
+      + kpi(dur(last.sec), "elapsed") + kpi(dur(left), "left (estimate)") + kpi(rate.toFixed(2) + "s", "per step")
+      + kpi(last.kl.toFixed(3), "loss now") + kpi(last.mem_gb + " GB", "GPU memory") + `</div></div>`;
+  }
+  const text = {
+    queued: ["Starting", "launching the job process"],
+    tokenize: ["Preparing data", `splitting off ${r.n_eval} held-out texts and tokenizing the rest`],
+    train: ["Loading models", `${r.base} and the ${r.scheme} teacher onto the GPU (the first run also downloads them); training starts after this`],
+    calibrate: ["Calibrating", `sampling ${r.n_null} texts from the unwatermarked base to set the detection threshold`],
+    evaluate: ["Evaluating", `generating ${j.n_held || r.n_eval} texts with the watermarked model, then detecting them and the held-out human texts`],
+  }[j.phase] || [j.phase, ""];
+  return `<div class="now"><h3>${text[0]} <small>${since(j.phase)}</small></h3>${bar(null)}<div class="small muted">${esc(text[1])}</div></div>`;
+}
+
+function chart(total) {
+  const L = S.log.filter(x => isFinite(x.kl)), W = 640, H = 200, p = { l: 48, r: 14, t: 12, b: 28 };
   if (!L.length) return "";
-  const n = Math.max(...L.map(x => x.step)), hi = Math.max(...L.map(x => x.kl)) * 1.05 || 1;
-  const X = s => p.l + (W - p.l - p.r) * (s - 1) / Math.max(1, n - 1), Y = v => p.t + (H - p.t - p.b) * (1 - v / hi);
-  const pts = L.map(x => `${X(x.step).toFixed(1)},${Y(x.kl).toFixed(1)}`).join(" ");
-  const ticks = [0, hi / 2, hi].map(v => `<text x="${p.l - 8}" y="${Y(v) + 4}" text-anchor="end">${v.toPrecision(2)}</text><line x1="${p.l}" x2="${W - p.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`).join("");
-  return `<div class="small muted">Training loss (KL to the watermarked teacher)</div><svg class="chart" viewBox="0 0 ${W} ${H}" style="font-size:11px;fill:var(--muted)">${ticks}<text x="${p.l}" y="${H - 6}">1</text><text x="${W - p.r}" y="${H - 6}" text-anchor="end">step ${n}</text><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+  let e = L[0].kl; const ema = L.map(x => (e = 0.9 * e + 0.1 * x.kl));
+  const n = Math.max(total || 0, ...L.map(x => x.step)), hi = Math.min(Math.max(...L.map(x => x.kl)), 1.6 * Math.max(...ema)) * 1.05 || 1;   // one spike must not flatten the curve
+  const X = s => p.l + (W - p.l - p.r) * (s - 1) / Math.max(1, n - 1), Y = v => p.t + (H - p.t - p.b) * (1 - Math.min(v, hi) / hi);
+  const line = vs => vs.map((v, i) => `${X(L[i].step).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+  const yt = [0, hi / 2, hi].map(v => `<text x="${p.l - 8}" y="${Y(v) + 4}" text-anchor="end">${v.toPrecision(2)}</text><line x1="${p.l}" x2="${W - p.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`).join("");
+  const xt = [1, Math.round(n / 2), n].map(s => `<text x="${X(s)}" y="${H - 8}" text-anchor="middle">${s}</text>`).join("");
+  return `<div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="small muted">Training loss: KL to the watermarked teacher (lower = closer)</span><span class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 35%,transparent)"></i>per step</span><span><i style="background:var(--accent)"></i>smoothed</span></span></div>`
+    + `<svg class="chart" viewBox="0 0 ${W} ${H}" style="font-size:11px;fill:var(--muted)">${yt}${xt}`
+    + `<polyline points="${line(L.map(x => x.kl))}" fill="none" stroke="var(--accent)" stroke-opacity=".3" stroke-width="1.2"/>`
+    + `<polyline points="${line(ema)}" fill="none" stroke="var(--accent)" stroke-width="2.4"/></svg>`;
 }
 </script>

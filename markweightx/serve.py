@@ -126,7 +126,8 @@ def job_state(jid: str, log_after: int = 0) -> dict | None:
             tail = f.read()[-4000:]
     except OSError:
         tail = ""
-    return {"id": jid, "request": req, **st, "log": steps[log_after:], "n_log": len(steps), "output": tail}
+    return {"id": jid, "request": req, **st, "log": steps[log_after:], "n_log": len(steps), "output": tail,
+            "now": time.time()}                           # the page times phases against the server's clock
 
 
 def start_job(req: dict) -> str:
