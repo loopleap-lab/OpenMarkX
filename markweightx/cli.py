@@ -236,6 +236,12 @@ def main(argv=None):
     p = sub.add_parser("keys", help="the key store ($MWX_KEYS)")
     p.add_argument("action", choices=["list", "show"], help="list every key, or show one (key material hidden)")
     p.add_argument("key", nargs="?", help=KEY_HELP)
+    p = sub.add_parser("serve", help="run jobs on this machine's GPUs from the web page")
+    p.add_argument("--port", type=int, default=7860)
+    p.add_argument("--host", default="127.0.0.1", help="listen address (default: this machine only; use an SSH "
+                   "tunnel to reach it from elsewhere)")
+    p.add_argument("--token", help="access token (default: a random one, printed at start)")
+    p.add_argument("--origin", action="append", help="another site allowed to connect (repeatable)")
     a = ap.parse_args(argv)
     try:
         _run(a)
@@ -332,6 +338,9 @@ def _run(a):
             os.makedirs(os.path.dirname(out), exist_ok=True)
         open(out, "w").write(TEMPLATE.format(name=a.name, cls=cls, file=out))
         print(f"wrote {out}: edit it, then run `markweightx check --adapter {out}`")
+    elif a.cmd == "serve":
+        from .serve import serve
+        serve(a.port, a.host, a.token, a.origin)
     elif a.cmd == "keys":
         from .keys import PUBLIC_KEY_FIELDS, STORE
         from .types import Key

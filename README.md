@@ -88,6 +88,19 @@ Edits are written `op:param=value,...`:
 | `quantize` | `bits=4` (nf4) or `bits=8` (int8) |
 | `synonym`, `word_deletion`, `context_synonym` | `ratio=0.3` (text edits, used with `rewrite`) |
 
+## Run from a web page
+
+`markweightx serve` lets you upload a dataset, pick a method and its hyperparameters, and learn a watermark on this
+machine's GPUs from a browser. It prints an address with a token; open it, or connect the project website's
+[run page](https://jqxue1999.github.io/MarkWeightX/app.html) to it. Each job trains on your texts, calibrates the key
+on the base model, then reports how many held-out texts from the watermarked model are detected and how many human
+texts are falsely flagged. Data, releases and keys stay on the machine (`$MWX_SERVE`, default `~/.markweightx/serve`,
+and the key store). For a GPU on another machine, run the server there and forward the port:
+
+```bash
+ssh -L 7860:127.0.0.1:7860 gpu-server      # then connect to http://127.0.0.1:7860
+```
+
 ## Supported methods
 
 `markweightx describe` prints the full table. A method is a **scheme**, assembled from six primitives: Key, Signal,

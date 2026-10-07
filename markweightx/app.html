@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MarkWeightX Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap">
+<style>
+/* The run page: served by `markweightx serve` on the user's machine, and also on the project website, where it
+   connects to that server from the browser. Same tokens as the homepage. */
+:root {
+  --bg: #f8fafc; --surface: rgba(255, 255, 255, .72); --solid: #ffffff; --ink: #020617; --muted: #475569;
+  --faint: #94a3b8; --line: #e2e8f0; --accent: #06b6d4; --accent-ink: #0e7490; --accent-soft: #ecfeff;
+  --good: #059669; --good-soft: #ecfdf5; --bad: #e11d48; --bad-soft: #fff1f2; --mid: #d97706;
+  --code-bg: #0f172a; --code-ink: #e2e8f0;
+  --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
+    --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --good: #34d399;
+    --good-soft: #022c22; --bad: #fb7185; --bad-soft: #2a0a12; --mid: #fbbf24; --code-bg: #0b1222; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
+  --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --good: #34d399;
+  --good-soft: #022c22; --bad: #fb7185; --bad-soft: #2a0a12; --mid: #fbbf24; --code-bg: #0b1222; color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.6; }
+a { color: var(--accent-ink); }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: 24px; }
+.hl { color: var(--accent); }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.nav .wrap { display: flex; align-items: center; gap: 28px; padding-block: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: var(--ink); text-decoration: none; }
+.brand svg { width: 32px; height: 32px; }
+.nav-end { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); display: inline-block; }
+.dot.on { background: var(--good); }
+main { padding-block: 40px 80px; display: grid; gap: 24px; }
+.title h1 { font-size: clamp(26px, 3.2vw, 36px); letter-spacing: -.02em; }
+.title p { color: var(--muted); max-width: 80ch; margin: 8px 0 0; }
+.card { background: var(--surface); border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); border-radius: 24px; padding: 26px; min-width: 0; }
+.card h2 { font-size: 17px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.num { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--accent); color: var(--accent-ink); font-size: 13px; display: inline-grid; place-items: center; flex: none; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 24px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+input, select { font: 400 14px var(--font); color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0; }
+input:focus, select:focus { border-color: var(--accent); outline: none; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 6px; font: 500 14px/1 var(--font); color: var(--ink); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); background: color-mix(in srgb, var(--solid) 60%, transparent); cursor: pointer; text-decoration: none; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #ffffff; border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.sm { padding: 6px 11px; font-size: 12px; }
+pre, code { font-family: var(--font); }
+pre { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: 13px; margin: 8px 0 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.msg { font-size: 13px; padding: 10px 12px; border-radius: 8px; margin-top: 12px; }
+.msg.err { background: var(--bad-soft); color: var(--bad); }
+.msg.ok { background: var(--good-soft); color: var(--good); }
+.gpus { display: grid; gap: 8px; margin-top: 14px; }
+.gpu { display: flex; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; flex-wrap: wrap; }
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; width: 140px; align-self: center; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.drop { border: 1.5px dashed color-mix(in srgb, var(--accent) 50%, var(--line)); border-radius: 16px; padding: 26px; text-align: center; color: var(--muted); cursor: pointer; }
+.drop.over { background: var(--accent-soft); }
+.drop b { color: var(--ink); }
+.locked { opacity: .45; pointer-events: none; }
+.phases { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 16px; }
+.ph { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--faint); }
+.ph.cur { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+.ph.done { color: var(--good); border-color: color-mix(in srgb, var(--good) 40%, transparent); }
+.ph.fail { color: var(--bad); border-color: var(--bad); }
+.jobs { display: grid; gap: 6px; }
+.job { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; font-size: 12px; background: none; color: var(--ink); font-family: var(--font); text-align: left; flex-wrap: wrap; }
+.job.sel { border-color: var(--accent); }
+.tag { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--line); color: var(--muted); }
+.tag.done { background: var(--good-soft); color: var(--good); }
+.tag.failed, .tag.cancelled { background: var(--bad-soft); color: var(--bad); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.stat b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+svg.chart { width: 100%; height: auto; display: block; }
+.texts { display: grid; gap: 8px; max-height: 360px; overflow-y: auto; }
+.tx { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 12px; display: grid; gap: 4px; }
+.tx .p { font-variant-numeric: tabular-nums; font-weight: 700; }
+.tx .p.y { color: var(--good); } .tx .p.n { color: var(--bad); }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.tabs button { font: 500 12px var(--font); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; }
+.tabs button[aria-selected="true"] { border-color: var(--accent); color: var(--ink); }
+details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+</style>
+
+<nav class="nav" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Mark<span class="hl">WeightX</span></span>
+    </a>
+    <div class="nav-end"><span class="dot" id="dot"></span><span id="conn-label">not connected</span></div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div class="title">
+    <h1>Run on your GPU</h1>
+    <p>Upload a dataset, choose a method and its hyperparameters, and learn a watermark into a base model on your own machine. The page sends commands to a server you start; your data, the watermarked model and the key stay on that machine.</p>
+  </div>
+
+  <div class="grid2">
+    <section class="card" aria-labelledby="h-conn">
+      <h2 id="h-conn"><span class="num">1</span>Connect your machine</h2>
+      <div id="howto">
+        <p class="muted small" style="margin:0">On the machine with the GPU:</p>
+        <pre>pip install "markweightx @ git+https://github.com/jqxue1999/MarkWeightX"
+markweightx serve</pre>
+        <p class="muted small">It prints an address and a token. GPU on a remote server? Forward the port first, then connect to <code>http://127.0.0.1:7860</code>:</p>
+        <pre>ssh -L 7860:127.0.0.1:7860 your-gpu-server</pre>
+      </div>
+      <form class="row" id="conn" style="margin-top:16px">
+        <label style="flex:1 1 200px">Address<input id="addr" value="http://127.0.0.1:7860" autocomplete="off"></label>
+        <label style="flex:1 1 200px">Token<input id="token" autocomplete="off" spellcheck="false"></label>
+        <button class="btn primary" type="submit">Connect</button>
+      </form>
+      <div id="conn-msg"></div>
+      <div class="gpus" id="gpus"></div>
+    </section>
+
+    <section class="card locked" id="sec-data" aria-labelledby="h-data">
+      <h2 id="h-data"><span class="num">2</span>Dataset</h2>
+      <div class="drop" id="drop" tabindex="0" role="button">
+        <b>Drop a file here</b> or click to choose<br>
+        <span class="small">.jsonl with {"text": ...} per line, or .txt with one text per line &middot; at least 20 texts</span>
+      </div>
+      <input type="file" id="file" accept=".jsonl,.txt" hidden>
+      <div id="data-msg"></div>
+      <p class="muted small" style="margin:12px 0 0">The model is trained on your texts. Some are held out: their first 32 tokens become prompts for the evaluation, and their real continuations measure false positives on human text.</p>
+    </section>
+  </div>
+
+  <section class="card locked" id="sec-cfg" aria-labelledby="h-cfg">
+    <h2 id="h-cfg"><span class="num">3</span>Method and hyperparameters</h2>
+    <div class="fields">
+      <label>Base model<select id="base"></select></label>
+      <label>Method<select id="scheme"></select></label>
+      <label>GPU<select id="device"></select></label>
+    </div>
+    <p class="muted small" id="scheme-doc" style="margin:10px 0 14px"></p>
+    <div class="fields" id="sparams"></div>
+    <h3 class="small muted" style="margin:18px 0 8px;font-weight:500">Training and evaluation</h3>
+    <div class="fields" id="recipe"></div>
+    <div class="row" style="margin-top:18px">
+      <button class="btn primary" id="run">Start</button>
+      <span class="muted small" id="run-note"></span>
+    </div>
+    <div id="run-msg"></div>
+  </section>
+
+  <section class="card locked" id="sec-jobs" aria-labelledby="h-jobs">
+    <h2 id="h-jobs"><span class="num">4</span>Jobs and results</h2>
+    <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))">
+      <div class="jobs" id="jobs" style="align-content:start"><p class="muted small">No jobs yet.</p></div>
+      <div id="detail" style="grid-column:span 2;min-width:0"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+const LABELS = { steps: "Training steps", lr: "Learning rate", bs: "Batch size", seq_len: "Sequence length",
+                 rank: "LoRA rank", n_eval: "Held-out texts", n_null: "Null texts", new_tokens: "Tokens per text", fpr: "Target FPR", seed: "Seed" };
+const PHASES = ["queued", "tokenize", "train", "calibrate", "evaluate", "done"];
+let S = { addr: "", token: "", info: null, dataset: null, sel: null, timer: null, log: [] };
+
+function msg(el, text, kind) { $(el).innerHTML = text ? `<div class="msg ${kind || "err"}">${esc(text)}</div>` : ""; }
+
+async function api(path, opt = {}) {
+  const r = await fetch(S.addr + path, { ...opt, headers: { Authorization: "Bearer " + S.token, ...(opt.headers || {}) } });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
+}
+
+// served by `markweightx serve` itself: the address is this page's origin and the token is in the #fragment
+(function init() {
+  const m = location.hash.match(/token=([\w-]+)/);
+  if (location.protocol === "http:" && m) {
+    $("#addr").value = location.origin; $("#token").value = m[1];
+    history.replaceState(null, "", location.pathname);
+    connect();
+  } else {
+    $("#addr").value = store.get("mwx.addr") || "http://127.0.0.1:7860";
+    $("#token").value = store.get("mwx.token") || "";
+  }
+})();
+
+$("#conn").addEventListener("submit", e => { e.preventDefault(); connect(); });
+
+async function connect() {
+  S.addr = $("#addr").value.trim().replace(/\/$/, ""); S.token = $("#token").value.trim();
+  msg("#conn-msg", "");
+  try {
+    S.info = await api("/api/info");
+  } catch (e) {
+    const blocked = e instanceof TypeError;
+    msg("#conn-msg", blocked ? `Could not reach ${S.addr}. Is \`markweightx serve\` running there? Safari blocks a website from reaching a local server: open the address the server printed instead.` : e.message);
+    setConnected(false); return;
+  }
+  store.set("mwx.addr", S.addr); store.set("mwx.token", S.token);
+  setConnected(true); renderMachine(); renderConfig(); refreshJobs();
+}
+
+function setConnected(on) {
+  $("#dot").classList.toggle("on", on);
+  $("#conn-label").textContent = on ? S.info.machine.host : "not connected";
+  for (const id of ["#sec-data", "#sec-cfg", "#sec-jobs"]) $(id).classList.toggle("locked", !on);
+  $("#howto").hidden = on;
+}
+
+function renderMachine() {
+  const g = S.info.machine.gpus;
+  $("#gpus").innerHTML = `<div class="small muted">${esc(S.info.machine.host)} &middot; torch ${esc(S.info.machine.torch)} &middot; markweightx ${esc(S.info.version)}</div>` +
+    (g.length ? g.map(x => `<div class="gpu"><span>${esc(x.device)} &middot; ${esc(x.name)}</span><span class="muted">${x.free_gb} / ${x.total_gb} GB free</span><span class="bar"><i style="width:${100 * (1 - x.free_gb / x.total_gb)}%"></i></span></div>`).join("")
+              : `<div class="msg err">No GPU found. Jobs would run on the CPU, which is too slow to train.</div>`);
+}
+
+function renderConfig() {
+  const I = S.info, best = Math.max(0, ...I.machine.gpus.map(g => g.free_gb));
+  $("#base").innerHTML = I.bases.map(b => `<option value="${b.name}" ${b.need_gb > best ? "disabled" : ""}>${b.name}${b.need_gb > best ? ` (needs ~${b.need_gb} GB)` : b.cached ? "" : " (downloads first)"}</option>`).join("");
+  $("#device").innerHTML = I.machine.gpus.map(g => `<option value="${g.device}">${g.device} &middot; ${g.free_gb} GB free</option>`).join("") || `<option value="cpu">cpu</option>`;
+  const order = s => s.name === "pro" ? 0 : s.name.startsWith("markllm-kgw") ? 1 : 2;
+  $("#scheme").innerHTML = [...I.schemes].sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)).map(s => `<option>${s.name}</option>`).join("");
+  $("#scheme").onchange = renderScheme; renderScheme();
+  $("#recipe").innerHTML = Object.entries(I.recipe).map(([k, v]) => `<label>${LABELS[k] || k}<input data-k="${k}" value="${v}" inputmode="decimal"></label>`).join("");
+}
+
+function renderScheme() {
+  const s = S.info.schemes.find(x => x.name === $("#scheme").value);
+  $("#scheme-doc").textContent = s.doc;
+  $("#sparams").innerHTML = Object.entries(s.params).map(([k, v]) => `<label>${k}<input data-k="${k}" value="${v}" inputmode="decimal"></label>`).join("");
+}
+
+// ---- dataset
+const drop = $("#drop");
+drop.onclick = () => $("#file").click();
+drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#file").click(); } };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]); };
+$("#file").onchange = e => e.target.files[0] && upload(e.target.files[0]);
+
+async function upload(f) {
+  msg("#data-msg", `Uploading ${f.name} (${(f.size / 2 ** 20).toFixed(1)} MB)...`, "ok");
+  try {
+    S.dataset = await api("/api/upload", { method: "POST", headers: { "X-Filename": f.name }, body: f });
+    $("#data-msg").innerHTML = `<div class="msg ok">${esc(S.dataset.name)}: ${S.dataset.n_texts.toLocaleString()} texts, ${S.dataset.n_words.toLocaleString()} words</div><details style="margin-top:8px"><summary>first text</summary><p class="small">${esc(S.dataset.sample)}</p></details>`;
+  } catch (e) { S.dataset = null; msg("#data-msg", e.message); }
+}
+
+// ---- run
+$("#run").onclick = async () => {
+  if (!S.dataset) return msg("#run-msg", "Upload a dataset first (step 2).");
+  const vals = sel => Object.fromEntries([...document.querySelectorAll(sel + " input")].map(i => [i.dataset.k, Number(i.value)]));
+  const req = { dataset: S.dataset.id, base: $("#base").value, scheme: $("#scheme").value, device: $("#device").value,
+                scheme_params: vals("#sparams"), ...vals("#recipe") };
+  msg("#run-msg", "");
+  $("#run").disabled = true;
+  try { const { id } = await api("/api/jobs", { method: "POST", body: JSON.stringify(req), headers: { "Content-Type": "application/json" } });
+        S.sel = id; S.log = []; await refreshJobs(); }
+  catch (e) { msg("#run-msg", e.message); }
+  $("#run").disabled = false;
+};
+
+// ---- jobs
+async function refreshJobs() {
+  let jobs;
+  try { jobs = await api("/api/jobs"); } catch (e) { return; }
+  $("#jobs").innerHTML = jobs.length ? jobs.map(j => `<button class="job ${j.id === S.sel ? "sel" : ""}" data-id="${j.id}"><span>${esc(j.request.scheme)}<br><span class="muted">${esc(j.id)}</span></span><span class="tag ${j.phase}">${j.phase}</span></button>`).join("") : `<p class="muted small">No jobs yet.</p>`;
+  $("#jobs").querySelectorAll(".job").forEach(b => b.onclick = () => { S.sel = b.dataset.id; S.log = []; refreshJobs(); });
+  if (!S.sel && jobs.length) S.sel = jobs[0].id;
+  if (S.sel) poll();
+}
+
+async function poll() {
+  clearTimeout(S.timer);
+  const id = S.sel;
+  let j;
+  try { j = await api(`/api/jobs/${id}?after=${S.log.length}`); } catch (e) { return; }
+  if (id !== S.sel) return;
+  S.log = S.log.concat(j.log);
+  renderJob(j);
+  if (!["done", "failed", "cancelled"].includes(j.phase)) S.timer = setTimeout(poll, 2000);
+  else if (document.querySelector(`.job[data-id="${id}"] .tag`)?.textContent !== j.phase) refreshJobs();
+}
+
+function renderJob(j) {
+  const r = j.request, at = PHASES.indexOf(j.phase), end = ["failed", "cancelled"].includes(j.phase);
+  const last = S.log[S.log.length - 1];
+  const ph = PHASES.slice(0, -1).map((p, i) => `<span class="ph ${i < at || j.phase === "done" ? "done" : i === at ? "cur" : ""}">${p === "train" && j.phase === "train" && last ? `train ${last.step}/${r.steps}` : p}</span>`).join("")
+    + (end ? `<span class="ph fail">${j.phase}</span>` : "");
+  let h = `<div class="row" style="justify-content:space-between;align-items:center"><div><b>${esc(r.scheme)}</b> on ${esc(r.base)} <span class="muted small">&middot; ${esc(r.device)} &middot; ${r.steps} steps &middot; lr ${r.lr}</span></div>`
+    + (["done", "failed", "cancelled"].includes(j.phase) ? "" : `<button class="btn sm" id="cancel">Cancel</button>`) + `</div><div class="phases" style="margin-top:10px">${ph}</div>`;
+  if (j.error) h += `<div class="msg err">${esc(j.error)}</div><details style="margin-top:8px"><summary>output</summary><pre>${esc(j.output)}</pre></details>`;
+  if (S.log.length) h += chart();
+  const R = j.result;
+  if (R) {
+    const pct = x => x == null ? "–" : (100 * x).toFixed(0) + "%";
+    h += `<div class="stats"><div class="stat"><b style="color:var(--good)">${pct(R.tpr)}</b><span>watermarked texts detected (${R.n_marked})</span></div>`
+      + `<div class="stat"><b>${pct(R.fpr_human)}</b><span>held-out human texts flagged (${R.n_human}), target ${pct(R.fpr)}</span></div>`
+      + `<div class="stat"><b>${R.n_null}</b><span>base-model texts in the null</span></div></div>`
+      + `<div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="marked">Watermarked model</button><button role="tab" aria-selected="false" data-t="human">Human text</button></div><div class="texts" id="texts"></div>`
+      + `<p class="small muted" style="margin:12px 0 0">Release <code>${esc(R.release)}</code><br>Key <code>${esc(R.key.slice(0, 16))}</code> in this machine's key store (<code>markweightx keys show ${esc(R.key.slice(0, 12))}</code>)</p>`;
+  } else if (!j.error) {
+    h += `<p class="muted small">${j.phase === "train" && last ? `${last.sec}s elapsed &middot; ${last.mem_gb} GB GPU memory` : j.phase === "queued" ? "Loading the model..." : ""}</p>`;
+  }
+  $("#detail").innerHTML = h;
+  $("#cancel")?.addEventListener("click", async () => { await api(`/api/jobs/${j.id}/cancel`, { method: "POST" }).catch(() => {}); refreshJobs(); });
+  if (R) {
+    const show = t => { $("#texts").innerHTML = R[t].map(x => `<div class="tx"><span class="p ${x.flag ? "y" : "n"}">${x.flag ? "watermark" : "no watermark"} &middot; p = ${x.p == null ? "–" : Number(x.p).toPrecision(2)} &middot; ${x.n_tokens} tokens</span><span>${esc(x.text)}</span></div>`).join("") || `<p class="muted small">None.</p>`;
+      document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.t === t)); };
+    document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => show(b.dataset.t));
+    show("marked");
+  }
+}
+
+function chart() {
+  const L = S.log.filter(x => isFinite(x.kl)), W = 600, H = 180, p = { l: 52, r: 12, t: 12, b: 26 };
+  if (!L.length) return "";
+  const n = Math.max(...L.map(x => x.step)), hi = Math.max(...L.map(x => x.kl)) * 1.05 || 1;
+  const X = s => p.l + (W - p.l - p.r) * (s - 1) / Math.max(1, n - 1), Y = v => p.t + (H - p.t - p.b) * (1 - v / hi);
+  const pts = L.map(x => `${X(x.step).toFixed(1)},${Y(x.kl).toFixed(1)}`).join(" ");
+  const ticks = [0, hi / 2, hi].map(v => `<text x="${p.l - 8}" y="${Y(v) + 4}" text-anchor="end">${v.toPrecision(2)}</text><line x1="${p.l}" x2="${W - p.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`).join("");
+  return `<div class="small muted">Training loss (KL to the watermarked teacher)</div><svg class="chart" viewBox="0 0 ${W} ${H}" style="font-size:11px;fill:var(--muted)">${ticks}<text x="${p.l}" y="${H - 6}">1</text><text x="${W - p.r}" y="${H - 6}" text-anchor="end">step ${n}</text><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+</script>
