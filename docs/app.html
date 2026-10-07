@@ -225,6 +225,7 @@ async function api(path, opt = {}) {
 // served by `markweightx serve` itself (directly, or through Colab's https proxy): the address is this page's origin and the token is in the #fragment
 (function init() {
   const m = location.hash.match(/token=([\w-]+)/);
+  S.want = (location.hash.match(/scheme=([\w.-]+)/) || [])[1];      // e.g. #token=...&scheme=pro from the PRO notebook
   if (m) {
     $("#addr").value = location.origin; $("#token").value = m[1];
     history.replaceState(null, "", location.pathname);
@@ -276,6 +277,7 @@ function renderConfig() {
   $("#device").innerHTML = I.machine.gpus.map(g => `<option value="${g.device}">${g.device} &middot; ${g.free_gb} GB free</option>`).join("") || `<option value="cpu">cpu</option>`;
   const order = s => s.name === "pro" ? 0 : s.name.startsWith("markllm-kgw") ? 1 : 2;
   $("#scheme").innerHTML = [...I.schemes].sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)).map(s => `<option>${s.name}</option>`).join("");
+  if (S.want && I.schemes.some(x => x.name === S.want)) $("#scheme").value = S.want;
   $("#scheme").onchange = renderScheme; renderScheme();
   $("#recipe").innerHTML = Object.entries(I.recipe).map(([k, v]) => `<label>${LABELS[k] || k}<input data-k="${k}" value="${v}" inputmode="decimal"></label>`).join("");
 }
