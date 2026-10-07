@@ -190,7 +190,7 @@ let S = { addr: "", token: "", info: null, dataset: null, sel: null, timer: null
 function msg(el, text, kind) { $(el).innerHTML = text ? `<div class="msg ${kind || "err"}">${esc(text)}</div>` : ""; }
 
 async function api(path, opt = {}) {
-  const r = await fetch(S.addr + path, { ...opt, headers: { Authorization: "Bearer " + S.token, ...(opt.headers || {}) } });
+  const r = await fetch(S.addr + path, { ...opt, headers: { "X-MWX-Token": S.token, ...(opt.headers || {}) } });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
   return j;

@@ -301,7 +301,7 @@ def make_handler(token: str, origins: set[str]):
             if o and (o in origins or urlparse(o).hostname in ("127.0.0.1", "localhost")):
                 self.send_header("Access-Control-Allow-Origin", o)
                 self.send_header("Vary", "Origin")
-                self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Filename")
+                self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Filename, X-MWX-Token")
                 self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
                 self.send_header("Access-Control-Allow-Private-Network", "true")   # Chrome: public page -> localhost
 
@@ -319,7 +319,9 @@ def make_handler(token: str, origins: set[str]):
             self.send_response(204); self.cors(); self.end_headers()
 
         def authed(self) -> bool:
-            ok = secrets.compare_digest(self.headers.get("Authorization", ""), f"Bearer {token}")
+            # X-MWX-Token first: a proxy in front of the server (Colab's) may use or strip Authorization itself
+            got = self.headers.get("X-MWX-Token") or self.headers.get("Authorization", "").removeprefix("Bearer ")
+            ok = secrets.compare_digest(got.encode(), token.encode())
             if not ok:
                 self.reply(401, {"error": "wrong or missing token (it is printed by `markweightx serve`)"})
             return ok
