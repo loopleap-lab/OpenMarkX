@@ -80,7 +80,7 @@ def bases() -> list[dict]:
         except Exception:
             cached = False
         out.append({"name": name, "repo": repo, "cached": cached,
-                    "need_gb": 16 if "1b" in name else 60})       # bf16 weights + LoRA training at bs 8, seq 128
+                    "need_gb": 10 if "1b" in name else 40})       # peak measured on 1B at bs 8, seq 128: 8.5 GB
     return out
 
 
