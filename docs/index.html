@@ -140,7 +140,8 @@ pre.code .c { color: var(--code-dim); }
 pre.code .k { color: var(--code-hi); }
 
 /* methods */
-.mgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.mgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .mgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .mgrid { grid-template-columns: minmax(0, 1fr); } }
 .m { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 8px; align-content: start; min-width: 0; }
@@ -172,7 +173,7 @@ tr.ours td { background: color-mix(in srgb, var(--accent-soft) 70%, transparent)
 .v { font-weight: 700; }
 .v.tg { color: var(--good); } .v.tm { color: var(--mid); } .v.tb { color: var(--bad); }
 .foot-note { font-size: 12px; color: var(--faint); margin: 14px 0 0; }
-.lb2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr); gap: 18px; margin-top: 18px; }
+.lb2 { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 18px; margin-top: 18px; }
 @media (max-width: 920px) { .lb2 { grid-template-columns: minmax(0, 1fr); } }
 .chart-card { display: grid; gap: 10px; }
 .chart-card h3, .mini h3 { font-size: 14px; font-weight: 700; }
@@ -195,6 +196,21 @@ tr.ours td { background: color-mix(in srgb, var(--accent-soft) 70%, transparent)
 .codecard { display: grid; gap: 12px; min-width: 0; }
 .codebar { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
 
+/* try it, explanations */
+.hero .desc2 { margin: 10px auto 0; max-width: 60ch; color: var(--faint); font-size: 13px; }
+.takeaway { margin: 16px 0 0; font-size: 15px; color: var(--ink); max-width: 80ch; }
+.explain { display: grid; gap: 6px; font-size: 12.5px; color: var(--muted); margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
+.explain b { color: var(--ink); margin-right: 8px; }
+.explain em { font-style: normal; margin-right: 4px; }
+.ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .ways { grid-template-columns: minmax(0, 1fr); } }
+.way { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.way > .btn { margin-top: auto; }
+.way h3 { font-size: 17px; }
+.way p { margin: 0; color: var(--muted); font-size: 14px; }
+.way pre.code { align-self: stretch; font-size: 12px; }
+.wn { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.role pre.code { font-size: 12.5px; }
 /* demo, cite, footer */
 .demo { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; }
 .demo h2 { font-size: clamp(22px, 2.6vw, 28px); }
@@ -219,21 +235,21 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Mark<span class="hl">WeightX</span></span>
     </a>
-    <div class="nav-links"><a href="#motivation">Motivation</a><a href="#quickstart">Quickstart</a><a href="#methods">Methods</a><a href="#leaderboard">Leaderboard</a><a href="app.html">Run on your GPU</a><a href="#cite">Cite</a></div>
+    <div class="nav-links"><a href="#motivation">Motivation</a><a href="#leaderboard">Results</a><a href="#try">Try it</a><a href="#methods">Methods</a><a href="#developers">Developers</a><a href="#cite">Cite</a></div>
     <div class="nav-end"><a class="btn sm" href="https://arxiv.org/abs/2510.23891">Paper</a><a class="btn sm js-repo" href="#quickstart">Code</a></div>
   </div>
 </nav>
 
 <header class="hero" id="top">
   <div class="wrap hero-in">
-    <a class="pill" href="https://arxiv.org/abs/2510.23891"><i></i><b>NeurIPS 2026</b><span>PRO: Precise and Robust Text Watermark for Open-Source LLMs</span></a>
+    <a class="pill" href="https://arxiv.org/abs/2510.23891"><i></i><b>NeurIPS 2026</b><span>PRO: Enabling Precise and Robust Text Watermark for Open-Source LLMs</span></a>
     <h1>Mark<span class="hl">WeightX</span></h1>
     <div class="sub">A Toolkit for Watermarking Open-Weight Language Models</div>
-    <p class="desc">Once a model's weights are public, anyone can run it with their own decoding, so a decoding-time watermark can simply be left out. MarkWeightX trains the watermark <b>into the weights</b> and tests whether it survives what users do to released models: <b>fine-tuning</b>, <b>merging</b>, <b>pruning</b>, <b>quantization</b> and <b>paraphrasing</b>.</p>
+    <p class="desc">MarkWeightX trains a watermark <b>into the weights</b> of an open model, so text it writes can be traced back to it, even after the model is <b>fine-tuned</b>, <b>merged</b>, <b>pruned</b> or <b>quantized</b>.</p>
+    <p class="desc2">MarkWeightX is the toolkit; PRO (NeurIPS 2026) is the method it was built for.</p>
     <div class="ctas">
-      <a class="btn primary" href="#quickstart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>Get Started</a>
-      <a class="btn" href="#leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>Leaderboard</a>
-      <a class="btn" href="app.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>Run on your GPU</a>
+      <a class="btn primary" href="#try"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>Try it</a>
+      <a class="btn" href="#leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>Results</a>
       <a class="btn" href="https://arxiv.org/abs/2510.23891"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6"/></svg>Paper</a>
     </div>
   </div>
@@ -241,14 +257,14 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
 
 <section class="band" id="motivation">
   <div class="wrap">
-    <div class="head"><div><h2><span class="hl">Motivation</span></h2><p>A closed model's provider controls decoding and can add the watermark there. Releasing the weights hands decoding to the user, who can drop that step. The watermark therefore has to be learned into the weights, so that any decoding produces watermarked text.</p></div></div>
+    <div class="head"><div><h2><span class="hl">Motivation</span></h2><p>Why an open model needs the watermark in its weights.</p></div></div>
     <div class="card cmp" role="table" aria-label="Closed and open models">
       <div class="cmp-r cmp-h" role="row"><span role="columnheader"></span><span role="columnheader"><b>Closed model</b>served by its provider</span><span role="columnheader"><b>Open model</b>e.g. Llama, anyone can download it</span></div>
       <div class="cmp-r" role="row"><span class="k" role="rowheader">Who runs it</span><span role="cell">The provider's servers</span><span role="cell" class="hard">Anyone, on their own machine</span></div>
       <div class="cmp-r" role="row"><span class="k" role="rowheader">How the mark gets in</span><span role="cell">The server biases word choices with a secret key</span><span role="cell" class="hard">No server does it: the weights must write the mark</span></div>
       <div class="cmp-r" role="row"><span class="k" role="rowheader">What can remove it</span><span role="cell">Rewording the text</span><span role="cell" class="hard">Rewording the text, and changing the weights: fine-tune, merge, prune, quantize</span></div>
     </div>
-    <h3 class="case-h">Threat model</h3>
+    <h3 class="case-h">Use case</h3>
     <div class="card tmcard"><div class="tm"><svg viewBox="0 0 1436 410" role="img" aria-label="Threat model: Alice ships a watermarked model and keeps the key. Anyone downstream can change the weights and reword the text. The detector sees only the text and the key, and still traces it to Alice.">
 <defs><marker id="tm-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker><marker id="tm-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--sim)"/></marker></defs>
 <rect x="0" y="0" width="1436" height="130" rx="14" fill="var(--accent-soft)" opacity=".75"/>
@@ -352,52 +368,24 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
 <text x="1214" y="357" font-size="14" fill="var(--muted)">traced after</text>
 <text x="1214" y="377" font-size="14" fill="var(--muted)">most edits</text>
 </svg></div></div>
-    <p class="foot-note">Alice releases the weights and keeps the key; anyone downstream may edit the weights and reword the text; the detector sees only the text and the key. MarkWeightX measures how often the text is still traced after both changes, and how often a human text is wrongly flagged.</p>
+    <p class="takeaway">MarkWeightX measures two things in this setting: how often the text is still traced to Alice's model after these changes, and how often a human-written text is wrongly flagged.</p>
   </div>
 </section>
 
-<section class="band" id="how">
-  <div class="wrap">
-    <div class="head"><div><h2>API</h2><p>Each party in the use case has its calls. The owner embeds the watermark and keeps the key, users modify and generate, and the detector tests texts or a whole model.</p></div></div>
-    <div class="roles">
-      <div class="card role"><h3>Owner <small>embed</small></h3><p>Trains the watermark into the model and releases the weights. The key is kept separately.</p>
-        <pre class="code"><span class="k">rel, key</span> = mwx.embed(<span class="c">"llama-3-8b"</span>, <span class="c">"pro"</span>)
-key = mwx.calibrate(key, <span class="c">"llama-3-8b"</span>)</pre></div>
-      <div class="card role"><h3>User <small>modify</small></h3><p>May fine-tune, merge, prune or quantize the model, and paraphrase its outputs.</p>
-        <pre class="code">edited = mwx.modify(rel, <span class="c">"quantize:bits=4"</span>)
-texts  = mwx.generate(edited, prompts)
-texts  = mwx.rewrite(texts, <span class="c">"synonym:ratio=0.3"</span>)</pre></div>
-      <div class="card role"><h3>Detector <small>detect</small></h3><p>Tests single texts with the key, or tests a suspect model from its outputs.</p>
-        <pre class="code">mwx.detect(texts, key)
-mwx.verify_model(edited, key, prompts,
-                 sequential=<span class="k">True</span>)</pre></div>
-    </div>
-  </div>
-</section>
 
-<section class="band" id="methods">
-  <div class="wrap">
-    <div class="head"><div><h2>Supported <span class="hl">Methods</span></h2><p>Each method is a scheme with a key, a training signal, a way of writing it into the weights, and a detector. The leaderboard reports the methods evaluated in the PRO paper; the others can be evaluated with the same benchmark.</p></div></div>
-    <div class="mgrid" id="mgrid"></div>
-    <h3 class="case-h">Adding a method</h3>
-    <div class="card"><div class="arch" aria-label="Architecture: methods on top, one adapter each, a fixed shared core below">
-        <div class="arow"><span class="alab"><b>Methods</b>own code, any size</span><div class="acells"><div class="am"><b>PRO</b><span>own repo</span></div><div class="am"><b>KGW-D</b><span>MarkLLM teacher</span></div><div class="am"><b>GaussMark</b><span>weight edit</span></div><div class="am new"><b>bob-mark</b><span>new method</span></div></div></div>
-        <div class="arow"><span class="alab"><b>Adapters</b>one file each</span><div class="acells"><div class="aa"><code>pro.py</code><span>adapter</span></div><div class="aa"><code>markllm.py</code><span>adapter</span></div><div class="aa"><code>gaussmark.py</code><span>adapter</span></div><div class="aa new"><code>bob_mark.py</code><span>+ you add</span></div></div></div>
-        <div class="aiface">each adapter is one <code>mwx.Scheme</code> subclass: <code>setup</code> (key) · <code>target_logits</code> (training signal) · <code>score</code> (detector) · <code>access</code></div>
-        <div class="arow"><span class="alab"><b>MarkWeightX core</b><span><svg class="lk" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg> fixed, shared by all</span></span>
-          <div class="acore"><span>load models</span><span>edit weights</span><span>generate</span><span>edit text</span><span>calibrate thresholds</span><span>scoreboard</span></div></div>
-      </div>
-  </div>
-</section>
+
+
+
 
 <section class="band" id="leaderboard">
   <div class="wrap">
     <div class="head">
-      <div><h2>Robustness <span class="hl">Leaderboard</span></h2><p>Ranked by detection after the selected modification (LLaMA-3-8B, 5,000 watermarked and 5,000 unwatermarked texts per setting, from the PRO paper). PPL is the median perplexity under LLaMA-2-13B; the unwatermarked model has 3.6.</p></div>
-      <a class="btn sm js-repo-file" data-file="LEADERBOARD.md" href="#quickstart">Full tables</a>
+      <div><h2>Robustness <span class="hl">Results</span></h2><p>How well each method's watermark is still detected after the model is changed. Numbers are from the PRO paper (LLaMA-3-8B, 5,000 watermarked and 5,000 human texts per setting).</p></div>
+      <a class="btn sm js-repo-file" data-file="LEADERBOARD.md" href="#try">Full tables</a>
     </div>
     <div class="card">
       <div class="controls"><div class="seg" role="group" aria-label="Modification" id="catSeg"></div><div class="seg" role="group" aria-label="Metric" id="metSeg"></div></div>
+      <div class="explain"><span><b>TPR @ 1% FPR</b> the share of watermarked texts detected when at most 1% of human texts are wrongly flagged. Higher is better.</span><span><b>Columns</b> how strong the change is: fine-tuning steps <i>s</i>, merge weight <i>t</i>, pruned fraction <i>&rho;</i>.</span><span><b>Colors</b> <em class="v tg">&ge; 80%</em> <em class="v tm">40&ndash;80%</em> <em class="v tb">&lt; 40%</em>; for PPL (text quality, lower is better) <em class="v tg">&le; 4.5</em> <em class="v tm">4.5&ndash;6</em> <em class="v tb">&gt; 6</em></span></div>
       <div class="tablewrap"><table id="lbTable"></table></div>
       <p class="foot-note" id="lbNote"></p>
     </div>
@@ -411,27 +399,60 @@ mwx.verify_model(edited, key, prompts,
   </div>
 </section>
 
-<section class="band" id="quickstart">
+<section class="band" id="try">
   <div class="wrap">
-    <div class="head"><div><h2><span class="hl">Quickstart</span></h2><p>Requires Python 3.10+ and a CUDA GPU for training and generation; the tests run on CPU. The repository does not include trained watermarked models.</p></div></div>
-    <div class="qs">
-      <ol class="steps">
-        <li><div><b>Install</b><span>The package, the markweightx command, and MarkLLM at a pinned commit.</span></div></li>
-        <li><div><b>Prepare data</b><span>Tokenize the C4 training text and evaluation prompts.</span></div></li>
-        <li><div><b>Embed, modify, detect</b><span>From Python or from the command line.</span></div></li>
-        <li><div><b>Add a method</b><span>Create a scheme file, run the ten tests, run the benchmark.</span></div></li>
-      </ol>
-      <div class="codecard">
+    <div class="head"><div><h2>Try <span class="hl">it</span></h2><p>Training a watermark needs a GPU. Pick the way that fits what you have. The repository has no trained watermarked models: you make your own.</p></div></div>
+    <div class="ways">
+      <div class="card way"><span class="wn">A</span><h3>In the browser, on your GPU</h3><p>Upload a dataset, choose a method and its hyperparameters, and watch training and detection. Start the server on your GPU machine; the page connects to it, and your data and key stay there.</p><pre class="code">pip install git+https://github.com/jqxue1999/MarkWeightX
+markweightx serve</pre><a class="btn primary" href="app.html">Open the run page</a></div>
+      <div class="card way"><span class="wn">B</span><h3>No GPU: on Colab</h3><p>The same run page on a free Colab T4. The notebook installs everything, starts the server and gives you a link to the page.</p><a class="btn primary" href="https://colab.research.google.com/github/jqxue1999/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb">Open in Colab</a></div>
+      <div class="card way"><span class="wn">C</span><h3>As a Python package</h3><p>For scripts and benchmarks: install from source, then use Python or the <code>markweightx</code> command. Python 3.10+, a CUDA GPU for training; the tests run on CPU.</p><a class="btn" href="#install">Install steps below</a></div>
+    </div>
+    <h3 class="case-h" id="install">C &middot; Install and first steps</h3>
+    <div class="codecard">
         <div class="codebar"><div class="seg" role="group" aria-label="Code example" id="codeSeg"></div><button class="btn sm" type="button" id="copyBtn">Copy</button></div>
         <pre class="code" id="codeBox"></pre>
       </div>
-    </div>
   </div>
 </section>
 
-<section class="band" id="run">
+<section class="band" id="methods">
   <div class="wrap">
-    <div class="card demo"><div><h2>Run on your <span class="hl">GPU</span></h2><p>Upload a dataset, choose a method and its hyperparameters, and learn a watermark into Llama-3.2-1B from the browser. The page connects to <code>markweightx serve</code> on your machine, so your data, the model and the key stay there. No GPU: the same page runs on a free Colab T4.</p></div><div class="ctas" style="margin:0"><a class="btn primary" href="app.html">Open the run page</a><a class="btn" href="https://colab.research.google.com/github/jqxue1999/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb">Open in Colab</a></div></div>
+    <div class="head"><div><h2>Supported <span class="hl">Methods</span></h2><p>Watermarks that MarkWeightX can train into a model and run through the same tests. Most started as watermarks added while generating text; MarkWeightX teaches the model to produce them on its own. The results above cover the four evaluated in the PRO paper.</p></div></div>
+    <div class="mgrid" id="mgrid"></div>
+  </div>
+</section>
+
+<section class="band" id="developers">
+  <div class="wrap">
+    <div class="head"><div><h2>For <span class="hl">developers</span></h2><p>The Python API follows the three roles of the use case. New methods plug in as one file.</p></div></div>
+    <div class="roles">
+      <div class="card role"><h3>Owner <small>embed</small></h3><p>Trains the watermark into the model and releases the weights. The key is kept separately.</p>
+        <pre class="code"><span class="k">rel, key</span> = mwx.embed(
+    <span class="c">"llama-3.2-1b"</span>, <span class="c">"pro"</span>)
+key = mwx.calibrate(
+    key, <span class="c">"llama-3.2-1b"</span>)</pre></div>
+      <div class="card role"><h3>Downstream <small>modify</small></h3><p>May fine-tune, merge, prune or quantize the model, and paraphrase its outputs.</p>
+        <pre class="code">edited = mwx.modify(
+    rel, <span class="c">"quantize:bits=4"</span>)
+texts = mwx.generate(
+    edited, prompts)
+texts = mwx.rewrite(
+    texts, <span class="c">"synonym:ratio=0.3"</span>)</pre></div>
+      <div class="card role"><h3>Detector <small>detect</small></h3><p>Tests single texts with the key, or tests a suspect model from its outputs.</p>
+        <pre class="code">mwx.detect(texts, key)
+mwx.verify_model(
+    edited, key, prompts,
+    sequential=<span class="k">True</span>)</pre></div>
+    </div>
+    <h3 class="case-h">Adding a method</h3>
+    <div class="card"><div class="arch" aria-label="Architecture: methods on top, one adapter each, a fixed shared core below">
+        <div class="arow"><span class="alab"><b>Methods</b>own code, any size</span><div class="acells"><div class="am"><b>PRO</b><span>own repo</span></div><div class="am"><b>KGW</b><span>from MarkLLM</span></div><div class="am"><b>GaussMark</b><span>weight edit</span></div><div class="am new"><b>bob-mark</b><span>new method</span></div></div></div>
+        <div class="arow"><span class="alab"><b>Adapters</b>one file each</span><div class="acells"><div class="aa"><code>pro.py</code><span>adapter</span></div><div class="aa"><code>markllm.py</code><span>adapter</span></div><div class="aa"><code>gaussmark.py</code><span>adapter</span></div><div class="aa new"><code>bob_mark.py</code><span>+ you add</span></div></div></div>
+        <div class="aiface">each adapter is one <code>mwx.Scheme</code> subclass: <code>setup</code> (key) · <code>target_logits</code> (training signal) · <code>score</code> (detector) · <code>access</code></div>
+        <div class="arow"><span class="alab"><b>MarkWeightX core</b><span><svg class="lk" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg> fixed, shared by all</span></span>
+          <div class="acore"><span>load models</span><span>edit weights</span><span>generate</span><span>edit text</span><span>calibrate thresholds</span><span>scoreboard</span></div></div>
+      </div>
   </div>
 </section>
 
@@ -453,7 +474,7 @@ mwx.verify_model(edited, key, prompts,
     <div class="fgrid">
       <div><a class="brand" href="#top"><svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Mark<span class="hl">WeightX</span></span></a>
         <p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight language models, with the benchmark of the PRO paper.</p></div>
-      <div><h4>Resources</h4><ul><li><a href="#quickstart">Quickstart</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="app.html">Run on your GPU</a></li><li><a class="js-repo-file" data-file="README.md" href="#quickstart">Documentation</a></li></ul></div>
+      <div><h4>Resources</h4><ul><li><a href="#try">Try it</a></li><li><a href="#leaderboard">Results</a></li><li><a href="app.html">Run page</a></li><li><a class="js-repo-file" data-file="README.md" href="#try">Documentation</a></li></ul></div>
       <div><h4>Research</h4><ul><li><a href="https://arxiv.org/abs/2510.23891">arXiv paper</a></li><li><a href="#cite">Citation</a></li><li><a href="https://github.com/THU-BPM/MarkLLM">MarkLLM</a></li></ul></div>
     </div>
     <div class="fbottom"><span>© 2026 MarkWeightX</span><span>Apache-2.0</span></div>
@@ -474,7 +495,7 @@ mwx.verify_model(edited, key, prompts,
     e.preventDefault();
     t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }));
-  document.querySelectorAll(".js-repo").forEach((a) => { if (REPO) a.href = REPO; else a.textContent = "Quickstart"; });
+  document.querySelectorAll(".js-repo").forEach((a) => { if (REPO) a.href = REPO; else a.textContent = "Try it"; });
   document.querySelectorAll(".js-repo-file").forEach((a) => { if (REPO) a.href = REPO + "/blob/main/" + a.dataset.file; });
   function seg(el, items, cur, on) {
     el.innerHTML = items.map(([k, lab]) => `<button type="button" data-k="${esc(k)}" aria-pressed="${k === cur}">${esc(lab)}</button>`).join("");
@@ -483,28 +504,28 @@ mwx.verify_model(edited, key, prompts,
 
   // methods
   const MET = [
-    ["PRO", "pro · pro-coopt-c100 · pro-full-b01", "A semantic watermark policy trained with the model, with perturbation-aware training against weight edits.", ["ours", "distilled", "text + key"], "var(--accent)", "PR"],
-    ["KGW (Gu et al.)", "markllm-kgw-d", "The KGW green-list watermark distilled into the weights; the main baseline of the paper.", ["distilled", "text + key"], "#6366f1", "KG"],
-    ["KTH (Gu et al.)", "markllm-exp-d", "The exponential-sampling watermark distilled into the weights.", ["distilled", "text + key"], "#8b5cf6", "KT"],
-    ["Unigram", "markllm-unigram-d", "A fixed green list over the vocabulary, the same for every context.", ["distilled", "text + key"], "#0ea5e9", "UG"],
-    ["SWEET · EWD", "markllm-sweet-d · markllm-ewd-d", "KGW variants that weight tokens by entropy; the detector runs the base model.", ["distilled", "text + key + base model"], "#14b8a6", "SE"],
-    ["MorphMark · DIP · Unbiased", "markllm-morphmark-d · -dip-d · -unbiased-d", "Further decode-time watermarks from MarkLLM, distilled the same way.", ["distilled", "text + key"], "#f59e0b", "MD"],
-    ["SynthID · EXPEdit · ITSEdit · PF", "markllm-synthid-d · -expedit-d · -itsedit-d · -pf-d", "Sampling-based watermarks from MarkLLM, distilled the same way.", ["distilled", "text + key"], "#ec4899", "SY"],
-    ["GaussMark", "gaussmark", "A keyed Gaussian perturbation written into one weight matrix, detected with gradients of the base model.", ["weight edit", "text + key + gradients"], "#64748b", "GM"],
-    ["Your method", "markweightx new-scheme my-mark", "One Python file from a template; ten tests on CPU, then the same benchmark.", ["plugin"], "var(--rose)", "+"],
+    ["PRO", "this paper", "A semantic watermark trained together with the model, and trained to survive edits to the weights.", "var(--accent)", "PR", true],
+    ["KGW (Gu et al.)", "baseline in the paper", "The green-list watermark: a secret key favors part of the vocabulary at each step; the model learns to do it.", "#6366f1", "KG"],
+    ["KTH (Gu et al.)", "baseline in the paper", "A watermark in how words are sampled, learned by the model.", "#8b5cf6", "KT"],
+    ["Unigram", "from MarkLLM", "A green list fixed for the whole vocabulary, the same in every context.", "#0ea5e9", "UG"],
+    ["SWEET and EWD", "from MarkLLM", "Green-list variants that count uncertain words more; detection also runs the original model.", "#14b8a6", "SE"],
+    ["GaussMark", "weight edit", "A small keyed change written directly into one weight matrix, without training.", "#64748b", "GM"],
+    ["More from MarkLLM", "from MarkLLM", "SynthID, MorphMark, DIP, Unbiased, EXPEdit, ITSEdit and PF, learned by the model the same way.", "#ec4899", "+7"],
+    ["Your method", "one file", "Start from a template, pass the built-in tests, then run the same benchmark.", "var(--rose)", "+"],
   ];
-  $("mgrid").innerHTML = MET.map(([n, k, d, tags, c, ab]) => `<div class="m"><div class="m-top"><div class="m-ico" style="background:color-mix(in srgb, ${c} 15%, transparent);color:${c}">${esc(ab)}</div><div><h3>${esc(n)}</h3><div class="k">${esc(k)}</div></div></div><p>${esc(d)}</p><div class="tags">${tags.map((t) => `<span class="tag${t === "ours" ? " ours" : ""}">${esc(t === "ours" ? "ours · NeurIPS 2026" : t)}</span>`).join("")}</div></div>`).join("");
+  $("mgrid").innerHTML = MET.map(([n, k, d, c, ab, ours]) => `<div class="m"><div class="m-top"><div class="m-ico" style="background:color-mix(in srgb, ${c} 15%, transparent);color:${c}">${esc(ab)}</div><div><h3>${esc(n)}</h3><div class="k">${esc(k)}</div></div></div><p>${esc(d)}</p>${ours ? `<div class="tags"><span class="tag ours">ours · NeurIPS 2026</span></div>` : ""}</div>`).join("");
 
   // leaderboard: rows are methods ranked by the selected modification
   (function board() {
     if (!LB || !LB.rows) { $("lbTable").innerHTML = "<tbody><tr><td class=\"l\">The leaderboard data is missing from this build: see LEADERBOARD.md.</td></tr></tbody>"; return; }
-    const MS = [["pro", "PRO", "#06b6d4", "PR"], ["glo", "Gloaguen et al. · KGW", "#14b8a6", "GL"], ["kgw", "Gu et al. · KGW", "#6366f1", "KG"], ["kth", "Gu et al. · KTH", "#8b5cf6", "KT"]];
+    const MS = [["pro", "PRO", "#06b6d4", "PR"], ["glo", "KGW (Gloaguen et al.)", "#14b8a6", "GL"], ["kgw", "KGW (Gu et al.)", "#6366f1", "KG"], ["kth", "KTH (Gu et al.)", "#8b5cf6", "KT"]];
+    const NAME = (x) => /gloaguen/i.test(x) ? "KGW (Gloaguen et al.)" : /kth/i.test(x) ? "KTH (Gu et al.)" : /kgw/i.test(x) ? "KGW (Gu et al.)" : x;
     const METRICS = [["t1", "TPR @ 1% FPR", 1, true], ["t5", "TPR @ 5% FPR", 0, true], ["ppl", "PPL", 2, false]];
     const CATS = [...new Set(LB.rows.map((r) => r.cat))];
     const short = (c) => ({ "Unaltered": "Unaltered", "Quantization, 8 bits": "Quantize 8-bit", "Quantization, 4 bits": "Quantize 4-bit", "Pruning, Wanda": "Prune · Wanda", "Pruning, SparseGPT": "Prune · SparseGPT", "Merging, SLERP": "Merge · SLERP", "Fine-tuning, OpenMathInstruct": "Fine-tune · Math", "Fine-tuning, OpenCodeInstruct": "Fine-tune · Code" }[c] || c);
-    const S = { cat: "Merging, SLERP", met: "t1" };
-    try { const v = JSON.parse(localStorage.getItem("mwx-lb2") || "null"); if (v && CATS.includes(v.cat)) Object.assign(S, v); } catch (e) {}
-    const save = () => { try { localStorage.setItem("mwx-lb2", JSON.stringify(S)); } catch (e) {} };
+    const S = { cat: "Fine-tuning, OpenMathInstruct", met: "t1" };
+    try { const v = JSON.parse(localStorage.getItem("mwx-lb3") || "null"); if (v && CATS.includes(v.cat)) Object.assign(S, v); } catch (e) {}
+    const save = () => { try { localStorage.setItem("mwx-lb3", JSON.stringify(S)); } catch (e) {} };
     const tone = (v, ppl) => "t" + (ppl ? (v <= 4.5 ? "g" : v <= 6 ? "m" : "b") : (v >= .8 ? "g" : v >= .4 ? "m" : "b"));
     function table() {
       const m = METRICS.find((x) => x[0] === S.met), idx = m[2], ppl = !m[3];
@@ -550,7 +571,7 @@ mwx.verify_model(edited, key, prompts,
     render();
     const mini = (el, head, rows) => {
       el.innerHTML = `<thead><tr>${head.map((x, i) => `<th class="${i ? "" : "l"}">${esc(x)}</th>`).join("")}</tr></thead><tbody>` +
-        rows.map((r) => `<tr class="${r[0] === "PRO" ? "ours" : ""}">${r.map((x, i) => `<td class="${i ? "" : "l"}">${i && r[0] === "PRO" ? `<span class="v tg">${esc(x)}</span>` : esc(x)}</td>`).join("")}</tr>`).join("") + "</tbody>";
+        rows.map((r) => [NAME(r[0]), ...r.slice(1)]).map((r) => `<tr class="${r[0] === "PRO" ? "ours" : ""}">${r.map((x, i) => `<td class="${i ? "" : "l"}">${i && r[0] === "PRO" ? `<span class="v tg">${esc(x)}</span>` : esc(x)}</td>`).join("")}</tr>`).join("") + "</tbody>";
     };
     mini($("dipper"), ["Method", "DIPPER-1", "DIPPER-2"], LB.dipper);
     mini($("downstream"), ["Model", "Hella.", "ARC-C", "AGI-M", "GSM8K"], LB.downstream);
