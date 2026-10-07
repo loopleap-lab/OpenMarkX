@@ -195,6 +195,14 @@ def save_upload(name: str, body: bytes) -> dict:
     return {"id": fid, "name": name, "n_texts": len(texts), "n_words": words, "sample": texts[0][:300]}
 
 
+def sample_dataset(n: int = 1000) -> dict:
+    """n texts from the C4 validation split (streamed: one shard, about 40 MB), for a first run without data."""
+    from datasets import load_dataset
+    rows = load_dataset("allenai/c4", "en", split="validation", streaming=True)
+    texts = [r["text"] for _, r in zip(range(n), rows)]
+    return save_upload("c4-sample.jsonl", "".join(json.dumps({"text": t}) + "\n" for t in texts).encode())
+
+
 def read_texts(raw: str, ext: str) -> list[str]:
     if ext == ".txt":
         return [l.strip() for l in raw.splitlines() if l.strip()]
@@ -355,6 +363,8 @@ def make_handler(token: str, origins: set[str]):
                 if u.path == "/api/upload":
                     return self.reply(200, save_upload(os.path.basename(self.headers.get("X-Filename", "data.txt")),
                                                        self.body()))
+                if u.path == "/api/sample":
+                    return self.reply(200, sample_dataset())
                 if u.path == "/api/jobs":
                     return self.reply(200, {"id": start_job(check_request(json.loads(self.body() or b"{}")))})
                 if u.path.startswith("/api/jobs/") and u.path.endswith("/cancel"):

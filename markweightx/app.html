@@ -125,6 +125,8 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
 markweightx serve</pre>
         <p class="muted small">It prints an address and a token. GPU on a remote server? Forward the port first, then connect to <code>http://127.0.0.1:7860</code>:</p>
         <pre>ssh -L 7860:127.0.0.1:7860 your-gpu-server</pre>
+        <p class="muted small">No GPU? Run it on a free Colab GPU: the notebook installs MarkWeightX, starts the server and gives you a link to this page, connected.</p>
+        <a class="btn" href="https://colab.research.google.com/github/jqxue1999/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb" target="_blank" rel="noopener">Open in Colab</a>
       </div>
       <form class="row" id="conn" style="margin-top:16px">
         <label style="flex:1 1 200px">Address<input id="addr" value="http://127.0.0.1:7860" autocomplete="off"></label>
@@ -142,6 +144,7 @@ markweightx serve</pre>
         <span class="small">.jsonl with {"text": ...} per line, or .txt with one text per line &middot; at least 20 texts</span>
       </div>
       <input type="file" id="file" accept=".jsonl,.txt" hidden>
+      <div class="row" style="margin-top:10px"><button class="btn sm" id="sample" type="button">Use a sample: 1,000 C4 texts</button></div>
       <div id="data-msg"></div>
       <p class="muted small" style="margin:12px 0 0">The model is trained on your texts. Some are held out: their first 32 tokens become prompts for the evaluation, and their real continuations measure false positives on human text.</p>
     </section>
@@ -193,10 +196,10 @@ async function api(path, opt = {}) {
   return j;
 }
 
-// served by `markweightx serve` itself: the address is this page's origin and the token is in the #fragment
+// served by `markweightx serve` itself (directly, or through Colab's https proxy): the address is this page's origin and the token is in the #fragment
 (function init() {
   const m = location.hash.match(/token=([\w-]+)/);
-  if (location.protocol === "http:" && m) {
+  if (m) {
     $("#addr").value = location.origin; $("#token").value = m[1];
     history.replaceState(null, "", location.pathname);
     connect();
@@ -261,11 +264,20 @@ drop.ondragleave = () => drop.classList.remove("over");
 drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]); };
 $("#file").onchange = e => e.target.files[0] && upload(e.target.files[0]);
 
+$("#sample").onclick = async () => {
+  msg("#data-msg", "Fetching 1,000 texts from C4 on the server...", "ok");
+  try { showData(await api("/api/sample", { method: "POST" })); } catch (e) { S.dataset = null; msg("#data-msg", e.message); }
+};
+
+function showData(d) {
+  S.dataset = d;
+  $("#data-msg").innerHTML = `<div class="msg ok">${esc(d.name)}: ${d.n_texts.toLocaleString()} texts, ${d.n_words.toLocaleString()} words</div><details style="margin-top:8px"><summary>first text</summary><p class="small">${esc(d.sample)}</p></details>`;
+}
+
 async function upload(f) {
   msg("#data-msg", `Uploading ${f.name} (${(f.size / 2 ** 20).toFixed(1)} MB)...`, "ok");
   try {
-    S.dataset = await api("/api/upload", { method: "POST", headers: { "X-Filename": f.name }, body: f });
-    $("#data-msg").innerHTML = `<div class="msg ok">${esc(S.dataset.name)}: ${S.dataset.n_texts.toLocaleString()} texts, ${S.dataset.n_words.toLocaleString()} words</div><details style="margin-top:8px"><summary>first text</summary><p class="small">${esc(S.dataset.sample)}</p></details>`;
+    showData(await api("/api/upload", { method: "POST", headers: { "X-Filename": f.name }, body: f }));
   } catch (e) { S.dataset = null; msg("#data-msg", e.message); }
 }
 

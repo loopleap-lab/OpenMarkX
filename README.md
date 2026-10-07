@@ -101,6 +101,9 @@ and the key store). For a GPU on another machine, run the server there and forwa
 ssh -L 7860:127.0.0.1:7860 gpu-server      # then connect to http://127.0.0.1:7860
 ```
 
+Without a GPU, [open the notebook in Colab](https://colab.research.google.com/github/jqxue1999/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb)
+(`notebooks/run_on_colab.ipynb`): it installs MarkWeightX on a free T4, starts the server and links to the run page.
+
 ## Supported methods
 
 `markweightx describe` prints the full table. A method is a **scheme**, assembled from six primitives: Key, Signal,
