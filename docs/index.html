@@ -150,6 +150,7 @@ pre.code .k { color: var(--code-hi); }
 .m h3 { font-size: 15px; }
 .m .k { font-size: 12px; color: var(--faint); overflow-wrap: anywhere; }
 .m p { margin: 0; font-size: 13px; color: var(--muted); }
+a.tag.ours { justify-self: start; text-decoration: none; }
 .tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .tag { font-size: 11px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
 .tag.ours { border-color: transparent; background: var(--accent-soft); color: var(--accent-ink); }
@@ -235,22 +236,20 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Mark<span class="hl">WeightX</span></span>
     </a>
-    <div class="nav-links"><a href="#motivation">Motivation</a><a href="#leaderboard">Results</a><a href="#try">Try it</a><a href="#methods">Methods</a><a href="#developers">Developers</a><a href="#cite">Cite</a></div>
-    <div class="nav-end"><a class="btn sm" href="https://arxiv.org/abs/2510.23891">Paper</a><a class="btn sm js-repo" href="#quickstart">Code</a></div>
+    <div class="nav-links"><a href="#motivation">Motivation</a><a href="#leaderboard">Results</a><a href="#try">Try it</a><a href="#methods">Methods</a><a href="#developers">Developers</a></div>
+    <div class="nav-end"><a class="btn sm js-repo" href="#quickstart">Code</a></div>
   </div>
 </nav>
 
 <header class="hero" id="top">
   <div class="wrap hero-in">
-    <a class="pill" href="https://arxiv.org/abs/2510.23891"><i></i><b>NeurIPS 2026</b><span>PRO: Enabling Precise and Robust Text Watermark for Open-Source LLMs</span></a>
     <h1>Mark<span class="hl">WeightX</span></h1>
     <div class="sub">A Toolkit for Watermarking Open-Weight Language Models</div>
     <p class="desc">MarkWeightX trains a watermark <b>into the weights</b> of an open model, so text it writes can be traced back to it, even after the model is <b>fine-tuned</b>, <b>merged</b>, <b>pruned</b> or <b>quantized</b>.</p>
-    <p class="desc2">MarkWeightX is the toolkit; PRO (NeurIPS 2026) is the method it was built for.</p>
     <div class="ctas">
       <a class="btn primary" href="#try"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>Try it</a>
       <a class="btn" href="#leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>Results</a>
-      <a class="btn" href="https://arxiv.org/abs/2510.23891"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6"/></svg>Paper</a>
+      <a class="btn" href="https://github.com/jqxue1999/MarkWeightX"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/></svg>Code</a>
     </div>
   </div>
 </header>
@@ -380,7 +379,7 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
 <section class="band" id="leaderboard">
   <div class="wrap">
     <div class="head">
-      <div><h2>Robustness <span class="hl">Results</span></h2><p>How well each method's watermark is still detected after the model is changed. Numbers are from the PRO paper (LLaMA-3-8B, 5,000 watermarked and 5,000 human texts per setting).</p></div>
+      <div><h2>Robustness <span class="hl">Results</span></h2><p>How well each method's watermark is still detected after the model is changed. Numbers are from the <a href="https://jqxue1999.github.io/PRO/">PRO paper</a> (LLaMA-3-8B, 5,000 watermarked and 5,000 human texts per setting).</p></div>
       <a class="btn sm js-repo-file" data-file="LEADERBOARD.md" href="#try">Full tables</a>
     </div>
     <div class="card">
@@ -456,26 +455,14 @@ mwx.verify_model(
   </div>
 </section>
 
-<section class="band" id="cite">
-  <div class="wrap cite">
-    <div class="codebar"><div><h2 style="font-size:20px">Citation</h2><p class="foot-note" style="margin:6px 0 0">If you use MarkWeightX or PRO in your research, please cite:</p></div><button class="btn sm" type="button" id="citeBtn">Copy</button></div>
-    <pre id="bib">@inproceedings{xue2026pro,
-  title     = {PRO: Enabling Precise and Robust Text Watermark for Open-Source LLMs},
-  author    = {Xue, Jiaqi and Zhao, Yifei and Al Ghanim, Mansour and Gao, Shangqian and
-               Sun, Ruimin and Lou, Qian and Zheng, Mengxin},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2026}
-}</pre>
-  </div>
-</section>
 
 <footer>
   <div class="wrap">
     <div class="fgrid">
       <div><a class="brand" href="#top"><svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Mark<span class="hl">WeightX</span></span></a>
-        <p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight language models, with the benchmark of the PRO paper.</p></div>
+        <p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight language models.</p></div>
       <div><h4>Resources</h4><ul><li><a href="#try">Try it</a></li><li><a href="#leaderboard">Results</a></li><li><a href="app.html">Run page</a></li><li><a class="js-repo-file" data-file="README.md" href="#try">Documentation</a></li></ul></div>
-      <div><h4>Research</h4><ul><li><a href="https://arxiv.org/abs/2510.23891">arXiv paper</a></li><li><a href="#cite">Citation</a></li><li><a href="https://github.com/THU-BPM/MarkLLM">MarkLLM</a></li></ul></div>
+      <div><h4>Related</h4><ul><li><a href="https://jqxue1999.github.io/PRO/">PRO (NeurIPS 2026)</a></li><li><a href="https://github.com/THU-BPM/MarkLLM">MarkLLM</a></li></ul></div>
     </div>
     <div class="fbottom"><span>© 2026 MarkWeightX</span><span>Apache-2.0</span></div>
   </div>
@@ -504,16 +491,16 @@ mwx.verify_model(
 
   // methods
   const MET = [
-    ["PRO", "this paper", "A semantic watermark trained together with the model, and trained to survive edits to the weights.", "var(--accent)", "PR", true],
-    ["KGW (Gu et al.)", "baseline in the paper", "The green-list watermark: a secret key favors part of the vocabulary at each step; the model learns to do it.", "#6366f1", "KG"],
-    ["KTH (Gu et al.)", "baseline in the paper", "A watermark in how words are sampled, learned by the model.", "#8b5cf6", "KT"],
+    ["PRO", "NeurIPS 2026", "A semantic watermark trained together with the model, and trained to survive edits to the weights.", "var(--accent)", "PR", "https://jqxue1999.github.io/PRO/"],
+    ["KGW (Gu et al.)", "baseline in the PRO paper", "The green-list watermark: a secret key favors part of the vocabulary at each step; the model learns to do it.", "#6366f1", "KG"],
+    ["KTH (Gu et al.)", "baseline in the PRO paper", "A watermark in how words are sampled, learned by the model.", "#8b5cf6", "KT"],
     ["Unigram", "from MarkLLM", "A green list fixed for the whole vocabulary, the same in every context.", "#0ea5e9", "UG"],
     ["SWEET and EWD", "from MarkLLM", "Green-list variants that count uncertain words more; detection also runs the original model.", "#14b8a6", "SE"],
     ["GaussMark", "weight edit", "A small keyed change written directly into one weight matrix, without training.", "#64748b", "GM"],
     ["More from MarkLLM", "from MarkLLM", "SynthID, MorphMark, DIP, Unbiased, EXPEdit, ITSEdit and PF, learned by the model the same way.", "#ec4899", "+7"],
     ["Your method", "one file", "Start from a template, pass the built-in tests, then run the same benchmark.", "var(--rose)", "+"],
   ];
-  $("mgrid").innerHTML = MET.map(([n, k, d, c, ab, ours]) => `<div class="m"><div class="m-top"><div class="m-ico" style="background:color-mix(in srgb, ${c} 15%, transparent);color:${c}">${esc(ab)}</div><div><h3>${esc(n)}</h3><div class="k">${esc(k)}</div></div></div><p>${esc(d)}</p>${ours ? `<div class="tags"><span class="tag ours">ours · NeurIPS 2026</span></div>` : ""}</div>`).join("");
+  $("mgrid").innerHTML = MET.map(([n, k, d, c, ab, ours]) => `<div class="m"><div class="m-top"><div class="m-ico" style="background:color-mix(in srgb, ${c} 15%, transparent);color:${c}">${esc(ab)}</div><div><h3>${esc(n)}</h3><div class="k">${esc(k)}</div></div></div><p>${esc(d)}</p>${ours ? `<a class="tag ours" href="${ours}">project page &rarr;</a>` : ""}</div>`).join("");
 
   // leaderboard: rows are methods ranked by the selected modification
   (function board() {
@@ -622,6 +609,5 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     try { navigator.clipboard.writeText(el.innerText).then(done, select); } catch (e) { select(); }
   }
   $("copyBtn").addEventListener("click", () => copy($("copyBtn"), $("codeBox")));
-  $("citeBtn").addEventListener("click", () => copy($("citeBtn"), $("bib")));
-})();
+  })();
 </script>
