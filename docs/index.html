@@ -219,7 +219,7 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Mark<span class="hl">WeightX</span></span>
     </a>
-    <div class="nav-links"><a href="#motivation">Motivation</a><a href="#quickstart">Quickstart</a><a href="#methods">Methods</a><a href="#leaderboard">Leaderboard</a><a href="demo.html">Demo</a><a href="app.html">Run on your GPU</a><a href="#cite">Cite</a></div>
+    <div class="nav-links"><a href="#motivation">Motivation</a><a href="#quickstart">Quickstart</a><a href="#methods">Methods</a><a href="#leaderboard">Leaderboard</a><a href="app.html">Run on your GPU</a><a href="#cite">Cite</a></div>
     <div class="nav-end"><a class="btn sm" href="https://arxiv.org/abs/2510.23891">Paper</a><a class="btn sm js-repo" href="#quickstart">Code</a></div>
   </div>
 </nav>
@@ -233,7 +233,7 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
     <div class="ctas">
       <a class="btn primary" href="#quickstart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>Get Started</a>
       <a class="btn" href="#leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>Leaderboard</a>
-      <a class="btn" href="demo.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg>Demo</a>
+      <a class="btn" href="app.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>Run on your GPU</a>
       <a class="btn" href="https://arxiv.org/abs/2510.23891"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H6v18h12V7zM14 3v4h4M9 13h6M9 17h6"/></svg>Paper</a>
     </div>
   </div>
@@ -429,9 +429,9 @@ mwx.verify_model(edited, key, prompts,
   </div>
 </section>
 
-<section class="band" id="demo">
+<section class="band" id="run">
   <div class="wrap">
-    <div class="card demo"><div><h2>Interactive <span class="hl">Demo</span></h2><p>A step-by-step example in the browser: release a watermarked model, modify it, paraphrase its output, and run detection, with the results reported in the paper.</p></div><a class="btn primary" href="demo.html">Open the demo</a></div>
+    <div class="card demo"><div><h2>Run on your <span class="hl">GPU</span></h2><p>Upload a dataset, choose a method and its hyperparameters, and learn a watermark into Llama-3.2-1B from the browser. The page connects to <code>markweightx serve</code> on your machine, so your data, the model and the key stay there. No GPU: the same page runs on a free Colab T4.</p></div><div class="ctas" style="margin:0"><a class="btn primary" href="app.html">Open the run page</a><a class="btn" href="https://colab.research.google.com/github/jqxue1999/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb">Open in Colab</a></div></div>
   </div>
 </section>
 
@@ -453,7 +453,7 @@ mwx.verify_model(edited, key, prompts,
     <div class="fgrid">
       <div><a class="brand" href="#top"><svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Mark<span class="hl">WeightX</span></span></a>
         <p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight language models, with the benchmark of the PRO paper.</p></div>
-      <div><h4>Resources</h4><ul><li><a href="#quickstart">Quickstart</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="demo.html">Demo</a></li><li><a class="js-repo-file" data-file="README.md" href="#quickstart">Documentation</a></li></ul></div>
+      <div><h4>Resources</h4><ul><li><a href="#quickstart">Quickstart</a></li><li><a href="#leaderboard">Leaderboard</a></li><li><a href="app.html">Run on your GPU</a></li><li><a class="js-repo-file" data-file="README.md" href="#quickstart">Documentation</a></li></ul></div>
       <div><h4>Research</h4><ul><li><a href="https://arxiv.org/abs/2510.23891">arXiv paper</a></li><li><a href="#cite">Citation</a></li><li><a href="https://github.com/THU-BPM/MarkLLM">MarkLLM</a></li></ul></div>
     </div>
     <div class="fbottom"><span>© 2026 MarkWeightX</span><span>Apache-2.0</span></div>
