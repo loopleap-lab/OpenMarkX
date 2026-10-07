@@ -156,6 +156,36 @@ def cancel_job(jid: str) -> bool:
     return True
 
 
+def job_zip(jid: str) -> tuple[str, bytes]:
+    """A finished job as one zip: the release (adapter, release.json, training log) and its key with the key files it
+    names, laid out as a key store (keys/<commitment>.json, keys/blobs/...)."""
+    import io
+    import re
+    import zipfile
+    from .keys import STORE
+    d = os.path.join(SERVE, "jobs", jid)
+    st = _read(os.path.join(d, "status.json"), {})
+    if st.get("phase") != "done":
+        raise ValueError("the job has not finished")
+    key = st["result"]["key"]
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        rel = os.path.join(d, "release")
+        for root, dirs, fs in os.walk(rel):
+            dirs[:] = [x for x in dirs if not x.startswith("adapter_step")]     # the last checkpoint is adapter/
+            for f in fs:
+                z.write(os.path.join(root, f), os.path.join("release", os.path.relpath(os.path.join(root, f), rel)))
+        kp = os.path.join(STORE, f"{key}.json")
+        z.write(kp, f"keys/{key}.json")
+        for b in set(re.findall(r"blob:([0-9a-f]{64}(?:\.[A-Za-z0-9_-]+)?)", open(kp).read())):
+            z.write(os.path.join(STORE, "blobs", b), f"keys/blobs/{b}")
+        z.writestr("README.txt", "release/  the watermarked model: a LoRA adapter on its base (release.json names it)\n"
+                   "keys/     the private key. Copy keys/* into your key store ($MWX_KEYS, default "
+                   "~/.markweightx/runs/keys) to detect with it. Whoever has the key can detect the watermark, and "
+                   "also remove or forge it.\n")
+    return f"markweightx-{jid}.zip", buf.getvalue()
+
+
 def check_request(req: dict) -> dict:
     """The job a page asked for, with types checked and defaults filled; ValueError says what is wrong."""
     known = {s["name"]: s for s in schemes()}
@@ -350,11 +380,20 @@ def make_handler(token: str, origins: set[str]):
                     jobs = [job_state(j) for j in ids[:50]]
                     return self.reply(200, [{k: j[k] for k in ("id", "request", "phase") if k in j}
                                             | {"result": j.get("result"), "error": j.get("error")} for j in jobs if j])
+                if u.path.startswith("/api/jobs/") and u.path.endswith("/download"):
+                    name, data = job_zip(u.path.split("/")[3])
+                    self.send_response(200); self.cors()
+                    self.send_header("Content-Type", "application/zip")
+                    self.send_header("Content-Disposition", f'attachment; filename="{name}"')
+                    self.send_header("Content-Length", str(len(data))); self.end_headers()
+                    return self.wfile.write(data)
                 if u.path.startswith("/api/jobs/"):
                     q = dict(p.split("=", 1) for p in u.query.split("&") if "=" in p)
                     j = job_state(os.path.basename(u.path), int(q.get("after", 0)))
                     return self.reply(200, j) if j else self.reply(404, {"error": "no such job"})
                 self.reply(404, {"error": "not found"})
+            except ValueError as e:
+                self.reply(400, {"error": str(e)})
             except Exception as e:
                 self.reply(500, {"error": f"{type(e).__name__}: {e}"})
 

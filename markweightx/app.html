@@ -73,6 +73,9 @@ pre { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; p
 .drop { border: 1.5px dashed color-mix(in srgb, var(--accent) 50%, var(--line)); border-radius: 16px; padding: 26px; text-align: center; color: var(--muted); cursor: pointer; }
 .drop.over { background: var(--accent-soft); }
 .drop b { color: var(--ink); }
+.lost { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--bad-soft); color: var(--bad); font-size: 13px; padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid color-mix(in srgb, var(--bad) 40%, transparent); }
+body.offline #detail { opacity: .45; }
+body.offline .prog.ind i, body.offline .st.cur .nd { animation: none; }
 .locked { opacity: .45; pointer-events: none; }
 .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 18px 0 20px; }
 .st { position: relative; display: grid; gap: 2px; padding-right: 8px; min-width: 0; }
@@ -132,6 +135,7 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
   </div>
 </nav>
 
+<div class="lost" id="lost" hidden><div class="wrap">Lost the connection to <span id="lost-addr"></span>. The server has stopped (on Colab: the runtime disconnected), so a running job has stopped too. Start the server again and reconnect.</div></div>
 <main class="wrap">
   <div class="title">
     <h1>Run on your GPU</h1>
@@ -245,6 +249,11 @@ async function connect() {
   }
   store.set("mwx.addr", S.addr); store.set("mwx.token", S.token);
   setConnected(true); renderMachine(); renderConfig(); refreshJobs();
+  clearInterval(S.beat);                        // notice a stopped server even when no job is being watched
+  S.beat = setInterval(async () => {
+    try { await api("/api/jobs"); S.missed = 0; if (!$("#lost").hidden) { lost(false); refreshJobs(); } }
+    catch (e) { if (++S.missed >= 2) lost(true); }
+  }, 10000);
 }
 
 function setConnected(on) {
@@ -331,7 +340,11 @@ async function poll() {
   clearTimeout(S.timer);
   const id = S.sel;
   let j;
-  try { j = await api(`/api/jobs/${id}?after=${S.log.length}`); } catch (e) { return; }
+  try { j = await api(`/api/jobs/${id}?after=${S.log.length}`); S.fails = 0; lost(false); }
+  catch (e) {                                   // keep trying: a network blip is not a lost server
+    if (++S.fails >= 3) lost(true);
+    S.timer = setTimeout(poll, 4000); return;
+  }
   if (id !== S.sel) return;
   S.log = S.log.concat(j.log);
   renderJob(j);
@@ -346,6 +359,25 @@ const STEPS = [
   ["evaluate", "Evaluate", "generate and detect"],
   ["done", "Done", "results"]];
 const dur = s => s < 90 ? `${Math.round(s)}s` : s < 5400 ? `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, "0")}s` : `${(s / 3600).toFixed(1)}h`;
+
+function lost(on) {
+  $("#lost").hidden = !on; $("#lost-addr").textContent = S.addr; document.body.classList.toggle("offline", on);
+  $("#dot").classList.toggle("on", !on);
+  $("#conn-label").textContent = on ? "disconnected" : S.info.machine.host;
+}
+
+async function download(id, btn) {
+  btn.disabled = true; btn.textContent = "Preparing...";
+  try {
+    const r = await fetch(`${S.addr}/api/jobs/${id}/download`, { headers: { "X-MWX-Token": S.token } });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `HTTP ${r.status}`);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(await r.blob()); a.download = `markweightx-${id}.zip`;
+    document.body.append(a); a.click(); a.remove();
+    btn.textContent = "Downloaded";
+  } catch (e) { btn.textContent = "Download failed: " + e.message; }
+  btn.disabled = false;
+}
 
 function renderJob(j) {
   const r = j.request, end = ["failed", "cancelled"].includes(j.phase), fin = end || j.phase === "done";
@@ -371,10 +403,12 @@ function renderJob(j) {
       + `<div class="stat"><b>${pct(R.fpr_human)}</b><span>held-out human texts flagged (${R.n_human}), target ${pct(R.fpr)}</span></div>`
       + `<div class="stat"><b>${R.n_null}</b><span>base-model texts in the null</span></div></div>`
       + `<div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="marked">Watermarked model</button><button role="tab" aria-selected="false" data-t="human">Human text</button></div><div class="texts" id="texts"></div>`
+      + `<div class="row" style="margin-top:14px;align-items:center"><button class="btn primary sm" id="dl">Download model and key (.zip)</button><span class="small muted">On Colab, download before the runtime ends: its files are deleted with it.</span></div>`
       + `<p class="small muted" style="margin:12px 0 0">Release <code>${esc(R.release)}</code><br>Key <code>${esc(R.key.slice(0, 16))}</code> in this machine's key store (<code>markweightx keys show ${esc(R.key.slice(0, 12))}</code>)</p>`;
   }
   if (j.output) h += `<details style="margin-top:14px" ${j.error ? "open" : ""}><summary>Process output</summary><pre style="max-height:260px">${esc(j.output)}</pre></details>`;
   $("#detail").innerHTML = h;
+  $("#dl")?.addEventListener("click", e => download(j.id, e.currentTarget));
   $("#cancel")?.addEventListener("click", async () => { await api(`/api/jobs/${j.id}/cancel`, { method: "POST" }).catch(() => {}); refreshJobs(); });
   if (R) {
     const show = t => { $("#texts").innerHTML = R[t].map(x => `<div class="tx"><span class="p ${x.flag ? "y" : "n"}">${x.flag ? "watermark" : "no watermark"} &middot; p = ${x.p == null ? "–" : Number(x.p).toPrecision(2)} &middot; ${x.n_tokens} tokens</span><span>${esc(x.text)}</span></div>`).join("") || `<p class="muted small">None.</p>`;
