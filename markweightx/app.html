@@ -350,8 +350,9 @@ async function poll() {
   if (id !== S.sel) return;
   S.log = S.log.concat(j.log);
   renderJob(j);
+  const tag = document.querySelector(`.job[data-id="${id}"] .tag`);
+  if (tag && tag.textContent !== j.phase) { tag.textContent = j.phase; tag.className = "tag " + j.phase; }
   if (!["done", "failed", "cancelled"].includes(j.phase)) S.timer = setTimeout(poll, 2000);
-  else if (document.querySelector(`.job[data-id="${id}"] .tag`)?.textContent !== j.phase) refreshJobs();
 }
 
 const STEPS = [

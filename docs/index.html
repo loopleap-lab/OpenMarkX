@@ -229,6 +229,11 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
 .fbottom { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12px; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 
+.vids { display: grid; gap: 22px; }
+.vid { margin: 0; padding: 14px; display: grid; gap: 12px; }
+.vid video { width: 100%; height: auto; border-radius: 12px; display: block; background: var(--solid); aspect-ratio: 1440 / 760; }
+.vid figcaption { color: var(--muted); font-size: 14px; padding: 0 6px 4px; }
+
 /* narrow nav */
 @media (max-width: 720px) { .nav-links { display: none; } }
 
@@ -396,23 +401,12 @@ section.band.dark .head h2 { color: #f8fafc; } section.band.dark .eyebrow { colo
 <section class="band" id="see">
   <div class="wrap">
     <div class="head"><div><span class="eyebrow">See it work</span><h2>How a watermark hides in plain <span class="hl">text</span></h2></div></div>
-    <div class="anims">
-      <div class="card anim">
-        <div class="anim-stage" id="anim1"></div>
-        <div class="anim-ctl"><button class="btn sm" type="button" id="a1key">Show with the key</button><span class="anim-c" id="a1count"></span></div>
-        <p>The key splits the vocabulary into green and red words. A watermarked model writes green words more often than chance; without the key the text reads as usual.</p>
-      </div>
-      <div class="card anim">
-        <div class="anim-stage pipes2" id="anim2">
-          <div class="p2 c"><b>Closed model</b><span class="pp">model</span><span class="ar">&rarr;</span><span class="pp mk">decoding + mark</span><span class="ar">&rarr;</span><span class="pp ok">marked</span></div>
-          <div class="p2 o"><b>Open model, decoding mark</b><span class="pp">model</span><span class="ar">&rarr;</span><span class="pp mk gone">decoding + mark</span><span class="ar">&rarr;</span><span class="pp no">not marked</span></div>
-          <div class="p2 w"><b>Open model, MarkWeightX</b><span class="pp mk">model with mark</span><span class="ar">&rarr;</span><span class="pp">any decoding</span><span class="ar">&rarr;</span><span class="pp ok">marked</span></div>
-        </div>
-        <div class="anim-ctl"><button class="btn sm" type="button" id="a2play">Play</button></div>
-        <p>A closed model adds the mark while it decodes. Whoever runs an open model controls decoding and can drop that step, so the mark has to be in the weights.</p>
-      </div>
+    <div class="vids">
+      <figure class="card vid"><video src="static/mark-in-text.mp4" poster="static/mark-in-text.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Two continuations of the same prompt; with the key, the watermarked model's text is almost all green"></video>
+        <figcaption>The key splits the vocabulary into green and red. Text from the model with PRO learned in is green far more often than chance; text from the original model is not. A real run of MarkWeightX on Llama-3.2-1B.</figcaption></figure>
+      <figure class="card vid"><video src="static/survives-edits.mp4" poster="static/survives-edits.jpg" autoplay muted loop playsinline preload="none" aria-label="Alice releases a model, Bob changes the weights, text is posted, a detector checks it; bars show how much is still detected after each change"></video>
+        <figcaption>From release to detection, and how much of the mark is still detected after each change to the weights. Numbers from the PRO paper.</figcaption></figure>
     </div>
-    <p class="dnote">Illustration: the sentence and its green/red split are made up to show the idea.</p>
   </div>
 </section>
 
@@ -589,6 +583,8 @@ class MyMark(mwx.Scheme):
 <section class="band" id="start">
   <div class="wrap">
     <div class="head"><div><span class="eyebrow">Get started</span><h2>Up and running in three <span class="hl">ways</span></h2><p>Training a watermark needs a GPU. Pick the way that fits what you have. The repository has no trained watermarked models: you make your own.</p></div></div>
+    <figure class="card vid" style="margin-bottom:22px"><video src="static/run-page.mp4" poster="static/run-page.jpg" autoplay muted loop playsinline preload="none" aria-label="The run page: upload a dataset, set the hyperparameters, start a job, and see training, calibration and detection results"></video>
+      <figcaption>Way A, recorded on a real job: upload a dataset, set the hyperparameters, start, and read the results (Llama-3.2-1B, PRO, 300 steps; training sped up 12&times;).</figcaption></figure>
     <div class="ways">
       <div class="card way"><span class="wn">A</span><h3>In the browser, on your GPU</h3><p>Upload a dataset, choose a method and its hyperparameters, and watch training and detection. Start the server on your GPU machine; the page connects to it, and your data and key stay there.</p><pre class="code">pip install git+https://github.com/jqxue1999/MarkWeightX
 markweightx serve</pre><a class="btn primary" href="app.html">Open the run page</a></div>
@@ -784,25 +780,9 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
   function modSeg() { seg($("modSeg"), MODS.map((m) => [m[0], m[1]]), mod, (k) => { mod = k; modSeg(); sus.filter((x) => x.dataset.done).forEach(show); }); }
   modSeg();
 
-  // ---- see it work 1: words appear; with the key, green and red show (illustration)
-  const W = [["The", "g"], ["storm", "g"], ["passed", "r"], ["over", "g"], ["the", "g"], ["valley", "g"], ["before", "r"], ["noon", "g"], ["and", "g"], ["the", "r"], ["river", "g"], ["rose", "g"]];
-  const st1 = $("anim1");
-  st1.innerHTML = W.map(([w, c]) => `<span class="w2 ${c}">${w}</span>`).join("");
-  const ws = [...st1.querySelectorAll(".w2")];
-  function play1() { ws.forEach((w) => w.classList.remove("in")); ws.forEach((w, i) => setTimeout(() => w.classList.add("in"), still ? 0 : 120 * i)); }
-  let keyed = false;
-  $("a1key").addEventListener("click", () => {
-    keyed = !keyed; st1.classList.toggle("keyed", keyed);
-    $("a1key").textContent = keyed ? "Hide the key" : "Show with the key";
-    const g = W.filter((x) => x[1] === "g").length;
-    $("a1count").innerHTML = keyed ? `<b>${g} of ${W.length}</b> words green; about ${W.length / 2} expected by chance` : "";
-  });
-  // ---- see it work 2: the three pipelines light up in turn
-  const p2 = [...document.querySelectorAll("#anim2 .p2")];
-  function play2() { p2.forEach((p) => p.classList.remove("show")); p2.forEach((p, i) => setTimeout(() => p.classList.add("show"), still ? 0 : 200 + i * 900)); }
-  $("a2play").addEventListener("click", play2);
-  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target === st1 ? play1() : play2(); io.unobserve(e.target); } }), { threshold: .4 });
-  io.observe(st1); io.observe($("anim2"));
+  // ---- see it work: play a video only while it is on screen
+  const vio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.preload = "auto"; e.target.play().catch(() => {}); } else e.target.pause(); }), { threshold: .3 });
+  document.querySelectorAll(".vid video").forEach((v) => vio.observe(v));
 
 })();
 </script>

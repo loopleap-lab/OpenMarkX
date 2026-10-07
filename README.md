@@ -4,6 +4,8 @@ Watermarks that live in the weights of an open model. The owner puts the mark in
 Anyone downstream can fine-tune, merge, prune, quantize or reword. A detector with the key traces text back to
 the model after most of these edits; fine-tuning still erases today's marks (see the leaderboard).
 
+<p align="center"><img src="docs/static/run-page.gif" alt="The MarkWeightX run page on a real job: upload a dataset, set the hyperparameters, train, and detect (training sped up 12x)" width="860"></p>
+
 ```
 Owner        embed ──▶ release (public weights)  +  key (private, in the key store)
 Downstream   modify ─▶ edited release ── generate ─▶ texts ── rewrite ─▶ reworded texts
