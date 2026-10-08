@@ -76,7 +76,10 @@ pre { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; p
 .lost { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--bad-soft); color: var(--bad); font-size: 13px; padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid color-mix(in srgb, var(--bad) 40%, transparent); }
 body.offline #detail { opacity: .45; }
 body.offline .prog.ind i, body.offline .st.cur .nd { animation: none; }
-.locked { opacity: .45; pointer-events: none; }
+.locked { position: relative; }
+.locked > * { opacity: .45; pointer-events: none; }
+.locked::before { content: "Connect first (step 1)"; position: absolute; top: 24px; right: 24px; font-size: 12px; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; }
+@media (max-width: 560px) { .locked::before { position: static; display: inline-block; margin-bottom: 10px; } }
 .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 18px 0 20px; }
 .st { position: relative; display: grid; gap: 2px; padding-right: 8px; min-width: 0; }
 .st::before { content: ""; position: absolute; top: 13px; left: 28px; right: 0; height: 2px; background: var(--line); }
@@ -147,7 +150,7 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
       <h2 id="h-conn"><span class="num">1</span>Connect your machine</h2>
       <div id="howto">
         <p class="muted small" style="margin:0">On the machine with the GPU:</p>
-        <pre>pip install "markweightx @ git+https://github.com/jqxue1999/MarkWeightX"
+        <pre>pip install git+https://github.com/jqxue1999/MarkWeightX
 markweightx serve</pre>
         <p class="muted small">It prints an address and a token. GPU on a remote server? Forward the port first, then connect to <code>http://127.0.0.1:7860</code>:</p>
         <pre>ssh -L 7860:127.0.0.1:7860 your-gpu-server</pre>
