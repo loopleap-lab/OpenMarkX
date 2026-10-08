@@ -357,7 +357,7 @@ section.band.dark .head h2 { color: #f8fafc; } section.band.dark .eyebrow { colo
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Mark<span class="hl">WeightX</span></span>
     </a>
-    <div class="nav-links"><a href="#why">Why</a><a href="#see">See it work</a><a href="#features">Features</a><a href="#methods">Methods</a><a href="#leaderboard">Results</a><a href="#roadmap">Roadmap</a><a href="docs/">Docs</a></div>
+    <div class="nav-links"><a href="#why">Why</a><a href="#see">See it work</a><a href="#methods">Methods</a><a href="#leaderboard">Results</a><a href="#roadmap">Roadmap</a><a href="docs/">Docs</a></div>
     <div class="nav-end"><a class="iconbtn js-repo" href="#start" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg></a><a class="btn sm primary" href="#start">Get started</a></div>
   </div>
 </nav>
@@ -381,7 +381,7 @@ section.band.dark .head h2 { color: #f8fafc; } section.band.dark .eyebrow { colo
 
 <section class="band" id="why">
   <div class="wrap">
-    <div class="head"><div><span class="eyebrow">Why</span><h2>Which model wrote this <span class="hl">text</span>?</h2><p>Open models get downloaded, fine-tuned, merged and quantized, and their text ends up online with no name attached. A watermark learned into the weights lets the owner answer with only the text and a secret key.</p></div></div>
+    <div class="head"><div><h2>Which model wrote this <span class="hl">text</span>?</h2><p>Open models get downloaded, fine-tuned, merged and quantized, and their text ends up online with no name attached. A watermark learned into the weights lets the owner answer with only the text and a secret key.</p></div></div>
     <div class="card demo2">
       <div class="dsteps"><span class="on">1 &middot; Texts found online</span><span id="ds2">2 &middot; Test each owner's key</span><span id="ds3">3 &middot; One key matches</span></div>
       <div class="dgrid">
@@ -392,9 +392,9 @@ section.band.dark .head h2 { color: #f8fafc; } section.band.dark .eyebrow { colo
           <div class="dfoot"><span id="dmsg">You are the detector. Test a key against the texts.</span><span><button class="btn sm" type="button" id="testAll">Test all</button> <button class="btn sm" type="button" id="dreset">Reset</button></span></div>
         </div>
       </div>
-      <div class="modrow"><span>And if the model was changed before its text was posted?</span><div class="seg" id="modSeg" role="group" aria-label="Modification"></div></div>
-      <p class="dmodel"><b>A low rate per text still convicts a model.</b> Each percentage is about one text at a time. A whole-model test pools many texts from the same model, so a rate well above the 1% chance level can still add up to a clear verdict. The session at the top of this page judged an unchanged 1B model from 20 texts at p = 3.6e-22.</p>
-      <p class="dnote">Numbers from the PRO paper. Alice's, Bob's and Carol's models are the paper's three independently PRO-watermarked models (LLaMA-3-8B, GPT-J-6B, Phi-2-2.7B); each key is applied to texts from Alice's model (cross-model attribution table). After a change, Alice's key on her modified model (robustness table); the other keys were not measured on modified models.</p>
+      
+      
+      <p class="dnote">Numbers from the PRO paper: three independently PRO-watermarked models, each key applied to texts from Alice's model.</p>
     </div>
     <div class="uses">
       <div class="card use"><span class="uico">&#9873;</span><h3>Misuse attribution</h3><p>Spam, scams or fake reviews written by a model: find out whether it was your released model, or a fine-tuned copy of it.</p></div>
@@ -405,34 +405,25 @@ section.band.dark .head h2 { color: #f8fafc; } section.band.dark .eyebrow { colo
 
 <section class="band" id="see">
   <div class="wrap">
-    <div class="head"><div><span class="eyebrow">See it work</span><h2>How a watermark hides in plain <span class="hl">text</span></h2></div></div>
+    <div class="head"><div><h2>How the watermark shows up in <span class="hl">text</span></h2></div></div>
     <div class="vids">
       <figure class="card vid"><video src="static/mark-in-text.mp4" poster="static/mark-in-text.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Two continuations of the same prompt; with the key, the watermarked model's text is almost all green"></video>
-        <figcaption>The key decides, for each chunk of about ten words, which words count as green. Text from the model with PRO learned in is green far more often than chance; text from the original model is not. A real run of MarkWeightX on Llama-3.2-1B.</figcaption></figure>
+        <figcaption>Same prompt, two continuations from Llama-3.2-1B in a real MarkWeightX run. With the key, the watermarked model's text is green far more often than chance.</figcaption></figure>
       <figure class="card vid"><video src="static/survives-edits.mp4" poster="static/survives-edits.jpg" autoplay muted loop playsinline preload="none" aria-label="Alice releases a model, Bob changes the weights, text is posted, a detector checks it; bars show how much is still detected after each change"></video>
-        <figcaption>From release to detection, and how much of the mark is still detected after each change to the weights. Numbers from the PRO paper.</figcaption></figure>
+        <figcaption>From release to detection, with how much is still detected after each change. Numbers from the PRO paper (LLaMA-3-8B, TPR at 1% FPR).</figcaption></figure>
     </div>
   </div>
 </section>
 
-<section class="band" id="features">
-  <div class="wrap">
-    <div class="head"><div><span class="eyebrow">Features</span><h2>Train, change, <span class="hl">detect</span></h2><p>Without the key, a watermarked model writes like an unmarked one. With the key, its text is detected, also after the weights were changed.</p></div></div>
-    <div class="feats">
-      <div class="card feat"><span class="fico">W</span><h3>Learned into the weights</h3><p>14 methods: decoding-time watermarks distilled into the model, PRO trained jointly with it, or a keyed edit written straight into one matrix.</p></div>
-      <div class="card feat"><span class="fico">&#916;</span><h3>The changes users make, built in</h3><p>Fine-tuning, merging, pruning, quantization and paraphrasing, applied to a release with one call, so robustness is measured the same way for every method.</p></div>
-      <div class="card feat"><span class="fico">&#10003;</span><h3>Detect texts or a whole model</h3><p>Score one text, or test a whole model from its outputs. Thresholds are set on unwatermarked text, so an innocent model is rarely accused.</p></div>
-    </div>
-  </div>
-</section>
+
 
 <section class="band dark" id="how">
   <div class="wrap">
-    <div class="head"><div><span class="eyebrow">How it works</span><h2>Owner, downstream, <span class="hl">detector</span></h2></div></div>
+    <div class="head"><div><h2>How it <span class="hl">works</span></h2></div></div>
     <ol class="hsteps">
-      <li><b>Embed</b><span>The owner trains a method into the model with <code>mwx.embed</code> and releases the weights. The key stays private.</span></li>
-      <li><b>Modify</b><span>Anyone downstream fine-tunes, merges, prunes or quantizes it (<code>mwx.modify</code>) and rewords its text.</span></li>
-      <li><b>Detect</b><span>The detector scores texts with the key (<code>mwx.detect</code>), or tests a suspect model (<code>mwx.verify_model</code>).</span></li>
+      <li><b>Embed</b><span>The owner trains one of 14 methods into the model (<code>mwx.embed</code>) and releases the weights. The key stays private.</span></li>
+      <li><b>Modify</b><span>Fine-tuning, merging, pruning, quantization and paraphrasing are built in (<code>mwx.modify</code>), so every method faces the same changes.</span></li>
+      <li><b>Detect</b><span>Score texts with the key (<code>mwx.detect</code>), or test a whole suspect model from its outputs (<code>mwx.verify_model</code>).</span></li>
     </ol>
     
     <div class="layers" aria-label="Architecture">
@@ -446,7 +437,7 @@ section.band.dark .head h2 { color: #f8fafc; } section.band.dark .eyebrow { colo
 
 <section class="band" id="methods">
   <div class="wrap">
-    <div class="head"><div><span class="eyebrow">Methods</span><h2>14 methods, grouped by <span class="hl">mechanism</span></h2><p>Every method is trained, changed and detected with the same calls. Decoding-time ones come from <a href="https://github.com/THU-BPM/MarkLLM">MarkLLM</a> and are distilled into the weights. <a href="https://jqxue1999.github.io/PRO/">PRO</a> has its own page. The results below cover the four methods in the PRO paper; <code>markweightx bench</code> measures any of them on your own runs.</p></div></div>
+    <div class="head"><div><h2>Supported <span class="hl">methods</span></h2><p>Every method is trained, changed and detected with the same calls; decoding-time ones come from <a href="https://github.com/THU-BPM/MarkLLM">MarkLLM</a>, and <a href="https://jqxue1999.github.io/PRO/">PRO</a> has its own page.</p></div></div>
     <div class="mgroups"><div class="mg"><h4>Learned jointly with the model</h4><p>The watermark policy is trained together with the LLM, with training against weight edits.</p><div class="chips"><i>PRO</i></div></div><div class="mg"><h4>Green lists</h4><p>The key favors part of the vocabulary at each step; the model learns to do the same.</p><div class="chips"><i>KGW</i><i>Unigram</i><i>SWEET</i><i>EWD</i><i>MorphMark</i></div></div><div class="mg"><h4>Keyed sampling</h4><p>The key picks each token from the model's own distribution.</p><div class="chips"><i>KTH</i><i>EXPEdit</i><i>ITSEdit</i><i>PF</i></div></div><div class="mg"><h4>Distribution-preserving</h4><p>The key reshapes the distribution while keeping it unbiased.</p><div class="chips"><i>SynthID</i><i>DIP</i><i>Unbiased</i></div></div><div class="mg"><h4>Weight edit</h4><p>A keyed change written straight into the weights, without training.</p><div class="chips"><i>GaussMark</i></div></div></div>
     <div class="addown">
       <div><h3>Add your own</h3><p>A new method is one Python file: a key, a training signal and a score. <code>markweightx check</code> runs ten tests on CPU before it joins the benchmark. The <a href="docs/">developer guide</a> walks through it.</p></div>
@@ -464,7 +455,7 @@ class MyMark(mwx.Scheme):
 <section class="band" id="leaderboard">
   <div class="wrap">
     <div class="head">
-      <div><span class="eyebrow">Performance</span><h2>Robustness <span class="hl">Results</span></h2><p>How well each method's watermark is still detected after the model is changed. Numbers are from the <a href="https://jqxue1999.github.io/PRO/">PRO paper</a> (LLaMA-3-8B, 5,000 watermarked and 5,000 human texts per setting).</p></div>
+      <div><h2>Robustness <span class="hl">results</span></h2><p>How much of each watermark is still detected after the model is changed: the four methods of the PRO paper, on LLaMA-3-8B. <code>markweightx bench</code> measures the others on your own runs.</p></div>
       <a class="btn sm js-repo-file" data-file="LEADERBOARD.md" href="#try">Full tables</a>
     </div>
     <div class="card">
@@ -473,6 +464,7 @@ class MyMark(mwx.Scheme):
       <div class="tablewrap"><table id="lbTable"></table></div>
       <p class="foot-note" id="lbNote"></p>
     </div>
+    <p class="dmodel"><b>A low rate per text still convicts a model.</b> Each percentage is about one text at a time. A whole-model test pools many texts from the same model, so a rate well above the 1% chance level can still add up to a clear verdict. The session at the top of this page judged an unchanged 1B model from 20 texts at p = 3.6e-22.</p>
     <div class="lb2">
       <div class="card chart-card"><h3 id="chartTitle"></h3><svg id="chart" viewBox="0 0 640 300" role="img" aria-label="TPR at 1% FPR as the modification grows"></svg><div class="legend" id="legend"></div></div>
       <div class="minis">
@@ -485,14 +477,13 @@ class MyMark(mwx.Scheme):
 
 <section class="band" id="start">
   <div class="wrap">
-    <div class="head"><div><span class="eyebrow">Get started</span><h2>Up and running in three <span class="hl">ways</span></h2><p>Training a watermark needs a GPU. Pick the way that fits what you have. The repository has no trained watermarked models: you make your own.</p></div></div>
+    <div class="head"><div><h2>Get <span class="hl">started</span></h2><p>Training a watermark needs a GPU. The repository ships no trained models: you make your own.</p></div></div>
     <figure class="card vid" style="margin-bottom:22px"><video src="static/run-page.mp4" poster="static/run-page.jpg" autoplay muted loop playsinline preload="none" aria-label="The run page: upload a dataset, set the hyperparameters, start a job, and see training, calibration and detection results"></video>
-      <figcaption>Way A, recorded on a real job: upload a dataset, set the hyperparameters, start, and read the results (Llama-3.2-1B, PRO, 300 steps; training sped up 12&times;).</figcaption></figure>
+      <figcaption>The run page on a real job (Llama-3.2-1B, PRO, 300 steps; training sped up 12&times;).</figcaption></figure>
     <div class="ways">
-      <div class="card way"><span class="wn">A</span><h3>In the browser, on your GPU</h3><p>Upload a dataset, choose a method and its hyperparameters, and watch training and detection. Start the server on your GPU machine; the page connects to it, and your data and key stay there.</p><pre class="code">pip install git+https://github.com/jqxue1999/MarkWeightX
-markweightx serve</pre><p class="small-n">Start the server first, then open the page and connect to it.</p><a class="btn primary" href="app.html">Open the run page</a></div>
-      <div class="card way"><span class="wn">B</span><h3>No GPU: on Colab</h3><p>The same run page on a free Colab T4. The notebook installs everything, starts the server and gives you a link to the page.</p><a class="btn primary" href="https://colab.research.google.com/github/jqxue1999/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb">Open in Colab</a></div>
-      <div class="card way"><span class="wn">C</span><h3>As a Python package</h3><p>To run the benchmark or change the code, clone the source. Just trying it? The pip line in A is enough. Python 3.10+, a CUDA GPU for training; the tests run on CPU.</p><a class="btn" href="#install">Install steps below</a></div>
+      <div class="card way"><span class="wn">A</span><h3>In the browser, on your GPU</h3><p>Upload a dataset, set the hyperparameters, and watch training and detection. Install with the pip line at the top, then on the GPU machine:</p><pre class="code">markweightx serve</pre><p class="small-n">Start the server first, then open the page and connect to it.</p><a class="btn primary" href="app.html">Open the run page</a></div>
+      <div class="card way"><span class="wn">B</span><h3>No GPU: on Colab</h3><p>The same run page on a free Colab T4; the notebook sets everything up.</p><a class="btn primary" href="https://colab.research.google.com/github/jqxue1999/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb">Open in Colab</a></div>
+      <div class="card way"><span class="wn">C</span><h3>From source</h3><p>To run the benchmark or change the code. Python 3.10+, a CUDA GPU for training.</p><a class="btn" href="#install">Install steps below</a></div>
     </div>
     <h3 class="case-h" id="install">C &middot; Install and first steps</h3>
     <div class="codecard">
@@ -502,7 +493,7 @@ markweightx serve</pre><p class="small-n">Start the server first, then open the 
   </div>
 </section>
 
-<section class="band" id="roadmap"><div class="wrap"><div class="head"><div><span class="eyebrow">Roadmap</span><h2>Where MarkWeightX is <span class="hl">going</span></h2></div></div><div class="rm"><div class="card rmc s"><span class="rmt">Shipped</span><ul><li>14 methods behind one API and CLI</li><li>Weight changes: fine-tune, merge, prune, quantize; text rewrites</li><li>Per-text detection and a whole-model test</li><li>Ten adapter checks for new methods</li><li>Run page and Colab notebook</li></ul></div><div class="card rmc p"><span class="rmt">In progress</span><ul><li>Release on PyPI</li><li>More base models beyond Llama</li></ul></div><div class="card rmc n"><span class="rmt">Planned</span><ul><li>More modifications to test against</li><li>A leaderboard from the toolkit's own runs at larger scale</li></ul></div></div></div></section>
+<section class="band" id="roadmap"><div class="wrap"><div class="head"><div><h2><span class="hl">Roadmap</span></h2></div></div><div class="rm"><div class="card rmc s"><span class="rmt">Shipped</span><ul><li>14 methods behind one API and CLI</li><li>Weight changes: fine-tune, merge, prune, quantize; text rewrites</li><li>Per-text detection and a whole-model test</li><li>Ten adapter checks for new methods</li><li>Run page and Colab notebook</li></ul></div><div class="card rmc p"><span class="rmt">In progress</span><ul><li>Release on PyPI</li><li>More base models beyond Llama</li></ul></div><div class="card rmc n"><span class="rmt">Planned</span><ul><li>More modifications to test against</li><li>A leaderboard from the toolkit's own runs at larger scale</li></ul></div></div></div></section>
 
 <section class="band" id="cta"><div class="wrap"><div class="ctab"><h2>Train your first watermarked model</h2><p>On your GPU from the browser, on a free Colab GPU, or from Python. Then add your own method with the developer guide.</p><div class="ctas"><a class="btn primary" href="docs/">Developer guide</a><a class="btn js-repo" href="#start">View on GitHub</a><a class="btn" href="app.html">Open the run page</a></div></div></div></section>
 
@@ -513,7 +504,7 @@ markweightx serve</pre><p class="small-n">Start the server first, then open the 
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Mark<span class="hl">WeightX</span></span>
     </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight language models. Apache-2.0 &middot; UCF ML Research</p></div>
-      <div><h4>Project</h4><ul><li><a href="#why">Why</a></li><li><a href="#features">Features</a></li><li><a href="#methods">Methods</a></li><li><a href="#leaderboard">Results</a></li><li><a href="#roadmap">Roadmap</a></li></ul></div>
+      <div><h4>Project</h4><ul><li><a href="#why">Why</a></li><li><a href="#methods">Methods</a></li><li><a href="#leaderboard">Results</a></li><li><a href="#roadmap">Roadmap</a></li></ul></div>
       <div><h4>Learn</h4><ul><li><a href="#start">Get started</a></li><li><a href="docs/">Developer guide</a></li><li><a href="app.html">Run page</a></li><li><a class="js-repo" href="#start">GitHub</a></li><li><a href="https://jqxue1999.github.io/PRO/">PRO</a></li></ul></div>
     </div>
   </div>
@@ -680,8 +671,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     $("ds2").classList.remove("on"); $("ds3").classList.remove("on"); $("dmsg").textContent = "You are the detector. Test a key against the texts.";
   }
   $("dreset").addEventListener("click", resetDemo);
-  function modSeg() { seg($("modSeg"), MODS.map((m) => [m[0], m[1]]), mod, (k) => { mod = k; modSeg(); sus.filter((x) => x.dataset.done).forEach(show); }); }
-  modSeg();
+
 
   // ---- see it work: play a video only while it is on screen
   const vio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.preload = "auto"; e.target.play().catch(() => {}); } else e.target.pause(); }), { threshold: .3 });
