@@ -11,44 +11,44 @@
 /* Layout: one centered column (1200px), monospace throughout as in the reference site. Centered hero, then the
    motivation: where the watermark is added, and a use case; left-aligned section heads with one cyan word; rounded translucent cards. */
 :root {
-  --bg: #f8fafc;
-  --surface: rgba(255, 255, 255, .72);
-  --solid: #ffffff;
-  --ink: #020617;
-  --muted: #475569;
-  --faint: #94a3b8;
-  --line: #e2e8f0;
-  --accent: #06b6d4;
-  --accent-ink: #0e7490;
-  --accent-soft: #ecfeff;
-  --rose: #f43f5e;
-  --good: #059669;
-  --good-soft: #ecfdf5;
-  --mid: #d97706;
-  --mid-soft: #fffbeb;
-  --bad: #e11d48;
-  --bad-soft: #fff1f2;
-  --code-bg: #0f172a;
-  --code-ink: #e2e8f0;
-  --code-dim: #64748b;
-  --code-hi: #67e8f9;
-  --sim: #b45309; --sim-soft: #fef3c7; --mark: #047857; --mark-soft: #d1fae5; --nomark: #be123c; --paper: #ffffff;
+  --bg: #FAF9F5; --band: #F0EEE6;
+  --surface: rgba(255, 255, 255, .62);
+  --solid: #FFFFFF;
+  --ink: #141413;
+  --muted: #5E5D59;
+  --faint: #9A9893;
+  --line: #E3DACC;
+  --accent: #C15F3C;
+  --accent-ink: #A14A2B;
+  --accent-soft: #F4E4DA;
+  --rose: #B8322A;
+  --good: #5C7043;
+  --good-soft: #E7EBDD;
+  --mid: #B7791F;
+  --mid-soft: #F6EBD6;
+  --bad: #B8322A;
+  --bad-soft: #F6E1DE;
+  --code-bg: #1F1E1D;
+  --code-ink: #E8E6DC;
+  --code-dim: #8A877F;
+  --code-hi: #E5A68C;
+  --sim: #9A5B1E; --sim-soft: #F6EBD6; --mark: #5C7043; --mark-soft: #E7EBDD; --nomark: #B8322A; --paper: #FFFFFF;
   --skin: #f1c7a2; --hair: #3a2a25; --hair-b: #b5622f; --hood: #4b5563; --wood: #8a6a4f;
   --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
-    --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --rose: #fb7185;
-    --good: #34d399; --good-soft: #022c22; --mid: #fbbf24; --mid-soft: #2a1d05; --bad: #fb7185; --bad-soft: #2a0a12;
-    --code-bg: #0b1222; color-scheme: dark; --sim: #fbbf24; --sim-soft: #2a1d05; --mark: #34d399; --mark-soft: #022c22; --nomark: #fb7185; --paper: #e2e8f0;
+    --bg: #1A1918; --surface: rgba(38, 37, 35, .72); --solid: #262523; --ink: #F0EEE6; --muted: #B5B2A8; --faint: #807D75;
+    --line: #3A3835; --accent: #D97757; --accent-ink: #E5A68C; --accent-soft: #3A2A22; --rose: #E08670;
+    --good: #9AB07A; --good-soft: #26301C; --mid: #E0B062; --mid-soft: #33291A; --bad: #E08670; --bad-soft: #3A2420;
+    --code-bg: #121211; color-scheme: dark; --sim: #E0B062; --sim-soft: #33291A; --mark: #9AB07A; --mark-soft: #26301C; --nomark: #E08670; --paper: #D6D3C9;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #020617; --surface: rgba(15, 23, 42, .72); --solid: #0f172a; --ink: #f1f5f9; --muted: #94a3b8; --faint: #64748b;
-  --line: #1e293b; --accent: #22d3ee; --accent-ink: #67e8f9; --accent-soft: #083344; --rose: #fb7185;
-  --good: #34d399; --good-soft: #022c22; --mid: #fbbf24; --mid-soft: #2a1d05; --bad: #fb7185; --bad-soft: #2a0a12;
-  --code-bg: #0b1222; color-scheme: dark; --sim: #fbbf24; --sim-soft: #2a1d05; --mark: #34d399; --mark-soft: #022c22; --nomark: #fb7185; --paper: #e2e8f0;
+  --bg: #1A1918; --surface: rgba(38, 37, 35, .72); --solid: #262523; --ink: #F0EEE6; --muted: #B5B2A8; --faint: #807D75;
+  --line: #3A3835; --accent: #D97757; --accent-ink: #E5A68C; --accent-soft: #3A2A22; --rose: #E08670;
+  --good: #9AB07A; --good-soft: #26301C; --mid: #E0B062; --mid-soft: #33291A; --bad: #E08670; --bad-soft: #3A2420;
+  --code-bg: #121211; color-scheme: dark; --sim: #E0B062; --sim-soft: #33291A; --mark: #9AB07A; --mark-soft: #26301C; --nomark: #E08670; --paper: #D6D3C9;
 }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.65; }
