@@ -13,20 +13,20 @@
   --bg: #FAF9F5; --band: #F0EEE6; --surface: rgba(255, 255, 255, .62); --solid: #FFFFFF; --ink: #141413; --muted: #5E5D59;
   --faint: #9A9893; --line: #E3DACC; --accent: #C15F3C; --accent-ink: #A14A2B; --accent-soft: #F4E4DA;
   --good: #5C7043; --good-soft: #E7EBDD; --bad: #B8322A; --bad-soft: #F6E1DE; --mid: #B7791F;
-  --code-bg: #1F1E1D; --code-ink: #E8E6DC;
+  --code-bg: #F3EFE7; --code-ink: #2E2D2A;
   --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1A1918; --surface: rgba(38, 37, 35, .72); --solid: #262523; --ink: #F0EEE6; --muted: #B5B2A8; --faint: #807D75;
     --line: #3A3835; --accent: #D97757; --accent-ink: #E5A68C; --accent-soft: #3A2A22; --good: #9AB07A;
-    --good-soft: #26301C; --bad: #E08670; --bad-soft: #3A2420; --mid: #E0B062; --code-bg: #121211; color-scheme: dark;
+    --good-soft: #26301C; --bad: #E08670; --bad-soft: #3A2420; --mid: #E0B062; --code-bg: #262523; --code-ink: #E8E6DC; --code-dim: #8A877F; --code-hi: #E5A68C; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #1A1918; --surface: rgba(38, 37, 35, .72); --solid: #262523; --ink: #F0EEE6; --muted: #B5B2A8; --faint: #807D75;
   --line: #3A3835; --accent: #D97757; --accent-ink: #E5A68C; --accent-soft: #3A2A22; --good: #9AB07A;
-  --good-soft: #26301C; --bad: #E08670; --bad-soft: #3A2420; --mid: #E0B062; --code-bg: #121211; color-scheme: dark;
+  --good-soft: #26301C; --bad: #E08670; --bad-soft: #3A2420; --mid: #E0B062; --code-bg: #262523; --code-ink: #E8E6DC; --code-dim: #8A877F; --code-hi: #E5A68C; color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.6; }
@@ -60,7 +60,7 @@ input:focus, select:focus { border-color: var(--accent); outline: none; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.sm { padding: 6px 11px; font-size: 12px; }
 pre, code { font-family: var(--font); }
-pre { background: var(--code-bg); color: var(--code-ink); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: 13px; margin: 8px 0 0; }
+pre { background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: 13px; margin: 8px 0 0; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
 .msg { font-size: 13px; padding: 10px 12px; border-radius: 8px; margin-top: 12px; }

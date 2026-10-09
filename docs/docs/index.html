@@ -28,10 +28,10 @@
   --mid-soft: #F6EBD6;
   --bad: #B8322A;
   --bad-soft: #F6E1DE;
-  --code-bg: #1F1E1D;
-  --code-ink: #E8E6DC;
-  --code-dim: #8A877F;
-  --code-hi: #E5A68C;
+  --code-bg: #F3EFE7;
+  --code-ink: #2E2D2A;
+  --code-dim: #8E8A80;
+  --code-hi: #A14A2B;
   --sim: #9A5B1E; --sim-soft: #F6EBD6; --mark: #5C7043; --mark-soft: #E7EBDD; --nomark: #B8322A; --paper: #FFFFFF;
   --skin: #f1c7a2; --hair: #3a2a25; --hair-b: #b5622f; --hood: #4b5563; --wood: #8a6a4f;
   --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -41,14 +41,14 @@
     --bg: #1A1918; --surface: rgba(38, 37, 35, .72); --solid: #262523; --ink: #F0EEE6; --muted: #B5B2A8; --faint: #807D75;
     --line: #3A3835; --accent: #D97757; --accent-ink: #E5A68C; --accent-soft: #3A2A22; --rose: #E08670;
     --good: #9AB07A; --good-soft: #26301C; --mid: #E0B062; --mid-soft: #33291A; --bad: #E08670; --bad-soft: #3A2420;
-    --code-bg: #121211; color-scheme: dark; --sim: #E0B062; --sim-soft: #33291A; --mark: #9AB07A; --mark-soft: #26301C; --nomark: #E08670; --paper: #D6D3C9;
+    --code-bg: #262523; --code-ink: #E8E6DC; --code-dim: #8A877F; --code-hi: #E5A68C; color-scheme: dark; --sim: #E0B062; --sim-soft: #33291A; --mark: #9AB07A; --mark-soft: #26301C; --nomark: #E08670; --paper: #D6D3C9;
   }
 }
 :root[data-theme="dark"] {
   --bg: #1A1918; --surface: rgba(38, 37, 35, .72); --solid: #262523; --ink: #F0EEE6; --muted: #B5B2A8; --faint: #807D75;
   --line: #3A3835; --accent: #D97757; --accent-ink: #E5A68C; --accent-soft: #3A2A22; --rose: #E08670;
   --good: #9AB07A; --good-soft: #26301C; --mid: #E0B062; --mid-soft: #33291A; --bad: #E08670; --bad-soft: #3A2420;
-  --code-bg: #121211; color-scheme: dark; --sim: #E0B062; --sim-soft: #33291A; --mark: #9AB07A; --mark-soft: #26301C; --nomark: #E08670; --paper: #D6D3C9;
+  --code-bg: #262523; --code-ink: #E8E6DC; --code-dim: #8A877F; --code-hi: #E5A68C; color-scheme: dark; --sim: #E0B062; --sim-soft: #33291A; --mark: #9AB07A; --mark-soft: #26301C; --nomark: #E08670; --paper: #D6D3C9;
 }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.65; }
@@ -105,7 +105,7 @@ main code { font-family: var(--font); background: var(--accent-soft); color: var
 .ws { text-align: left; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--solid); color: var(--ink); font: 400 13px/1.5 var(--font); cursor: pointer; display: grid; gap: 2px; }
 .ws span { color: var(--faint); font-size: 12px; overflow-wrap: anywhere; }
 .ws.on { border-color: var(--accent); background: var(--accent-soft); }
-pre.code { margin: 0; background: var(--code-bg); color: var(--code-ink); border-radius: 12px; padding: 16px 18px; font: 12.5px/1.7 var(--font); overflow-x: auto; }
+pre.code { margin: 0; background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; font: 12.5px/1.7 var(--font); overflow-x: auto; }
 pre.wc { max-height: 520px; overflow: auto; font-size: 12px; }
 pre.wc .fn { color: var(--code-dim); }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
