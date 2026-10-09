@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 
 from .paths import BASES, HOME
 
-SITE = "https://jqxue1999.github.io"                   # the project website may connect; nothing else cross-origin
+SITE = "https://ucf-ml-research.github.io"                   # the project website may connect; nothing else cross-origin
 SERVE = os.environ.get("MWX_SERVE", os.path.join(HOME, "serve"))
 MAX_UPLOAD = 512 * 2**20
 RECIPE = {"steps": (int, 300), "lr": (float, 2e-4), "bs": (int, 8), "seq_len": (int, 128), "rank": (int, 64),
