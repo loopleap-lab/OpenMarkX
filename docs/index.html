@@ -239,8 +239,40 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
 .dmodel b { color: var(--accent-ink); }
 .small-n { font-size: 12px !important; color: var(--faint) !important; margin: 0; }
 
+
+/* ---- motion: quiet, never hides content, off under reduced motion ---- */
+.progress { position: fixed; left: 0; top: 0; height: 2px; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: var(--accent); z-index: 60; pointer-events: none; }
+.nav { transition: box-shadow .3s, background .3s; }
+.nav.scrolled { box-shadow: 0 6px 24px -18px rgba(20, 20, 19, .35); background: color-mix(in srgb, var(--bg) 92%, transparent); }
+.nav-links a { position: relative; transition: color .2s; }
+.nav-links a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: -6px; height: 2px; background: var(--accent); border-radius: 1px; transition: right .3s ease; }
+.nav-links a.cur { color: var(--ink); }
+.nav-links a.cur::after, .nav-links a:hover::after { right: 0; }
+.hero-glow { position: absolute; inset: -20% -10% auto; height: 120%; pointer-events: none; z-index: 0; }
+.hero-glow i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; }
+.hero-glow i:nth-child(1) { width: 420px; height: 420px; left: 12%; top: 8%; background: color-mix(in srgb, var(--accent) 22%, transparent); animation: drift1 22s ease-in-out infinite alternate; }
+.hero-glow i:nth-child(2) { width: 360px; height: 360px; right: 10%; top: 22%; background: color-mix(in srgb, var(--good) 18%, transparent); animation: drift2 26s ease-in-out infinite alternate; }
+.hero-grid { position: absolute; inset: 0; pointer-events: none; z-index: 0; background-image: radial-gradient(color-mix(in srgb, var(--ink) 9%, transparent) 1px, transparent 1px); background-size: 22px 22px; -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 35%, #000, transparent 75%); mask-image: radial-gradient(ellipse 60% 55% at 50% 35%, #000, transparent 75%); }
+@keyframes drift1 { to { transform: translate(60px, 40px) scale(1.08); } }
+@keyframes drift2 { to { transform: translate(-70px, 30px) scale(.94); } }
+.hero-in { z-index: 1; grid-template-columns: minmax(0, 1fr); }
+.hero-in > * { max-width: 100%; min-width: 0; }
+.term, .install { width: 100%; }
+.card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 14px 32px -22px rgba(20, 20, 19, .35); border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+.vid:hover, .demo2:hover, #leaderboard .card:hover { transform: none; }
+.btn { transition: border-color .2s, transform .2s, box-shadow .2s, filter .2s; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px -10px rgba(20, 20, 19, .4); }
+.btn:active { transform: none; box-shadow: none; }
+.term-body::after { content: "\258B"; color: var(--code-hi); animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+#lbTable tbody, #chart { animation: fadein .35s ease; }
+@keyframes fadein { from { opacity: .25; } }
+.sus .sbar i { transition: width 1.1s cubic-bezier(.2, .8, .2, 1); }
+@media (prefers-reduced-motion: reduce) { .hero-glow i, .term-body::after, #lbTable tbody, #chart { animation: none; } .card, .btn, .nav-links a::after { transition: none; } .card:hover, .btn:hover { transform: none; } .progress { display: none; } }
+
 /* narrow nav */
-@media (max-width: 720px) { .nav-links { display: none; } }
+@media (max-width: 720px) { .nav-links { display: none; } .nav .wrap { flex-wrap: nowrap; gap: 12px; } }
 
 /* ---- counterpart layout: hero terminal, why demo, see-it-work, features, how, methods, roadmap, cta ---- */
 .eyebrow { display: block; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 10px; }
@@ -363,7 +395,9 @@ section.band.dark .head h2 { color: #F0EEE6; } section.band.dark .eyebrow { colo
   </div>
 </nav>
 
+<div class="progress" id="progress" aria-hidden="true"></div>
 <header class="hero" id="top">
+  <div class="hero-grid" aria-hidden="true"></div><div class="hero-glow" aria-hidden="true"><i></i><i></i></div>
   <div class="wrap hero-in">
     <h1>Mark<span class="hl">WeightX</span></h1>
     <div class="sub">A Toolkit for Watermarking Open-Weight Language Models</div>
@@ -673,6 +707,24 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
   }
   $("dreset").addEventListener("click", resetDemo);
 
+
+
+  // ---- motion: scroll progress, nav state, current section in the nav
+  const nav = document.querySelector(".nav"), bar = $("progress");
+  const links = [...document.querySelectorAll(".nav-links a[href^='#']")];
+  const secs = links.map((a) => document.getElementById(a.getAttribute("href").slice(1))).filter(Boolean);
+  let ticking = false;
+  function onScroll() {
+    const h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.transform = `scaleX(${max > 0 ? h.scrollTop / max : 0})`;
+    nav.classList.toggle("scrolled", h.scrollTop > 8);
+    let cur = null;
+    secs.forEach((sc) => { if (sc.getBoundingClientRect().top < 140) cur = sc.id; });
+    links.forEach((a) => a.classList.toggle("cur", a.getAttribute("href") === "#" + cur));
+    ticking = false;
+  }
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  onScroll();
 
   // ---- see it work: play a video only while it is on screen
   const vio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.preload = "auto"; e.target.play().catch(() => {}); } else e.target.pause(); }), { threshold: .3 });
