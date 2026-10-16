@@ -514,51 +514,6 @@ code, pre, .code, .term, .term-body, .install code, .chips i, .colh { font-famil
 .ctab p { font-size: 19px; }
 footer { font-size: 13px; }
 
-/* ---- Apple palette and finish: white and #F5F5F7 bands, black stages, one blue, gradient name ---- */
-:root { --bg: #FFFFFF; --band: #F5F5F7; --surface: #FFFFFF; --solid: #FFFFFF; --ink: #1D1D1F; --muted: #6E6E73; --faint: #86868B;
-  --line: #D2D2D7; --accent: #0071E3; --accent-ink: #0066CC; --accent-soft: #E8F2FD; --rose: #D70015;
-  --good: #248A3D; --good-soft: #E9F6EC; --mid: #B25000; --mid-soft: #FFF3E6; --bad: #D70015; --bad-soft: #FDECEC;
-  --code-bg: #F5F5F7; --code-ink: #1D1D1F; --code-dim: #86868B; --code-hi: #0066CC; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #000000; --band: #161617; --surface: #1D1D1F; --solid: #1D1D1F; --ink: #F5F5F7; --muted: #A1A1A6; --faint: #86868B;
-  --line: #424245; --accent: #2997FF; --accent-ink: #66B3FF; --accent-soft: #0B2A4A; --rose: #FF6961;
-  --good: #30D158; --good-soft: #10301A; --mid: #FF9F0A; --mid-soft: #33240A; --bad: #FF6961; --bad-soft: #3A1715;
-  --code-bg: #1D1D1F; --code-ink: #F5F5F7; --code-dim: #86868B; --code-hi: #66B3FF; color-scheme: dark; } }
-:root[data-theme="dark"] { --bg: #000000; --band: #161617; --surface: #1D1D1F; --solid: #1D1D1F; --ink: #F5F5F7; --muted: #A1A1A6; --faint: #86868B;
-  --line: #424245; --accent: #2997FF; --accent-ink: #66B3FF; --accent-soft: #0B2A4A; --rose: #FF6961;
-  --good: #30D158; --good-soft: #10301A; --mid: #FF9F0A; --mid-soft: #33240A; --bad: #FF6961; --bad-soft: #3A1715;
-  --code-bg: #1D1D1F; --code-ink: #F5F5F7; --code-dim: #86868B; --code-hi: #66B3FF; color-scheme: dark; }
-body { background: var(--bg); color: var(--ink); }
-.hero, #toolkit, #cta { --bg: #000000; --band: #000000; --surface: #1D1D1F; --solid: #1D1D1F; --ink: #F5F5F7; --muted: #A1A1A6; --faint: #86868B;
-  --line: #424245; --accent: #2997FF; --accent-ink: #66B3FF; --accent-soft: #0B2A4A; --good: #30D158; --good-soft: #10301A;
-  --bad: #FF6961; --bad-soft: #3A1715; --code-bg: #1D1D1F; --code-ink: #F5F5F7; --code-dim: #86868B; --code-hi: #66B3FF; background: #000; color: var(--ink); }
-.hero-glow { display: none; }
-.hero h1 { color: #F5F5F7; }
-.hero h1 .hl { background: linear-gradient(90deg, #2997FF 0%, #A259FF 50%, #FF6482 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.head h2 .hl, .ctab h2 .hl { color: inherit; }
-#why, #results { background: var(--band); }
-#start { background: var(--bg); }
-.card { box-shadow: none; background: var(--solid); border-radius: 28px; }
-#start .card, #start .codecard { background: var(--band); }
-.flow .fn { box-shadow: none; background: var(--solid); }
-.btn { border: 0; background: transparent; color: var(--accent-ink); }
-.btn.primary { background: var(--accent); color: #fff; }
-.btn:not(.primary) { box-shadow: inset 0 0 0 1px var(--accent); }
-.btn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
-.nav { background: color-mix(in srgb, var(--bg) 78%, transparent); }
-.nav .btn.primary { padding: 5px 14px; }
-.install { background: #1D1D1F; border: 1px solid #424245; }
-.install code { color: #F5F5F7; }
-.term { border: 1px solid #333336; box-shadow: 0 40px 80px -40px rgba(41, 151, 255, .35); }
-.ctab { background: #000; border: 0; }
-.ctab h2 { color: #F5F5F7; }
-.ctab .btn:not(.primary) { background: transparent; color: #66B3FF; box-shadow: inset 0 0 0 1px #2997FF; }
-.layers .ly { background: #1D1D1F; }
-.layers .ly.core { background: #0B2A4A; }
-.hleg i.p, .hb .bar.p i { background: var(--accent); }
-.hb .bar.p b, .hb b[style] { color: var(--accent) !important; }
-.roles .card h3 { color: var(--ink); }
-.res2 .card { padding: 32px; }
-
 /* ---- motion, Apple-style: content rises in as it scrolls into view; bars grow; the name shimmers ---- */
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 @keyframes sheen { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
@@ -566,11 +521,11 @@ body { background: var(--bg); color: var(--ink); }
 .hero .sub { animation-delay: .12s; } .hero .desc { animation-delay: .22s; } .hero .ctas { animation-delay: .32s; }
 .hero .install { animation-delay: .4s; } .hero .term { animation-delay: .5s; }
 .hero h1 .hl { background-size: 200% 100%; animation: sheen 6s ease-in-out infinite alternate; }
-.rv { opacity: 0; transform: translateY(32px); transition: opacity .9s cubic-bezier(.2, .7, .2, 1), transform .9s cubic-bezier(.2, .7, .2, 1); }
-.rv.in { opacity: 1; transform: none; }
+.rv { opacity: 0; transform: translateY(48px) scale(.97); filter: blur(6px); transition: opacity 1.1s cubic-bezier(.16, 1, .3, 1), transform 1.1s cubic-bezier(.16, 1, .3, 1), filter 1.1s cubic-bezier(.16, 1, .3, 1); }
+.rv.in { opacity: 1; transform: none; filter: none; }
 .rv .bar i { transform: scaleX(0); transform-origin: left; transition: transform 1.3s cubic-bezier(.2, .7, .2, 1) .25s; }
 .rv.in .bar i { transform: scaleX(1); }
-@media (prefers-reduced-motion: reduce) { .hero *, .hero h1 .hl { animation: none !important; } .rv { opacity: 1; transform: none; transition: none; } .rv .bar i { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hero *, .hero h1 .hl { animation: none !important; } .rv { opacity: 1; transform: none; filter: none; transition: none; } .rv .bar i { transform: none; } }
 </style>
 
 <nav class="nav" aria-label="Site">
@@ -842,16 +797,18 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
   const vio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.preload = "auto"; e.target.play().catch(() => {}); } else e.target.pause(); }), { threshold: .3 });
   document.querySelectorAll(".vid video").forEach((v) => vio.observe(v));
 
-  // ---- motion: blocks below the first screen rise in as they scroll into view (siblings one after another)
+  // ---- motion: every block outside the hero rises in when it enters the viewport (siblings one after another).
+  // The page may sit in a frame as tall as itself, so visibility comes from the observer, never from innerHeight.
   if (!still && "IntersectionObserver" in window) {
     const SEL = ".head, .flow .fn, #lanes .lane, .why2, .markline, .layers .ly, .roles .card, .res2 .card, .ways .card, .vid, .ctab, details.more";
-    const rio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); rio.unobserve(e.target); } }), { threshold: .15, rootMargin: "0px 0px -6% 0px" });
+    const rio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); rio.unobserve(e.target); } }), { threshold: .2 });
     document.querySelectorAll(SEL).forEach((el) => {
-      if (el.closest(".hero") || el.getBoundingClientRect().top < innerHeight) return;   // what is on screen at load stays put
+      if (el.closest(".hero")) return;
       const sib = [...el.parentElement.children].filter((c) => c.matches(SEL));
-      el.style.transitionDelay = Math.min(sib.indexOf(el), 5) * 90 + "ms";
+      el.style.transitionDelay = Math.min(sib.indexOf(el), 5) * 110 + "ms";
       el.classList.add("rv"); rio.observe(el);
     });
+    setTimeout(() => document.querySelectorAll(".rv:not(.in)").forEach((el) => { if (el.getBoundingClientRect().bottom < 0) el.classList.add("in"); }), 4000);
   }
 
 })();
