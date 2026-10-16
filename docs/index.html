@@ -513,6 +513,51 @@ code, pre, .code, .term, .term-body, .install code, .chips i, .colh { font-famil
 .ctab h2 { font-size: clamp(34px, 5vw, 56px); letter-spacing: -.035em; }
 .ctab p { font-size: 19px; }
 footer { font-size: 13px; }
+
+/* ---- Apple palette and finish: white and #F5F5F7 bands, black stages, one blue, gradient name ---- */
+:root { --bg: #FFFFFF; --band: #F5F5F7; --surface: #FFFFFF; --solid: #FFFFFF; --ink: #1D1D1F; --muted: #6E6E73; --faint: #86868B;
+  --line: #D2D2D7; --accent: #0071E3; --accent-ink: #0066CC; --accent-soft: #E8F2FD; --rose: #D70015;
+  --good: #248A3D; --good-soft: #E9F6EC; --mid: #B25000; --mid-soft: #FFF3E6; --bad: #D70015; --bad-soft: #FDECEC;
+  --code-bg: #F5F5F7; --code-ink: #1D1D1F; --code-dim: #86868B; --code-hi: #0066CC; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #000000; --band: #161617; --surface: #1D1D1F; --solid: #1D1D1F; --ink: #F5F5F7; --muted: #A1A1A6; --faint: #86868B;
+  --line: #424245; --accent: #2997FF; --accent-ink: #66B3FF; --accent-soft: #0B2A4A; --rose: #FF6961;
+  --good: #30D158; --good-soft: #10301A; --mid: #FF9F0A; --mid-soft: #33240A; --bad: #FF6961; --bad-soft: #3A1715;
+  --code-bg: #1D1D1F; --code-ink: #F5F5F7; --code-dim: #86868B; --code-hi: #66B3FF; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #000000; --band: #161617; --surface: #1D1D1F; --solid: #1D1D1F; --ink: #F5F5F7; --muted: #A1A1A6; --faint: #86868B;
+  --line: #424245; --accent: #2997FF; --accent-ink: #66B3FF; --accent-soft: #0B2A4A; --rose: #FF6961;
+  --good: #30D158; --good-soft: #10301A; --mid: #FF9F0A; --mid-soft: #33240A; --bad: #FF6961; --bad-soft: #3A1715;
+  --code-bg: #1D1D1F; --code-ink: #F5F5F7; --code-dim: #86868B; --code-hi: #66B3FF; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); }
+.hero, #toolkit, #cta { --bg: #000000; --band: #000000; --surface: #1D1D1F; --solid: #1D1D1F; --ink: #F5F5F7; --muted: #A1A1A6; --faint: #86868B;
+  --line: #424245; --accent: #2997FF; --accent-ink: #66B3FF; --accent-soft: #0B2A4A; --good: #30D158; --good-soft: #10301A;
+  --bad: #FF6961; --bad-soft: #3A1715; --code-bg: #1D1D1F; --code-ink: #F5F5F7; --code-dim: #86868B; --code-hi: #66B3FF; background: #000; color: var(--ink); }
+.hero-glow { display: none; }
+.hero h1 { color: #F5F5F7; }
+.hero h1 .hl { background: linear-gradient(90deg, #2997FF 0%, #A259FF 50%, #FF6482 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.head h2 .hl, .ctab h2 .hl { color: inherit; }
+#why, #results { background: var(--band); }
+#start { background: var(--bg); }
+.card { box-shadow: none; background: var(--solid); border-radius: 28px; }
+#start .card, #start .codecard { background: var(--band); }
+.flow .fn { box-shadow: none; background: var(--solid); }
+.btn { border: 0; background: transparent; color: var(--accent-ink); }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn:not(.primary) { box-shadow: inset 0 0 0 1px var(--accent); }
+.btn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+.nav { background: color-mix(in srgb, var(--bg) 78%, transparent); }
+.nav .btn.primary { padding: 5px 14px; }
+.install { background: #1D1D1F; border: 1px solid #424245; }
+.install code { color: #F5F5F7; }
+.term { border: 1px solid #333336; box-shadow: 0 40px 80px -40px rgba(41, 151, 255, .35); }
+.ctab { background: #000; border: 0; }
+.ctab h2 { color: #F5F5F7; }
+.ctab .btn:not(.primary) { background: transparent; color: #66B3FF; box-shadow: inset 0 0 0 1px #2997FF; }
+.layers .ly { background: #1D1D1F; }
+.layers .ly.core { background: #0B2A4A; }
+.hleg i.p, .hb .bar.p i { background: var(--accent); }
+.hb .bar.p b, .hb b[style] { color: var(--accent) !important; }
+.roles .card h3 { color: var(--ink); }
+.res2 .card { padding: 32px; }
 </style>
 
 <nav class="nav" aria-label="Site">
