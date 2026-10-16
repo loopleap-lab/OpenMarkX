@@ -525,7 +525,7 @@ footer { font-size: 13px; }
 .rv.in { opacity: 1; transform: none; filter: none; }
 .rv .bar i { transform: scaleX(0); transform-origin: left; transition: transform 1.3s cubic-bezier(.2, .7, .2, 1) .25s; }
 .rv.in .bar i { transform: scaleX(1); }
-@media (prefers-reduced-motion: reduce) { .hero *, .hero h1 .hl { animation: none !important; } .rv { opacity: 1; transform: none; filter: none; transition: none; } .rv .bar i { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hero *, .hero h1 .hl { animation: none !important; } .rv { transform: none; filter: none; transition: opacity .8s ease; } .rv .bar i { transform: none; } }
 </style>
 
 <nav class="nav" aria-label="Site">
@@ -799,9 +799,9 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
 
   // ---- motion: every block outside the hero rises in when it enters the viewport (siblings one after another).
   // The page may sit in a frame as tall as itself, so visibility comes from the observer, never from innerHeight.
-  if (!still && "IntersectionObserver" in window) {
+  if ("IntersectionObserver" in window) {
     const SEL = ".head, .flow .fn, #lanes .lane, .why2, .markline, .layers .ly, .roles .card, .res2 .card, .ways .card, .vid, .ctab, details.more";
-    const rio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); rio.unobserve(e.target); } }), { threshold: .2 });
+    const rio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); rio.unobserve(e.target); } }), { threshold: .1 });
     document.querySelectorAll(SEL).forEach((el) => {
       if (el.closest(".hero")) return;
       const sib = [...el.parentElement.children].filter((c) => c.matches(SEL));
