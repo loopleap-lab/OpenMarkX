@@ -219,15 +219,17 @@ def generate(release: Release, prompts: list[str], *, device=DEFAULT_DEVICE, new
 
 
 def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> list[str]:
-    """Text edits through MarkLLM's text editors: 'synonym:ratio=0.3', 'word_deletion:ratio=0.3'."""
+    """A registered text edit: 'synonym:ratio=0.3', 'word_deletion:ratio=0.3', or your own (@mwx.register_text_edit)."""
     from .edits import rewrite as _rewrite
+    from .edits.text import RANGES
     from .edits.weights import check_params
-    RATIO = {"ratio": (lambda v: 0 < v <= 1, "in (0, 1]")}
+    from .registry import TEXT_EDITS
     op, params = _spec(edits)
     if "device" in params:
         raise ValueError("the device is not an edit parameter: pass device= (CLI --device)")
-    check_params(_rewrite, op, params, {"synonym": RATIO, "word_deletion": RATIO, "context_synonym": RATIO},
-                 skip=("texts", "kind", "device"))
+    if op not in TEXT_EDITS:
+        return _rewrite(texts, op)                           # raises: unknown text edit, with the list
+    check_params(TEXT_EDITS[op], op, params, RANGES, skip=("texts", "device"))
     return _rewrite(texts, op, device=device or _auto_device(), **params)
 
 

@@ -175,7 +175,140 @@ markweightx keys show KEY        # prints metadata only; key material stays hidd
 Keys made before 2026-10-06 store only the parameters that were typed, not the defaults. Their parameters are part
 of the commitment, so they cannot be filled in afterwards. Such a key detects with the scheme's current defaults.
 
-## Add your own method
+## Extending MarkWeightX
+
+Five things can be added, each in one place. All of them reach the benchmark the same way: name them in an arena
+file, run `markweightx bench`, and they get a row or a column on the same leaderboard as the built-ins.
+
+| To add | You write | You run | It shows up as |
+|---|---|---|---|
+| A watermark method | one `.py` file from `markweightx new-scheme` | `markweightx check --adapter my_mark.py` | a row |
+| A weight edit (a new attack on the released model) | a function with `@mwx.register_edit` | `markweightx modify REL --edit name:k=v --plugin file.py` | a column |
+| A text edit (a new attack on the generated text) | a function with `@mwx.register_text_edit` | `markweightx rewrite texts.jsonl --edit name:k=v --plugin file.py` | a column |
+| A dataset or domain (e.g. physics) | nothing: point at a Hugging Face dataset or a `.jsonl` | `exp/prepare_data.py --dataset ...`, then `MWX_DATA=<file>` | the same board, on your text |
+| A base model | nothing for Llama-style models; optionally a pinned entry in `BASES` | `--base <hf-id or local dir>` | a board per base |
+
+`examples/my_edits.py` holds one weight edit and one text edit, and `configs/arena/plugins_example.yaml` runs them
+next to the built-ins; `tests/test_edit_plugins.py` runs both on CPU.
+
+### Add a weight edit
+
+A weight edit is what someone downstream does to the released weights. It takes the release, an output directory,
+its own parameters (each with a default) and `device`, and returns the edited release. Load the release as a plain
+model with `materialize`, change it, and hand it to `edited_release`, which saves it and extends the release's
+lineage:
+
+```python
+# my_edits.py
+import torch
+import markweightx as mwx
+from markweightx.edits.weights import edited_release, materialize
+
+@mwx.register_edit
+@torch.no_grad()
+def noise(rel, out, *, scale=0.01, seed=0, device="cuda:0"):
+    """Gaussian noise on every decoder linear weight, scaled to each matrix's spread."""
+    model = materialize(rel, device)
+    g = torch.Generator(device=device).manual_seed(seed)
+    for name, mod in model.named_modules():
+        if isinstance(mod, torch.nn.Linear) and ".layers." in name:
+            W = mod.weight
+            W.add_(torch.randn(W.shape, generator=g, device=W.device, dtype=W.dtype) * W.float().std().to(W.dtype) * scale)
+    return edited_release(rel, out, "noise", dict(scale=scale, seed=seed), model)
+```
+
+```bash
+markweightx modify RELEASE --edit noise:scale=0.01 --plugin my_edits.py --out noised/
+```
+
+In Python, `mwx.load_plugins("my_edits.py")` (or a plain `import`) and then `mwx.modify(rel, "noise:scale=0.01")`.
+A misspelled parameter (`noise:scael=0.01`) is refused before any model is loaded. Edits that need data, such as
+fine-tuning on a domain corpus, take a `data=` parameter like the built-in `finetune` does
+(`finetune:steps=800,data=/path/to/data_physics.pt`).
+
+### Add a text edit
+
+A text edit is what someone does to the generated text: paraphrase, translate and back, add typos. It takes the
+list of texts and its parameters, and returns one string per text. Add `device` to its parameters if it runs a model.
+
+```python
+@mwx.register_text_edit
+def typos(texts, *, rate=0.05, seed=0):
+    """Swap two neighbouring letters in that share of the words."""
+    ...                                   # full code in examples/my_edits.py
+```
+
+```bash
+markweightx rewrite texts.jsonl --edit typos:rate=0.05 --plugin my_edits.py --out typoed.jsonl
+markweightx detect typoed.jsonl --key KEY     # does the mark survive the edit?
+```
+
+The built-ins (`synonym`, `word_deletion`, `context_synonym`) are registered the same way, in
+`markweightx/edits/text.py`; an edit that returns the wrong number of texts is refused.
+
+### Benchmark the new edits
+
+```yaml
+# configs/arena/plugins_example.yaml
+base: llama-3.2-1b
+methods: [pro, markllm-kgw-d]
+plugins: [examples/my_edits.py]          # loaded before the edits are checked, and by every step that runs them
+edits: [finetune:steps=800, noise:scale=0.01, text:synonym:ratio=0.3, text:typos:rate=0.05]
+```
+
+`bench` checks every edit and its parameters when it reads the file, so a typo fails at once rather than on a GPU
+an hour later. Each new edit becomes a column (`noise_scale0.01`, `typos_rate0.05`) after the default ones. For
+scale, these are the default columns of the 1B board for PRO (TPR at 1% FPR, from our runs, `$MWX_RUNS/e2/llama-3.2-1b/leaderboard.md`):
+
+| method | learned | FT 800 | merge .4 | prune 20% | nf4 | delete 30% | synonym 30% |
+|---|---|---|---|---|---|---|---|
+| pro | 0.88 | 0.07 | 0.55 | 0.89 | 0.89 | 0.83 | 0.67 |
+
+and the paper's numbers for the same kinds of edit on Llama-3-8B are in [LEADERBOARD.md](../LEADERBOARD.md)
+(e.g. after 4-bit HQQ PRO keeps 0.91 against 0.77 for Gloaguen et al.; after 300 steps of math fine-tuning, 0.43
+against 0.22). A new edit is read against these: close to `nf4` means harmless, close to `FT 800` means it erases the mark.
+
+### Use your own dataset or domain
+
+Every step reads one tokenized corpus: training text for `embed`, clean text for the fine-tune edit, and held-out
+documents whose first 50 tokens are the evaluation prompts and the calibration prompts. Build one from any text:
+
+```bash
+python exp/prepare_data.py --dataset camel-ai/physics --field message_2 --out $MWX_RUNS/data_physics.pt
+python exp/prepare_data.py --dataset my_papers.jsonl --out $MWX_RUNS/data_mine.pt     # {"text": ...} per line, or .txt
+export MWX_DATA=$MWX_RUNS/data_physics.pt     # every step now trains, attacks and evaluates on this text
+```
+
+The first `--n_eval` documents (600) are held out for prompts; at least 250 tokens each are needed for a prompt
+plus a 200-token continuation, so short answers give few prompts (the C4 file keeps 311 of the first 500). The
+fine-tune edit reads chunks past 10,000, so keep `--n_train` above that. To change only one step, pass the file
+to it instead: `embed --recipe` with `data: <file>`, or the edit `finetune:data=<file>`. Check a dataset's license
+before training on it (`camel-ai/physics` is CC BY-NC 4.0).
+
+### Use another base model
+
+`--base` takes a name from `BASES` in `markweightx/paths.py` (pinned to a Hugging Face revision), a Hugging Face
+repo id, or a local directory. What a base needs:
+
+- **A causal language model** that `AutoModelForCausalLM` loads. Encoder-decoder or vision-language models
+  (e.g. BiomedGPT, built on OFA) need a model loader of their own; that is not built yet.
+- **LoRA target names** `q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj`, as in Llama, Mistral and
+  Qwen2 (`LORA_TARGETS` in `markweightx/imprint.py`; the fine-tune edit uses the same list).
+- **A corpus in its tokenizer**: `prepare_data.py --base <the base>`. Llama-3.2-1B and Llama-3.1-8B share one.
+- **A merge partner** for the merge edit: `<base>-instruct` in `BASES`, or `merge:partner=<repo id>` in the arena.
+
+Add a line to `BASES` to pin the revision, so a run is comparable across machines:
+
+```python
+"qwen2.5-1.5b": ("Qwen/Qwen2.5-1.5B", "<commit sha>"),
+```
+
+### Add a watermark method
+
+The rest of this section; it is the most involved of the five because the key, the training signal and the
+detector all have to agree.
+
+#### The steps
 
 ```bash
 markweightx new-scheme my-mark            # writes my_mark.py: Key, Signal, Score in ~40 lines
@@ -297,8 +430,8 @@ markweightx/        api.py (the facade) · cli.py · bench.py · check.py · key
   schemes/          base.py (Scheme) · markllm.py · pro.py · gaussmark.py
   edits/            weights.py (finetune, merge, prune, quantize) · text.py (synonym, word_deletion)
   imprint.py · sampling.py · scoring.py · models.py · paths.py
-configs/            embed.yaml · watermark/<scheme>.yaml (generated by exp/write_configs.py)
-examples/           quickstart.py · my_scheme.py (the new-scheme template)
+configs/            embed.yaml · watermark/<scheme>.yaml (generated by exp/write_configs.py) · arena/*.yaml
+examples/           quickstart.py · my_scheme.py (the new-scheme template) · my_edits.py (a weight edit and a text edit)
 exp/                experiment scripts (above)
 tests/              pytest -q tests  (add -m "not slow" to skip the end-to-end check runs)
 ```

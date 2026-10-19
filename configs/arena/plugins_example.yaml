@@ -1,0 +1,10 @@
+# An arena with edits from a plugin file (examples/my_edits.py) next to built-in ones.
+#   markweightx bench configs/arena/plugins_example.yaml --dry-run
+base: llama-3.2-1b
+methods: [pro, markllm-kgw-d]
+plugins: [examples/my_edits.py]          # files that register edits; loaded before the edits are checked
+edits:
+  - finetune:steps=800                   # built-in weight edit
+  - noise:scale=0.01                     # plugin weight edit (examples/my_edits.py)
+  - text:synonym:ratio=0.3               # built-in text edit
+  - text:typos:rate=0.05                 # plugin text edit

@@ -136,9 +136,11 @@ markweightx bench configs/arena/1b.yaml
 | To add | Where it goes |
 |---|---|
 | A watermark method | one file from `markweightx new-scheme`, passed by `markweightx check` |
-| A weight edit | `markweightx/edits/weights.py` |
-| A text edit | `markweightx/edits/text.py` |
-| A benchmark arena | a yaml under `configs/arena/` |
+| A weight edit (attack on the weights) | a function with `@mwx.register_edit` in your own file, loaded with `--plugin` |
+| A text edit (attack on the text) | a function with `@mwx.register_text_edit` in the same kind of file |
+| A dataset or domain | `exp/prepare_data.py --dataset <HF id or .jsonl>`, then `MWX_DATA=<file>` |
+| A base model | `--base <HF id or local dir>` (Llama-style causal LMs); pin it in `BASES` |
+| A benchmark arena | a yaml under `configs/arena/`; plugin edits go under `plugins:` |
 
 A method is one class: `setup` builds its state from the key, `target_logits` is the signal the model learns, and
 `score` reads it back from text.
@@ -163,6 +165,8 @@ class MyMark(mwx.Scheme):
 
 </details>
 
+`examples/my_edits.py` adds one weight edit and one text edit, and `configs/arena/plugins_example.yaml` benchmarks
+them; the reference's [Extending MarkWeightX](docs/REFERENCE.md#extending-markweightx) walks through all five.
 The [reference](docs/REFERENCE.md) covers every command and parameter, keys, what a detector needs, the checks,
 the benchmark and how `verify_model` decides.
 

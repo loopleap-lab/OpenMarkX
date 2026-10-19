@@ -42,6 +42,13 @@ def _save_weights(model, tok, out):
     return w
 
 
+def edited_release(rel: Release, out: str, op: str, params: dict, model, **kw) -> Release:
+    """Save an edited model as a new release under `out` and return it: the end of every weight edit, built-in or
+    plugin. `params` is what the leaderboard and lineage record for this edit."""
+    tok = load_tokenizer(rel.base)
+    return _child(rel, out, op, params, weights=_save_weights(model, tok, out), **kw).save()
+
+
 @register_edit
 def finetune(rel: Release, out: str, *, steps=800, lr=1e-4, bs=8, seq_len=256, rank=16, device="cuda:0",
              data: str | None = None, seed=1, offset=10000, micro_bs: int | None = None):
@@ -150,7 +157,8 @@ def check_params(fn, name: str, params: dict, ranges: dict, skip=("rel", "out", 
 def modify(rel: Release, edit: str, out: str, **params) -> Release:
     from ..registry import EDITS
     if edit not in EDITS:
-        raise ValueError(f"unknown weight edit {edit!r}; available: {', '.join(sorted(EDITS))}")
+        raise ValueError(f"unknown weight edit {edit!r}; available: {', '.join(sorted(EDITS))} "
+                         f"(or register one with @mwx.register_edit and load its file with --plugin)")
     check_params(EDITS[edit], edit, {k: v for k, v in params.items() if k != "device"}, RANGES)
     if edit == "merge":
         from ..paths import base_path

@@ -69,7 +69,7 @@ def parse_edit(spec: str) -> tuple[str, dict]:
 def load_arena(path: str) -> dict:
     import yaml
     a = yaml.safe_load(open(path)) or {}
-    keys = {"base", "tag", "methods", "steps", "learn", "edits"}
+    keys = {"base", "tag", "methods", "steps", "learn", "edits", "plugins"}
     unknown = sorted(set(a) - keys)
     if unknown or not a.get("methods"):
         raise ValueError(f"{path}: needs 'methods' (a list); allowed keys: {', '.join(sorted(keys))}"
@@ -84,27 +84,29 @@ def load_arena(path: str) -> dict:
     allowed_learn = {"steps", "bs", "accum", "bos"}             # not n: every step reads the 500-prompt texts
     if set(a.get("learn", {})) - allowed_learn:
         raise ValueError(f"{path}: learn takes {sorted(allowed_learn)}")
+    plugin_files = [os.path.abspath(p) for p in a.get("plugins") or []]   # files that register edits
+    from .registry import load_plugins
+    load_plugins(plugin_files)
     grid = [parse_edit(e) for e in a["edits"]] if a.get("edits") else EDIT_GRID
     if a.get("edits"):                                      # fail here, not on a GPU after the learn step
-        import inspect
-        from .edits.text import rewrite
+        from .edits.text import RANGES as TEXT_RANGES
         from .edits.weights import RANGES, check_params
-        from .registry import EDITS
-        from . import edits  # noqa: F401  (registers the weight edits)
-        texts = ("word_deletion", "synonym", "context_synonym")
+        from .registry import EDITS, TEXT_EDITS
+        from . import edits  # noqa: F401  (registers the built-in edits)
         for op, params in grid:
             if op.startswith("text:"):
-                if op[5:] not in texts:
-                    raise ValueError(f"{path}: unknown text edit {op[5:]!r}; available: {', '.join(texts)}")
-                ratio = {op[5:]: {"ratio": (lambda v: 0 < v <= 1, "in (0, 1]")}}
-                check_params(rewrite, op[5:], params, ratio, skip=("texts", "kind", "device"))
+                if op[5:] not in TEXT_EDITS:
+                    raise ValueError(f"{path}: unknown text edit {op[5:]!r}; available: {', '.join(sorted(TEXT_EDITS))}"
+                                     f" (a plugin's edits need its file under 'plugins:')")
+                check_params(TEXT_EDITS[op[5:]], op[5:], params, TEXT_RANGES, skip=("texts", "device"))
             elif op not in EDITS:
-                raise ValueError(f"{path}: unknown edit {op!r}; available: {', '.join(sorted(EDITS))}, text:<kind>")
+                raise ValueError(f"{path}: unknown edit {op!r}; available: {', '.join(sorted(EDITS))}, text:<kind>"
+                                 f" (a plugin's edits need its file under 'plugins:')")
             else:
                 check_params(EDITS[op], op, params, RANGES)
     return {"base": a.get("base", "llama-3.2-1b"), "tag": a.get("tag", "e2"), "methods": list(a["methods"]),
             "steps": list(a.get("steps", STEPS)), "learn": dict(a.get("learn", {})), "grid": grid,
-            "custom_grid": bool(a.get("edits"))}
+            "custom_grid": bool(a.get("edits")), "plugins": plugin_files}
 
 
 def _absolute(m: str) -> str:
@@ -130,6 +132,7 @@ def plan(arena: dict, python: str = sys.executable) -> list[dict]:
     run with CUDA_VISIBLE_DEVICES set to one GPU (as exp/scheduler.py does). A method listed twice is planned once."""
     jobs, seen = [], {}
     grid_arg = (" --grid " + shlex.quote(json.dumps(arena["grid"]))) if arena.get("custom_grid") else ""
+    grid_arg += "".join(f" --plugin {shlex.quote(p)}" for p in arena.get("plugins", []))
     for entry in arena["methods"]:
         m, only = (entry["method"], entry.get("steps")) if isinstance(entry, dict) else (entry, None)
         m = _absolute(m)

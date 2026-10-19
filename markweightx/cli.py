@@ -44,11 +44,13 @@ WEIGHT_EDITS = """edits:
   merge:partner=llama-3.2-1b-instruct,ratio=0.4            linear merge; ratio is the partner's weight
   prune:sparsity=0.5,method=magnitude                      zero the smallest weights
   quantize:bits=4                                          bitsandbytes: 8 (int8) or 4 (nf4)
+  your own                                                 @mwx.register_edit in a file, passed with --plugin
 """
 TEXT_EDITS = """edits:
   synonym:ratio=0.3          swap that share of the words for WordNet synonyms
   word_deletion:ratio=0.3    delete that share of the words
   context_synonym:ratio=0.3  synonyms chosen by BERT from the context (downloads bert-large-uncased)
+  your own                   @mwx.register_text_edit in a file, passed with --plugin
 """
 
 
@@ -179,6 +181,7 @@ def main(argv=None):
                        formatter_class=argparse.RawDescriptionHelpFormatter, epilog=WEIGHT_EDITS)
     p.add_argument("release", help="release directory")
     p.add_argument("--edit", required=True, help="op:param=value,... (see below)")
+    p.add_argument("--plugin", action="append", default=[], help="a .py file that registers edits (repeatable)")
     p.add_argument("--out", help="directory for the edited release (default: next to the release)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p = sub.add_parser("generate", help="Downstream: sample texts from a release")
@@ -190,6 +193,7 @@ def main(argv=None):
                        formatter_class=argparse.RawDescriptionHelpFormatter, epilog=TEXT_EDITS)
     p.add_argument("texts", help=TEXTS_HELP)
     p.add_argument("--edit", required=True, help="op:param=value (see below)")
+    p.add_argument("--plugin", action="append", default=[], help="a .py file that registers text edits (repeatable)")
     p.add_argument("--out", help="output .jsonl (default: stdout)")
     p = sub.add_parser("detect", help="Detector: score texts with a key")
     p.add_argument("texts", help=TEXTS_HELP)
@@ -275,12 +279,14 @@ def _run(a):
                           n=a.n, device=a.device, trust_plugin=a.trust_plugin)
         print(json.dumps({"key": k.commitment, "null_n": k.calibration["n"]}))
     elif a.cmd == "modify":
+        mwx.load_plugins(a.plugin)
         r = mwx.modify(_release(a.release), a.edit, a.out, device=a.device)
         print(json.dumps({"release": r.path}))
     elif a.cmd == "generate":
         texts = mwx.generate(_release(a.release), _read_texts(a.prompts), device=a.device)
         _write_jsonl(a.out, [{"text": t} for t in texts])
     elif a.cmd == "rewrite":
+        mwx.load_plugins(a.plugin)
         _write_jsonl(a.out, [{"text": t} for t in mwx.rewrite(_read_texts(a.texts), a.edit)])
     elif a.cmd == "detect":
         grant = getattr(mwx.Access, a.grant) if a.grant else None

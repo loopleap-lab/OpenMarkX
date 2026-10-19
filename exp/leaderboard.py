@@ -143,13 +143,21 @@ def label(r):
     return name + " (" + ", ".join(diff + ([r["note"]] if r.get("note") else [])) + ")"
 
 
+def columns(rows):
+    """The default edit columns, then one column per extra edit any row has (a plugin edit or a custom arena grid)."""
+    known = {k for k, _ in COLS}
+    extra = sorted({e for r in rows for e in r["edits"] if e != "none" and e not in known})
+    return COLS[:-1] + [(e, e.replace("text:", "")) for e in extra] + COLS[-1:]
+
+
 def table(rows, ppl_base):
     f = lambda x: "–" if x is None else f"{x:.2f}"
-    print("| method | learned | ceiling | AUC | " + " | ".join(c for _, c in COLS) + f" | PPL (base {ppl_base:.1f}) | rep4 |")
-    print("|" + "---|" * (len(COLS) + 6))
+    cols = columns(rows)
+    print("| method | learned | ceiling | AUC | " + " | ".join(c for _, c in cols) + f" | PPL (base {ppl_base:.1f}) | rep4 |")
+    print("|" + "---|" * (len(cols) + 6))
     for r in rows:
         cells = []
-        for k, _ in COLS:
+        for k, _ in cols:
             e = r["edits"].get(k)
             cells.append("" if e is None else f(e["tpr_at_1fpr"]) + ("*" if e.get("rep4", 0) > 0.3 else ""))
         rep = r["edits"].get("none", {}).get("rep4")

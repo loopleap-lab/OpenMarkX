@@ -3,10 +3,10 @@ from .api import build_scheme, calibrate, detect, embed, generate, modify, port,
 from . import keys
 from .keys import load_key
 from .primitives import Access, AccessDenied, Imprint, describe
-from .registry import UntrustedPlugin, register_edit, register_scheme
+from .registry import UntrustedPlugin, load_plugins, register_edit, register_scheme, register_text_edit
 from .schemes.base import Scheme
 from .types import Detection, Key, Release
 
 __all__ = ["build_scheme", "embed", "port", "calibrate", "modify", "generate", "rewrite", "detect", "verify_model", "load_key",
-           "register_scheme", "register_edit", "Scheme", "Release", "Key", "Detection", "Access", "AccessDenied", "Imprint",
+           "register_scheme", "register_edit", "register_text_edit", "load_plugins", "Scheme", "Release", "Key", "Detection", "Access", "AccessDenied", "Imprint",
            "UntrustedPlugin", "describe"]

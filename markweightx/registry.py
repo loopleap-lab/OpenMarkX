@@ -4,7 +4,8 @@ from __future__ import annotations
 SCHEMES: dict = {}       # name -> class (for a plugin: the version loaded last)
 VERSIONS: dict = {}      # (name, module) -> class: every loaded plugin version, so a key finds its own code
 LOADED: set = set()      # sha256 of every plugin file imported in this process (by you, or by a trusted key)
-EDITS: dict = {}
+EDITS: dict = {}         # weight edits: fn(release, out, **params) -> Release (modify)
+TEXT_EDITS: dict = {}    # text edits: fn(texts, **params) -> texts (rewrite)
 
 
 def register_scheme(cls=None, *, name: str | None = None):
@@ -32,6 +33,20 @@ def register_edit(fn=None, *, name: str | None = None):
         EDITS[name or f.__name__] = f
         return f
     return wrap(fn) if fn is not None else wrap
+
+
+def register_text_edit(fn=None, *, name: str | None = None):
+    """Register fn(texts: list[str], **params) -> list[str] as a text edit, used as rewrite(texts, "name:k=v")
+    and in an arena as "text:name:k=v". It may also take device= (the GPU the run uses)."""
+    def wrap(f):
+        TEXT_EDITS[name or f.__name__] = f
+        return f
+    return wrap(fn) if fn is not None else wrap
+
+
+def load_plugins(paths) -> list:
+    """Import plugin files (or modules) that register edits or schemes, so their names resolve in this process."""
+    return [load_plugin(p) for p in ([paths] if isinstance(paths, str) else paths or [])]
 
 
 class UntrustedPlugin(PermissionError):

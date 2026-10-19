@@ -34,7 +34,10 @@ def main():
     ap.add_argument("--n", type=int, default=500)
     ap.add_argument("--only", default="", help="comma-separated edit names to run")
     ap.add_argument("--grid", help='JSON list of [op, params] pairs instead of EDIT_GRID (markweightx bench passes it)')
+    ap.add_argument("--plugin", action="append", default=[], help="a .py file that registers edits (repeatable)")
     a = ap.parse_args()
+    from markweightx.registry import load_plugins
+    load_plugins(a.plugin)
     rel = Release.open(a.release)
     out_rows = f"{a.release}/robustness.jsonl"
     done = {json.loads(l)["edit"] for l in open(out_rows)} if os.path.exists(out_rows) else set()
@@ -83,7 +86,7 @@ def main():
             record(t, rewrite(texts["student"], op[5:], **p, device=a.device))
             continue
         child_dir = f"{a.release}/edits/{t}"
-        kw = dict(partner=partner) if op == "merge" else {}
+        kw = dict(partner=partner) if op == "merge" and "partner" not in p else {}   # an arena may name the partner
         if op == "finetune" and big:
             kw["micro_bs"] = 2                            # 8B on a 24 GB card: same edit, accumulated
         child = modify(rel, op, child_dir, device=a.device, **p, **kw)
