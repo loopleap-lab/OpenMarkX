@@ -526,6 +526,7 @@ footer { font-size: 13px; }
 .rv .bar i { transform: scaleX(0); transform-origin: left; transition: transform 1.3s cubic-bezier(.2, .7, .2, 1) .25s; }
 .rv.in .bar i { transform: scaleX(1); }
 @media (prefers-reduced-motion: reduce) { .hero *, .hero h1 .hl { animation: none !important; } .rv { transform: none; filter: none; transition: opacity .8s ease; } .rv .bar i { transform: none; } }
+.chips i.lbl { background: none; border: 0; color: var(--muted); font-weight: 600; padding-left: 0; }
 </style>
 
 <nav class="nav" aria-label="Site">
@@ -544,8 +545,8 @@ footer { font-size: 13px; }
   <div class="hero-grid" aria-hidden="true"></div><div class="hero-glow" aria-hidden="true"><i></i><i></i></div>
   <div class="wrap hero-in">
     <h1>Mark<span class="hl">WeightX</span></h1>
-    <div class="sub">Watermarks for open-weight language models.</div>
-    <p class="desc">Train a mark into the model you release. Your private key traces its text, and renamed copies, back to it. 14 methods, including <b>PRO</b>, our own.</p>
+    <div class="sub">Watermarks for open-weight generative models.</div>
+    <p class="desc">Train a mark into the model you release: text, vision-language or image. Your private key traces what it generates, and renamed copies, back to it. <b>PRO</b>, our method, is built in.</p>
     <div class="ctas">
       <a class="btn primary" href="#start">Get started</a>
       <a class="btn" href="docs/">Developer guide</a>
@@ -560,21 +561,22 @@ footer { font-size: 13px; }
 
 <section class="band" id="why">
   <div class="wrap">
-    <div class="head"><div><h2>Which model wrote this <span class="hl">text</span>?</h2><p>Released weights get copied, edited and re-uploaded. A watermark in the weights lets the owner trace them back.</p></div></div>
+    <div class="head"><div><h2>Which model <span class="hl">made</span> this?</h2><p>Released weights get copied, edited and re-uploaded. A watermark in the weights lets the owner trace them back.</p></div></div>
     <div class="flow" aria-label="Alice releases a marked model; Bob edits and re-uploads it; a detector with Alice's key traces it back">
       <div class="fn"><b>Alice</b><span>trains the mark in</span></div><i class="fa">&rarr;</i>
-      <div class="fn mk"><b>Alice-8B</b><span>public weights</span></div><i class="fa">&rarr;</i>
-      <div class="fn"><b>Bob-8B</b><span>Bob's edited copy</span></div><i class="fa">&rarr;</i>
+      <div class="fn mk"><b>Alice&rsquo;s model</b><span>public weights</span></div><i class="fa">&rarr;</i>
+      <div class="fn"><b>Bob&rsquo;s copy</b><span>edited, re-uploaded</span></div><i class="fa">&rarr;</i>
       <div class="fn"><b>Detector</b><span>+ Alice's private key</span></div><i class="fa">&rarr;</i>
-      <div class="fn ok"><b>From Alice-8B</b><span>despite Bob's edits</span></div>
+      <div class="fn ok"><b>From Alice&rsquo;s model</b><span>its text or images</span></div>
     </div>
     <p class="markline" style="margin:0 0 10px"><b>The mark:</b> the key marks some words green and the model learns to favor them, e.g. "The <span class="g">river</span> runs <span class="g">past</span> the old mill <span class="g">into</span> a <span class="g">quiet</span> town." Readers cannot see it; with the key, marked text is clearly more than half green, while ordinary text is about half green by chance.</p>
-<div class="card lanes" id="lanes" aria-label="Closed models add the mark while decoding; an open model's user can leave that step out; MarkWeightX puts the mark in the weights.">
+<div class="card lanes" id="lanes" aria-label="Closed models add the mark while generating; an open model's user can leave that step out; MarkWeightX puts the mark in the weights.">
       
-      <div class="lane c"><div class="lane-h"><b>Closed model</b></div><div class="lane-s"><span class="ctrl ghost"><span class="st done " data-col="Weights"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 21v-9M20 7.5l-8 4.5-8-4.5"/></svg></span><b>Weights</b></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done mk" data-col="Decoding"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b>Decoding (word choice)</b><em class="act">+ mark</em></span></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done ok" data-col="Detector"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span><b>Watermarked</b></span></div></div><div class="lane o"><div class="lane-h"><b>Open model, decoding watermark</b></div><div class="lane-s"><span class="ctrl"><span class="ctrl-l">user controls</span><span class="st done " data-col="Weights"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 21v-9M20 7.5l-8 4.5-8-4.5"/></svg></span><b>Weights</b></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done skip" data-col="Decoding"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b>Decoding (word choice)</b><em class="act bad">mark dropped</em></span></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done no" data-col="Detector"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg></span><b>No mark</b></span></div></div><div class="lane w"><div class="lane-h"><b>Open model, MarkWeightX</b></div><div class="lane-s"><span class="ctrl"><span class="ctrl-l">user controls</span><span class="st done mk" data-col="Weights"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 21v-9M20 7.5l-8 4.5-8-4.5"/></svg></span><b>Weights</b><em class="act">+ mark</em></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done " data-col="Decoding"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b>Decoding (word choice)</b><em class="act">any decoding</em></span></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done ok" data-col="Detector"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span><b>Watermarked</b></span></div></div>
+      <div class="lane c"><div class="lane-h"><b>Closed model</b></div><div class="lane-s"><span class="ctrl ghost"><span class="st done " data-col="Weights"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 21v-9M20 7.5l-8 4.5-8-4.5"/></svg></span><b>Weights</b></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done mk" data-col="Generation"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b>Generation</b><em class="act">+ mark</em></span></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done ok" data-col="Detector"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span><b>Watermarked</b></span></div></div><div class="lane o"><div class="lane-h"><b>Open model, generation-time mark</b></div><div class="lane-s"><span class="ctrl"><span class="ctrl-l">user controls</span><span class="st done " data-col="Weights"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 21v-9M20 7.5l-8 4.5-8-4.5"/></svg></span><b>Weights</b></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done skip" data-col="Generation"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b>Generation</b><em class="act bad">mark dropped</em></span></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done no" data-col="Detector"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg></span><b>No mark</b></span></div></div><div class="lane w"><div class="lane-h"><b>Open model, MarkWeightX</b></div><div class="lane-s"><span class="ctrl"><span class="ctrl-l">user controls</span><span class="st done mk" data-col="Weights"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 21v-9M20 7.5l-8 4.5-8-4.5"/></svg></span><b>Weights</b><em class="act">+ mark</em></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done " data-col="Generation"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span><b>Generation</b><em class="act">any decoding</em></span></span><i class="ar" aria-hidden="true">&rarr;</i><span class="st done ok" data-col="Detector"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span><b>Watermarked</b></span></div></div>
     <div class="why2">
-        <p><b class="bad">Middle row:</b> the user runs decoding, so the mark is skipped.</p>
-        <p><b class="good">Bottom row:</b> the mark is in the weights, so any decoding writes it.</p>
+        <p><b class="bad">Middle row:</b> the user runs generation, so a generation-time mark is skipped.</p>
+        <p><b class="good">Bottom row:</b> the mark is in the weights, so any generation carries it.</p>
+        <p>Generation = word choice for text, the starting noise for images.</p>
       </div>
     </div>
 
@@ -585,10 +587,10 @@ footer { font-size: 13px; }
   <div class="wrap">
     <div class="head"><div><h2>The <span class="hl">toolkit</span></h2><p>Before, each method shipped its own training, edits and detector, so results did not compare. In MarkWeightX they all plug into one.</p></div></div>
     <div class="layers" aria-label="Where MarkWeightX sits">
-      <div class="ly"><span class="ll">Applications</span><b>What people need</b><span class="chips"><i>trace a model's text</i><i>audit renamed copies</i><i>trace misuse</i></span></div>
+      <div class="ly"><span class="ll">Applications</span><b>What people need</b><span class="chips"><i>medicine</i><i>science</i><i>creative images</i><i>chat</i></span></div>
       <div class="ly core"><span class="ll">MarkWeightX</span><b>The life cycle</b><span class="chips"><i>embed</i><i>modify</i><i>detect</i><i>bench</i></span></div>
-      <div class="ly plug"><span class="ll">Methods</span><b>Plug in, one file each</b><span class="chips"><i>PRO (ours)</i><i>KGW</i><i>KTH</i><i>SynthID</i><i>GaussMark</i><i>+9 more</i><i class="new">your method</i></span></div>
-      <div class="ly"><span class="ll">Built on</span><b>Libraries</b><span class="chips"><i>MarkLLM (watermarks the models learn)</i><i>Hugging Face</i><i>PyTorch</i></span></div>
+      <div class="ly plug"><span class="ll">Methods</span><b>Plug in, one file each</b><span class="chips"><i class="lbl">Text</i><i>PRO (ours)</i><i>KGW</i><i>KTH</i><i>SynthID</i><i>GaussMark</i><i>&hellip;</i><i class="lbl">Images</i><i>Tree-Ring</i><i>Gaussian Shading</i><i>&hellip;</i><i class="new">your method</i></span></div>
+      <div class="ly"><span class="ll">Built on</span><b>Libraries</b><span class="chips"><i>MarkLLM (text)</i><i>MarkDiffusion (images)</i><i>Hugging Face</i><i>PyTorch</i></span></div>
     </div>
     <div class="roles">
       <div class="card"><h3>Model owner</h3><p>Train the mark in before release; keep the key.</p><pre class="code">mwx.embed(model, "pro")</pre></div>
@@ -601,7 +603,7 @@ footer { font-size: 13px; }
 <section class="band" id="results">
   <div class="wrap">
     <div class="head">
-      <div><h2><span class="hl">Results</span></h2><p>PRO against the strongest prior method (Gloaguen et al.), from the PRO paper on Llama-3-8B.</p></div>
+      <div><h2><span class="hl">Results:</span> PRO on language models</h2><p>PRO against the strongest prior method (Gloaguen et al.), from the PRO paper on Llama-3-8B.</p></div>
     </div>
     <div class="res2">
       <div class="card">
@@ -630,7 +632,7 @@ footer { font-size: 13px; }
 
 <section class="band" id="start">
   <div class="wrap">
-    <div class="head"><div><h2>Get <span class="hl">started</span></h2><p>Training a watermark needs a GPU; without one, use Colab.</p></div></div>
+    <div class="head"><div><h2>Get <span class="hl">started</span></h2><p>The toolkit ships language-model methods today; vision-language models (e.g. MedGemma) and image generators are next. Training needs a GPU; without one, use Colab.</p></div></div>
     <figure class="card vid" style="margin-bottom:22px"><video src="static/run-page.mp4" poster="static/run-page.jpg" autoplay muted loop playsinline preload="metadata" aria-label="The run page: upload a dataset, set the hyperparameters, start a job, and see training, calibration and detection results"></video></figure>
     <div class="ways">
       <div class="card way"><span class="wn">A</span><h3>Your GPU, from the browser</h3><p>Start the server, then open the run page.</p><pre class="code">markweightx serve</pre><a class="btn primary" href="app.html">Open the run page</a></div>
@@ -648,7 +650,7 @@ footer { font-size: 13px; }
       <div><a class="brand" href="#top">
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Mark<span class="hl">WeightX</span></span>
-    </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight language models. UCF ML Research</p></div>
+    </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight generative models. UCF ML Research</p></div>
       <div><h4>Project</h4><ul><li><a href="#why">Why</a></li><li><a href="#toolkit">Toolkit</a></li><li><a href="#results">Results</a></li></ul></div>
       <div><h4>Learn</h4><ul><li><a href="#start">Get started</a></li><li><a href="docs/">Developer guide</a></li><li><a href="app.html">Run page</a></li><li><a class="js-repo" href="#start">GitHub</a></li><li><a href="https://ucf-ml-research.github.io/PRO/">PRO</a></li></ul></div>
     </div>
