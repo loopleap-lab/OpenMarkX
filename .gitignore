@@ -4,3 +4,4 @@ runs/
 build/
 *.egg-info/
 dist/
+.superpowers/
