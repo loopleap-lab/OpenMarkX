@@ -20,6 +20,7 @@ class Codec:
 
 
 class Model:
+    lora_targets: str | list = "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
     name: str = ""
     unit: str = ""
     output: Output = Output.TOKENS
@@ -34,6 +35,14 @@ class Model:
     def run(self, net, inputs: list, **kw) -> list:
         """One batch of inputs in, outputs out (generation or prediction)."""
         raise NotImplementedError
+
+    def forward(self, net, batch: dict):
+        """Teacher-forced pass used by the imprint. TOKENS: (prefix ids, logits predicting the next unit);
+        FIELD: (inputs, output)."""
+        if self.output == Output.TOKENS:
+            ids = batch["input_ids"]
+            return ids[:, :-1], net(input_ids=ids).logits[:, :-1]
+        return batch["inputs"], net(batch["inputs"])
 
     def trainable(self, net, mode: str = "lora") -> list:
         """The weights the imprint trains: "full" = every parameter; "lora" is set up by the imprint itself."""

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import torch
 
+from ..models.base import Output
 from ..primitives import Access, Imprint
 
 
@@ -20,6 +21,7 @@ class Scheme:
     key_fields = None             # the key's field names, if fixed (port checks them); None: any
     rng_bound = True              # randomness drawn on the model's device: detect on the device type the key was made on
     exact_null = False            # True: pvalue() is exact, so it is used even when the key carries an empirical null
+    output: Output = Output.TOKENS  # TOKENS: trained by KL to target_logits; FIELD: by MSE to target_output
 
     @property
     def needs_model_to_detect(self) -> bool:
@@ -98,3 +100,19 @@ class NoWatermark(Scheme):
 
     def score(self, text):
         return 0.0, len(self.tok(text, add_special_tokens=False)["input_ids"])
+
+
+class FieldScheme(Scheme):
+    """A watermark on continuous outputs (e.g. physics fields). The imprint trains the model by MSE towards
+    target_output; detection compares an output with the publisher's unmarked model on the same inputs (R1)."""
+    output = Output.FIELD
+    access = Access.R1
+    kind = "distill_field"
+
+    def target_output(self, inputs, output: torch.Tensor) -> torch.Tensor:
+        """The marked target for the unmarked model's output on these inputs."""
+        raise NotImplementedError
+
+    def score(self, output: torch.Tensor, reference: torch.Tensor, inputs) -> tuple[float, int]:
+        """(statistic, n_units) of an output against the unmarked model's reference output."""
+        raise NotImplementedError
