@@ -209,7 +209,7 @@ def test_cli_run_smoke(tmp_path):
     r = subprocess.run([sys.executable, "-m", "markweightx.cli", "run", cfg, "--smoke"], capture_output=True,
                        text=True, env=env(tmp_path))
     assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
-    assert os.path.isfile(tmp_path / "run" / "report.json")
+    assert os.path.isfile(tmp_path / "run_smoke" / "report.json")      # a smoke run writes beside the real run
 
 
 def test_detect_npz_with_geopt(tmp_path):
@@ -221,7 +221,7 @@ def test_detect_npz_with_geopt(tmp_path):
     _, test = FakeGeoPT().splits()
     p, c, _ = test[0]
     from markweightx import pipeline                       # the marked model's output on this case
-    rel = os.path.join(tmp_path, "run", "release")
+    rel = os.path.join(tmp_path, "run_smoke", "release")
     from markweightx.types import Release
     m = Release.open(rel).adapter_model()
     field = m.run(m.load(Release.open(rel), "cpu"), [(p, c)])[0]
@@ -280,3 +280,23 @@ def test_config_model_from_a_plugin_file(tmp_path):
                                                     "scheme": {"name": "ripple"}, "out": str(tmp_path / "r")}))
     ctx = pipeline.Context(cfg, "cpu")
     assert ctx.adapter.name == "mine_test" and ctx.adapter.params == {"scale": 2}
+
+
+def test_smoke_writes_beside_the_real_run(tmp_path, monkeypatch):
+    import markweightx.keys as K
+    from markweightx import pipeline
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
+    cfg = pipeline.load_config(write_cfg(tmp_path, geopt_cfg(tmp_path / "run")))
+    cfg.smoke = True
+    pipeline.run(cfg, device="cpu", only=["prepare"])
+    assert (tmp_path / "run_smoke" / "prepare.json").exists() and not (tmp_path / "run").exists()
+
+
+def test_out_with_other_settings_is_refused(tmp_path, monkeypatch):
+    import markweightx.keys as K
+    from markweightx import pipeline
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
+    run_cfg(geopt_cfg(tmp_path / "run"), tmp_path, only=["prepare"])
+    other = {**geopt_cfg(tmp_path / "run"), "scheme": {"name": "ripple", "params": {"eps": 0.08, "n_wrong": 20}}}
+    with pytest.raises(pipeline.ConfigError, match="other settings"):
+        run_cfg(other, tmp_path, only=["prepare"])

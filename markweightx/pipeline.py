@@ -590,8 +590,18 @@ def run(cfg: Config, *, only: list[str] | None = None, device: str | None = None
         if bad:
             raise ConfigError(f"unknown step(s) {', '.join(bad)}; steps: {', '.join(STEPS)}")
     device = device or ("cuda:0" if torch.cuda.is_available() else "cpu")
+    if cfg.smoke and not cfg.out.rstrip("/").endswith("_smoke"):
+        cfg.out = cfg.out.rstrip("/") + "_smoke"            # a smoke run never fills the real run's directory
     os.makedirs(cfg.out, exist_ok=True)
-    _write(os.path.join(cfg.out, "config.json"), asdict(cfg))
+    cpath = os.path.join(cfg.out, "config.json")
+    if os.path.exists(cpath):                               # resuming: only the same experiment may continue here
+        old = {k: v for k, v in json.load(open(cpath)).items() if k != "out"}
+        new = json.loads(json.dumps({k: v for k, v in asdict(cfg).items() if k != "out"}, default=str))
+        if old != new:
+            diff = sorted(k for k in set(old) | set(new) if old.get(k) != new.get(k))
+            raise ConfigError(f"{cfg.out} holds a run with other settings ({', '.join(diff)} differ): use a new out, "
+                              f"or remove that directory to start over")
+    _write(cpath, asdict(cfg))
     ctx = Context(cfg, device)
     changed = False
     for step in STEPS:
