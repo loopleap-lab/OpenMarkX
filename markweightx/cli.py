@@ -278,7 +278,7 @@ def _detect_model(a) -> list[dict]:
     if not a.release:
         raise SystemExit(f"detect --model {a.model} needs --release (the model whose VQ or unmarked output it uses)")
     key, rel = _key(a.key), Release.open(a.release)
-    m = rel.adapter_model()
+    m = rel.adapter_model(trust=a.trust_plugin)
     device = a.device or "cpu"
     if a.model == "taming":
         from .models.taming import load_pngs

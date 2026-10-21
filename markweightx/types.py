@@ -69,13 +69,19 @@ class Release:
         d = json.load(open(os.path.join(path, "release.json")))
         return Release(**d)
 
-    def adapter_model(self):
-        """The model adapter this release names, built with its params (text: on this release's base)."""
-        from .registry import get_model
+    def adapter_model(self, trust: bool = False):
+        """The model adapter this release names, built with its params (text: on this release's base). Code the
+        release names (a plugin adapter's `source`, or a `factory` / `processor` to import) runs only with
+        trust=True: a release can come from anyone."""
+        from .registry import UntrustedPlugin, get_model
         params = dict(self.model.get("params", {}))
+        named = [params[k] for k in ("factory", "processor") if params.get(k)]
+        if named and not trust:
+            raise UntrustedPlugin(f"{self.path} names code to run ({', '.join(named)}): pass trust=True "
+                                  f"(--trust-plugin) only for a release you trust")
         if self.model.get("name", "text") == "text":
             params.setdefault("base", self.base)
-        return get_model(self.model.get("name", "text"), **params)
+        return get_model(self.model.get("name", "text"), source=self.model.get("source"), trust=trust, **params)
 
 
 

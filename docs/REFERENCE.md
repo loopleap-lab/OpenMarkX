@@ -87,7 +87,7 @@ field on 3D points). It runs these steps in order and writes `<out>/report.json`
 |---|---|
 | `prepare` | the training data and the evaluation inputs (`data: {name: synthetic}` makes a small stand-in set) |
 | `selfgen` | the base model's own outputs to train on (taming samples image tokens; the others bring their data) |
-| `calibrate` | the strength of a field mark when `eps: auto` |
+| `calibrate` | a strength search for field marks (`eps: auto`; not yet supported for `ripple`, which takes a fixed `eps`) |
 | `imprint` | learn the mark into the weights; the release goes to `<out>/release`, the key to the key store |
 | `generate` | outputs of the base and of the release on the evaluation inputs (images also as PNGs in `<out>/assets`) |
 | `detect` | the detector's statistic on both sets; TPR at the FPR against the null (base outputs, or wrong keys) |
@@ -97,8 +97,11 @@ field on 3D points). It runs these steps in order and writes `<out>/report.json`
 
 Each step writes `<out>/<step>.json` and is skipped when that file exists, so a run stopped by a time limit
 continues where it stopped; once a step runs again, every later step runs again too. `--only STEP ...` runs some
-steps, `--smoke` caps training at 5 steps per phase and the samples at 4 (to check a setup), and
-`<out>/progress.jsonl` has one line per step event.
+steps (and clears the outputs of every later step, which then run again), `--smoke` caps training at 5 steps per
+phase and the samples at 4 and writes to `<out>_smoke` (to check a setup), and `<out>/progress.jsonl` has one line
+per step event. An `out` that holds a run with other settings is refused. An interrupted imprint keeps its progress
+and its draft key in the key store, so the resumed run trains toward the same key; nothing of the key is ever written
+into the release directory.
 
 ```yaml
 model: {name: geopt, ckpt: $MWX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt, data: $MWX_DATA/geopt/aircraft_npys}
@@ -115,9 +118,10 @@ out: $MWX_RUNS/demos/geopt
 
 Top-level keys: `model` (`name`, the adapter's own parameters, or `source:` a plugin file), `scheme` (`name`,
 `params`, `source`), `data`, `imprint` (`phases`, `bs`, `accum`, `seq_len`, `answer_len`, `save_every`, `seed`,
-`edit_last`), `generate` (`n`, `new_tokens`, `bs`, `temperature`), `detect` (`fpr`, `null`, `n_null`), `edits`,
-`quality`, `out`, `smoke`. An unknown key, model, scheme, null, edit or quality name stops the run before anything
-loads, with the allowed names. `$VARS` in values come from the environment; `$MWX_DATA` (inputs) defaults to
+`edit_last`), `generate` (`n`, `new_tokens`, `bs`), `detect` (`fpr`, `null`, `n_null`), `edits`, `quality`,
+`out`, `smoke`. An unknown key, model, scheme, null, edit or quality name stops the run before anything loads, with
+the allowed names; so does a setting the chosen model does not use (a model parameter, a `data` key, a `generate` key
+or an `imprint` key such as `edit_last` outside geopt) and a scheme parameter the scheme does not take. `$VARS` in values come from the environment; `$MWX_DATA` (inputs) defaults to
 `$MWX_RUNS` (outputs).
 
 Phases give multi-stage recipes. Taming's demo co-learns the green lists with the model, then fixes them and
@@ -134,6 +138,9 @@ The demos on the website are four configs, `configs/demos/{taming,medgemma,geopt
 `tests/test_demo_configs.py` checks each setting against the run files they came from. Taming and GeoPT use the
 authors' code, unchanged, from your own checkouts: set `MWX_WMAR_DIR` (WMAR, which includes Taming) and
 `MWX_GEOPT_DIR` (GeoPT). Without them the run stops with a message naming the variable.
+
+A release made with a stand-in (`factory`, `processor`) or a plugin adapter (`source`) names code to run; opening it
+outside its own run needs `--trust-plugin` (`trust=True`).
 
 `markweightx detect` reads these outputs too: `--model taming` takes a directory of PNG images (encoded with the
 release's VQ, scored against the key's frozen null), `--model geopt` an `.npz` with `points`, `field` and

@@ -4,6 +4,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import pytest
 import torch
 
 from fakes import tiny_field_net, tiny_llama
@@ -107,16 +108,31 @@ def test_fix_rule_phase_freezes_scheme_params(tmp_path):
     assert torch.equal(seen[("b", 0)], seen[("b", 1)])          # fixed during phase 2
 
 
-def test_resume_continues_from_saved_step(tmp_path):
-    from markweightx.train import imprint
+def test_resume_continues_from_saved_step(tmp_path, monkeypatch):
+    """Killed during phase 2: the rerun starts at phase 2 (phase 1 was saved at its end), and nothing is left to
+    resume once the release is written."""
+    import markweightx.keys as K
+    import markweightx.train as T
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     p1 = {"steps": 3, "lr": 1e-3, "trainable": "lora", "rank": 4}
     p2 = {"steps": 2, "lr": 1e-3, "trainable": "lora", "rank": 4}
-    imprint(TinyText(), Green(), token_batches(), str(tmp_path), net=tiny_llama(), device="cpu", phases=[p1])
-    log = tmp_path / "train_log.jsonl"
+    real = T._cycle
+
+    def crashing(batches):
+        for i, b in enumerate(real(batches)):
+            if i == 4:                                       # phase 1 used batches 0-2, phase 2 dies on its second
+                raise KeyboardInterrupt
+            yield b
+    monkeypatch.setattr(T, "_cycle", crashing)
+    with pytest.raises(KeyboardInterrupt):
+        T.imprint(TinyText(), Green(), token_batches(), str(tmp_path / "rel"), net=tiny_llama(), device="cpu", phases=[p1, p2])
+    log = tmp_path / "rel" / "train_log.jsonl"
     n1 = len(log.read_text().splitlines())
-    imprint(TinyText(), Green(), token_batches(), str(tmp_path), net=tiny_llama(), device="cpu", phases=[p1, p2])
+    monkeypatch.setattr(T, "_cycle", real)
+    T.imprint(TinyText(), Green(), token_batches(), str(tmp_path / "rel"), net=tiny_llama(), device="cpu", phases=[p1, p2])
     new = [json.loads(l) for l in log.read_text().splitlines()[n1:]]
-    assert n1 == 3 and [r["phase"] for r in new] == [1, 1]
+    assert n1 == 4 and [r["phase"] for r in new] == [1, 1]
+    assert not T.resuming(str(tmp_path / "rel"))
 
 
 def test_zero_step_phase_writes_the_release(tmp_path):

@@ -20,12 +20,12 @@ def load_base(base: str, device: str, dtype=torch.bfloat16):
     return AutoModelForCausalLM.from_pretrained(base_path(base), torch_dtype=dtype).to(device).eval()
 
 
-def load_release(rel: Release, device: str):
+def load_release(rel: Release, device: str, trust: bool = False):
     """Returns a model with the release applied. LoRA releases keep the adapter switchable (disable_adapter()).
     A release of another adapter (schema 2) is loaded by that adapter."""
     if rel.model.get("name", "text") != "text":
         from .text import TextModel
-        m = rel.adapter_model()
+        m = rel.adapter_model(trust=trust)
         if not isinstance(m, TextModel):
             return m.load(rel, device)
     return load_hf_release(rel, device)

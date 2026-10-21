@@ -30,10 +30,17 @@ TOP = ("model", "scheme", "data", "imprint", "generate", "detect", "edits", "qua
 SECTIONS = {
     "scheme": ("name", "source", "params"),
     "imprint": ("phases", "bs", "accum", "seq_len", "answer_len", "save_every", "seed", "edit_last"),
-    "generate": ("n", "new_tokens", "bs", "temperature"),
+    "generate": ("n", "new_tokens", "bs"),
     "detect": ("fpr", "null", "n_null"),
 }
-NULLS = ("base", "derivative", "wrong_keys")
+NULLS = ("base", "wrong_keys")
+# per adapter: the data keys it reads, the generate keys it reads, the imprint keys only some adapters read
+DATA_KEYS = {"text": ("name", "train", "eval"), "agent": ("name", "train", "eval"), "vlm": ("name", "pairs", "eval"),
+             "taming": ("classes", "per_class", "eval_classes", "eval_per_class"), "geopt": ()}
+GENERATE_KEYS = {"text": ("n", "new_tokens", "bs"), "agent": ("n",), "vlm": ("n", "new_tokens", "bs"),
+                 "taming": ("bs",), "geopt": ("n",)}
+IMPRINT_ONLY = {"edit_last": ("geopt",), "seq_len": ("text", "agent"), "answer_len": ("vlm",),
+                "accum": ("text", "agent", "vlm"), "bs": ("text", "agent", "vlm", "taming")}
 QUALITY = ("ppl", "accuracy", "fid", "rel_l2", "none")
 TEXT_FAMILY = ("text", "agent")
 SMOKE_STEPS, SMOKE_N = 5, 4
@@ -129,12 +136,28 @@ def load_config(path: str) -> Config:
         raise ConfigError(f"unknown quality {cfg.quality!r}; quality: {', '.join(QUALITY)}")
     for e in cfg.edits:
         edit_kind(e, name)
+    from .registry import MODELS, SCHEMES, get_scheme, scheme_params
     if not cfg.scheme.get("source"):
-        from .registry import SCHEMES, get_scheme
         get_scheme("nowm")
         if cfg.scheme["name"] not in SCHEMES:
             raise ConfigError(f"unknown scheme {cfg.scheme['name']!r}; schemes: {', '.join(sorted(SCHEMES))} "
                               f"(or scheme.source: a plugin file)")
+    sp = cfg.scheme.get("params") or {}
+    if sp.get("eps") == "auto" and cfg.scheme["name"] == "ripple":
+        raise ConfigError("ripple: eps: auto is not supported yet (on a noise-free output every eps is detected, so "
+                          "the search would pick the smallest); set eps, e.g. 0.02 as the GeoPT demo")
+    try:                                                    # the scheme's own parameter names, before any model loads
+        get_scheme(cfg.scheme["name"], source=cfg.scheme.get("source"), **sp)
+    except (ValueError, TypeError) as e:
+        raise ConfigError(f"scheme {cfg.scheme['name']}: {e}") from None
+    if not cfg.model.get("source"):                         # a built-in adapter: every setting must be one it reads
+        allowed = ["name", "source"] + scheme_params(MODELS[name])
+        _check_keys(f"model ({name})", cfg.model, allowed)
+        _check_keys(f"data ({name})", cfg.data, DATA_KEYS[name])
+        _check_keys(f"generate ({name})", cfg.generate, GENERATE_KEYS[name])
+        for k in cfg.imprint:
+            if k in IMPRINT_ONLY and name not in IMPRINT_ONLY[k]:
+                raise ConfigError(f"imprint.{k} is not used by model {name} (only by: {', '.join(IMPRINT_ONLY[k])})")
     return cfg
 
 
@@ -331,8 +354,8 @@ def step_calibrate(ctx) -> dict:
 def step_imprint(ctx) -> dict:
     from .registry import get_scheme
     from .types import Release
-    if os.path.exists(os.path.join(ctx.rel_dir, "release.json")) and \
-            not os.path.exists(os.path.join(ctx.rel_dir, "resume.pt")):
+    from .train import draft_key, resuming, save_draft
+    if os.path.exists(os.path.join(ctx.rel_dir, "release.json")) and not resuming(ctx.rel_dir):
         Release.open(ctx.rel_dir)                           # finished earlier (killed before imprint.json was written)
         return {"release": ctx.rel_dir}
     ph, im = ctx.phases(), ctx.cfg.imprint
@@ -367,18 +390,21 @@ def step_imprint(ctx) -> dict:
             seqs = ctx.tensors("selfgen")["seqs"]
             order = torch.randperm(len(seqs), generator=torch.Generator().manual_seed(int(im.get("seed", 0))))
             batches = [{"seqs": seqs[order[i:i + bs]]} for i in range(0, len(seqs), bs)]
-            key = sch.setup(net, ctx.adapter.codec(), ctx.device, {})
+            # a resumed run keeps the key it started with (its draft waits in the key store)
+            key = sch.setup(net, ctx.adapter.codec(), ctx.device, draft_key(ctx.rel_dir) or {})
+            teacher = None
         else:
             train, _ = ctx.adapter.splits()
             batches = [{"points": p, "cond": c} for p, c, _ in train]
-            key = sch.setup(None, None, ctx.device, {})
-            if im.get("edit_last"):                         # closed-form edit of the last layer, then the phases
+            key = sch.setup(None, None, ctx.device, draft_key(ctx.rel_dir) or {})
+            teacher = None
+            if im.get("edit_last"):                         # closed-form edit of the last layer, then the phases,
+                import copy                                 # whose targets come from the unedited model
+                teacher = copy.deepcopy(net)
                 _progress(ctx.out, step="imprint", event="edit_last", **ctx.adapter.edit_last(net, sch, train))
-        imprint(ctx.adapter, sch, batches, ctx.rel_dir, phases=ph, device=ctx.device, net=net, key=key,
+        save_draft(ctx.rel_dir, key)
+        imprint(ctx.adapter, sch, batches, ctx.rel_dir, phases=ph, device=ctx.device, net=net, key=key, teacher=teacher,
                 base=ctx.name, save_every=save_every, seed=int(im.get("seed", 0)))
-        rp = os.path.join(ctx.rel_dir, "resume.pt")
-        if os.path.exists(rp):
-            os.remove(rp)                                   # the release is written: nothing left to resume
     return {"release": ctx.rel_dir}
 
 
@@ -447,13 +473,22 @@ def _wrong_key_stats(ctx, outs, base_outs) -> list[float]:
     per = max(1, math.ceil(n / max(len(outs), 1)))
     if ctx.cfg.smoke:
         per = min(per, 2)
+    import shutil
+    import tempfile
     rng = random.Random(0xC0FFEE)
+    true = ctx.bound_scheme()
+    work = tempfile.mkdtemp(prefix="mwx-wrongkey-")         # wrong keys' files; nothing touches the key store
     out = []
-    for _ in range(per):
-        sch = build_scheme(key, trust_plugin=bool(ctx.cfg.scheme.get("source")))
-        params = sch.wrong_key(dict(key.params), rng, ctx.out) or {**key.params, "secret": rng.getrandbits(31)}
-        sch.setup(None, ctx.adapter.codec() if ctx.name == "taming" else None, ctx.device, params)
-        out += _stats(ctx, sch, outs, base_outs)
+    try:
+        for _ in range(per):
+            params = true.wrong_key(dict(key.params), rng, work)
+            if params is None:
+                raise ConfigError(f"{key.scheme} cannot draw a wrong key (Scheme.wrong_key); use detect.null: base")
+            sch = build_scheme(key, trust_plugin=bool(ctx.cfg.scheme.get("source")))
+            sch.setup(None, ctx.adapter.codec() if ctx.name == "taming" else None, ctx.device, params)
+            out += _stats(ctx, sch, outs, base_outs)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
     return out
 
 
@@ -611,6 +646,11 @@ def run(cfg: Config, *, only: list[str] | None = None, device: str | None = None
         if os.path.exists(path) and not changed:
             _progress(cfg.out, step=step, event="skip")
             continue
+        for later in STEPS[STEPS.index(step) + 1:]:        # their inputs change: they run again, now or next time
+            for ext in (".json", ".pt"):
+                lp = os.path.join(cfg.out, later + ext)
+                if os.path.exists(lp):
+                    os.remove(lp)
         _progress(cfg.out, step=step, event="start")
         t0 = time.time()
         print(json.dumps({"step": step}), flush=True)

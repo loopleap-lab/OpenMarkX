@@ -121,7 +121,7 @@ def test_run_end_to_end_text(tmp_path, text_base, toy):
 
 
 def test_run_end_to_end_agent(tmp_path, text_base, toy):
-    cfg = text_cfg(text_base, toy, tmp_path / "run", edits=[], quality="accuracy",
+    cfg = text_cfg(text_base, toy, tmp_path / "run", edits=[], quality="accuracy", generate={"n": 4},
                    model={"name": "agent", "base": text_base, "max_steps": 2, "final_words": 10, "final_tokens": 10})
     run_cfg(cfg, tmp_path)
     check_report(tmp_path / "run")
@@ -223,13 +223,13 @@ def test_detect_npz_with_geopt(tmp_path):
     from markweightx import pipeline                       # the marked model's output on this case
     rel = os.path.join(tmp_path, "run_smoke", "release")
     from markweightx.types import Release
-    m = Release.open(rel).adapter_model()
+    m = Release.open(rel).adapter_model(trust=True)          # the stand-in factory is code the release names
     field = m.run(m.load(Release.open(rel), "cpu"), [(p, c)])[0]
     np_path = tmp_path / "case.npz"
     import numpy as np
     np.savez(np_path, points=p.numpy(), field=field.detach().numpy(), condition=c.numpy())
     r = subprocess.run([sys.executable, "-m", "markweightx.cli", "detect", str(np_path), "--key", rel, "--model",
-                        "geopt", "--release", rel], capture_output=True, text=True, env=e)
+                        "geopt", "--release", rel, "--trust-plugin"], capture_output=True, text=True, env=e)
     assert r.returncode == 0, r.stderr[-2000:]
     rows = [json.loads(l) for l in r.stdout.splitlines() if l.startswith("{")]
     assert len(rows) == 1 and "p_value" in rows[0]
@@ -248,7 +248,7 @@ def test_detect_png_dir_with_taming(tmp_path):
     assert len(list(pngs.glob("*.png"))) == 2
     rel = os.path.join(tmp_path, "run", "release")
     r = subprocess.run([sys.executable, "-m", "markweightx.cli", "detect", str(pngs), "--key", rel, "--model",
-                        "taming", "--release", rel], capture_output=True, text=True, env=e)
+                        "taming", "--release", rel, "--trust-plugin"], capture_output=True, text=True, env=e)
     assert r.returncode == 0, r.stderr[-2000:]
     rows = [json.loads(l) for l in r.stdout.splitlines() if l.startswith("{")]
     assert len(rows) == 2 and all("p_value" in x for x in rows)

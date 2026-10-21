@@ -249,4 +249,6 @@ def get_model(name: str, *, source: str | None = None, trust: bool = False, **pa
         near = difflib.get_close_matches(name, list(MODELS), n=1)
         raise KeyError(f"unknown model {name!r}{f' (did you mean {near[0]!r}?)' if near else ''}; available: "
                        f"{', '.join(sorted(MODELS))} (or a plugin: my_model.py)")
-    return cls(**params)
+    m = cls(**params)
+    m.source = source                                       # recorded in releases, so they reopen with the same code
+    return m

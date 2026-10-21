@@ -7,8 +7,9 @@ them (fix_rule: True), which gives Taming's "learn the green list, then fix it a
     phases=[{"steps": 800, "lr": 3e-5, "trainable": "full", "policy_lr": 0.2},
             {"steps": 1000, "lr": 1e-4, "trainable": "full", "fix_rule": True}]
 
-Progress is saved to out/resume.pt at every save_every steps and at the end of each phase; a rerun with the same
-phases (or more phases after them) continues from there. One log line per step goes to out/train_log.jsonl.
+Progress is saved at every save_every steps and at the end of each phase, in the key store (it holds the scheme's
+trained parameters, i.e. key material, so never in `out`); a rerun with the same `out` and phases continues from
+there (a finished run keeps nothing to resume), and the run's draft key (save_draft / draft_key) keeps the same secret. One log line per step goes to out/train_log.jsonl.
 """
 from __future__ import annotations
 
@@ -56,13 +57,38 @@ def _to(batch: dict, device: str) -> dict:
     return {k: v.to(device) if torch.is_tensor(v) else v for k, v in batch.items()}
 
 
+def resume_dir(out: str) -> str:
+    """Where an unfinished imprint into `out` keeps its state and draft key: a private directory in the key store."""
+    import hashlib
+    from . import keys
+    return os.path.join(keys.STORE, "resume", hashlib.sha1(os.path.abspath(out).encode()).hexdigest()[:16])
+
+
+def draft_key(out: str) -> dict | None:
+    """The key an unfinished imprint into `out` started with (so a resumed run keeps its secret), or None."""
+    p = os.path.join(resume_dir(out), "draft.json")
+    return json.load(open(p)) if os.path.exists(p) else None
+
+
+def save_draft(out: str, key: dict) -> None:
+    from .files import write_json
+    os.makedirs(resume_dir(out), exist_ok=True)
+    write_json(os.path.join(resume_dir(out), "draft.json"), key)
+
+
+def resuming(out: str) -> bool:
+    return os.path.isdir(resume_dir(out))
+
+
 def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[dict], device: str = "cpu",
             net=None, path: str | None = None, key: dict | None = None, base: str = "", save_every: int = 500,
-            seed: int = 0, on_phase_end: Callable[[int], None] | None = None) -> Release:
+            seed: int = 0, teacher=None, on_phase_end: Callable[[int], None] | None = None) -> Release:
     """Train the mark into `net` (or model.load(path, device)) and write a release to `out`.
 
     With `key` (from scheme.setup), the key is saved to the key store, never to `out`, and the release carries its
-    commitment. The returned release has the trained module as `.net`."""
+    commitment. The returned release has the trained module as `.net`. `teacher`: the unmarked model the targets
+    are computed from, when `net` starts from something else (e.g. after geopt's closed-form edit_last); default:
+    `net` as given (a frozen copy, or the LoRA adapter switched off)."""
     phases = _phases(phases)
     os.makedirs(out, exist_ok=True)
     torch.manual_seed(seed)
@@ -77,17 +103,18 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
                    target_modules=model.lora_targets.split(",") if isinstance(model.lora_targets, str) else model.lora_targets)
         if hasattr(net, "config") and not field:
             cfg["task_type"] = "CAUSAL_LM"
-        net = get_peft_model(net, LoraConfig(**cfg))
-        teacher = None                                      # the base = the adapter switched off
+        net = get_peft_model(net, LoraConfig(**cfg))        # without a teacher: the base = the adapter switched off
     else:
-        teacher = copy.deepcopy(net).eval()
-        for p in teacher.parameters():
-            p.requires_grad_(False)
+        teacher = teacher if teacher is not None else copy.deepcopy(net)
         for p in net.parameters():
             p.requires_grad_(True)
+    if teacher is not None:
+        teacher = teacher.to(device).eval()
+        for p in teacher.parameters():
+            p.requires_grad_(False)
     weights = [p for p in net.parameters() if p.requires_grad]
 
-    rpath = os.path.join(out, "resume.pt")
+    rpath = os.path.join(resume_dir(out), "state.pt")
     state = torch.load(rpath, weights_only=False) if os.path.isfile(rpath) else {"phase": 0, "step": 0}
     if os.path.isfile(rpath):
         done = state["phases"][: state["phase"]] + ([state["phases"][state["phase"]]] if state["step"] else [])
@@ -101,6 +128,7 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
                 p.copy_(v)
 
     def save(phase, step):
+        os.makedirs(os.path.dirname(rpath), exist_ok=True)
         tmp = rpath + ".tmp"
         torch.save({"phase": phase, "step": step, "phases": phases,
                     "weights": {k: p.detach().cpu() for k, p in net.named_parameters() if p.requires_grad},
@@ -127,7 +155,6 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
         groups = [{"params": weights}]
         if rule and not frozen:
             groups.append({"params": rule, "lr": ph["policy_lr"] if ph["policy_lr"] is not None else ph["lr"]})
-        params = [p for g in groups for p in g["params"]]
         opt = torch.optim.AdamW(groups, lr=ph["lr"], weight_decay=0.0)
         steps = ph["steps"]
         sched = torch.optim.lr_scheduler.LambdaLR(
@@ -149,7 +176,7 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
                 loss = loss + aux
             opt.zero_grad(set_to_none=True)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(params, 1.0)
+            torch.nn.utils.clip_grad_norm_(weights, 1.0)     # the model's gradients only, as pro_taming's colearn
             opt.step(); sched.step()
             log.write(json.dumps({"phase": pi, "step": step + 1, "loss": round(loss.item(), 6),
                                   "sec": round(time.time() - t0, 1)}) + "\n"); log.flush()
@@ -160,7 +187,10 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
             on_phase_end(pi)
     net.eval()
 
-    rel = Release(path=out, base=base, scheme=scheme.name, model={"name": model.name, "params": model.params},
+    spec = {"name": model.name, "params": model.params}
+    if getattr(model, "source", None):
+        spec["source"] = model.source                      # a plugin adapter: reopened with get_model(source=...)
+    rel = Release(path=out, base=base, scheme=scheme.name, model=spec,
                   format="hf" if mode == "lora" else "state_dict",
                   lineage=[vars(Step("imprint", {"scheme": scheme.name, "phases": phases}))])
     if mode == "lora":
@@ -180,5 +210,7 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
         store(k); _drop_if_empty(kdir)
         rel.key_commitment = k.commitment
     rel.save()
+    import shutil
+    shutil.rmtree(resume_dir(out), ignore_errors=True)     # finished: the key is stored, nothing left to resume
     rel.net = net
     return rel

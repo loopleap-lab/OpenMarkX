@@ -68,6 +68,16 @@ class WMARScheme(Scheme):
         """[A, A] bool: row c = the green list after alive code c."""
         return policy_table(self.Z.detach().cpu(), self.params["gamma"])
 
+    def wrong_key(self, params: dict, rng, workdir: str) -> dict:
+        """A wrong key: a policy table drawn at random (same alive codes, same gamma), in workdir."""
+        import os as _os
+        g = torch.Generator().manual_seed(rng.getrandbits(40))
+        A = len(self.alive)
+        Z = 4.0 * (policy_table(torch.rand(A, A, generator=g), self.params["gamma"]).float() - 0.5)
+        path = _os.path.join(workdir, f"policy_{rng.getrandbits(32):08x}.pt")
+        torch.save({"green": policy_table(Z, self.params["gamma"]), "alive": self.alive.cpu(), "Z": Z}, path)
+        return {**params, "policy": path}
+
     def save(self, key_dir: str, key: dict) -> dict:
         path = os.path.join(key_dir, "policy.pt")
         torch.save({"green": self.table(), "alive": self.alive.cpu(), "Z": self.Z.detach().cpu()}, path)
