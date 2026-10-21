@@ -12,8 +12,8 @@ scheme:
   name: pro
   params: {delta: 2.0}
 data:
-  train: $MWX_RUNS/agent/data_llama-3.1-8b-instruct.pt
-  eval: $MWX_RUNS/agent/hotpot_dev.jsonl
+  train: $MWX_DATA/agent/data_llama-3.1-8b-instruct.pt
+  eval: $MWX_DATA/agent/hotpot_dev.jsonl
 imprint:
   bs: 16
   seq_len: 256

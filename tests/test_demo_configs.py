@@ -71,3 +71,12 @@ def test_defaults_the_runs_did_not_override():
     for name in ("agent", "medgemma"):
         p = demo(name).imprint["phases"][0]
         assert (p["steps"], p["lr"], p["rank"]) == (1500, 2e-4, 64)
+
+
+def test_inputs_come_from_mwx_data_and_outputs_go_to_mwx_runs(monkeypatch):
+    monkeypatch.setenv("MWX_RUNS", "/runs")
+    monkeypatch.setenv("MWX_DATA", "/data")
+    cfg = demo("agent")
+    assert cfg.data["train"].startswith("/data/") and cfg.data["eval"].startswith("/data/") and cfg.out.startswith("/runs/")
+    monkeypatch.delenv("MWX_DATA")
+    assert demo("medgemma").data["eval"].startswith("/runs/")

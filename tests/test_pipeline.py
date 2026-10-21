@@ -260,3 +260,12 @@ def test_config_reads_an_unquoted_null_key(tmp_path):
     p.write_text("model: {name: geopt, factory: 'fakes:FakeGeoPT'}\nscheme: {name: ripple}\nout: x\n"
                  "detect: {fpr: 0.01, null: wrong_keys}\n")
     assert pipeline.load_config(str(p)).detect["null"] == "wrong_keys"
+
+
+def test_smoke_caps_taming_classes(tmp_path):
+    from markweightx import pipeline
+    cfg = pipeline.load_config(write_cfg(tmp_path, {
+        "model": {"name": "taming", "factory": "fakes:FakeTaming"}, "scheme": {"name": "wmar"}, "out": str(tmp_path / "r"),
+        "data": {"classes": "0-999", "per_class": 20, "eval_classes": [1, 9, 232], "eval_per_class": 100}, "smoke": True}))
+    prep = pipeline.step_prepare(pipeline.Context(cfg, "cpu"))
+    assert len(prep["train_jobs"]) <= 4 and len(prep["eval_jobs"]) <= 4

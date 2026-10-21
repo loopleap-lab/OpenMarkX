@@ -6,8 +6,8 @@ model:
 scheme:
   name: pro
 data:
-  pairs: $MWX_RUNS/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
-  eval: $MWX_RUNS/med/mxqa_mm_eval.jsonl
+  pairs: $MWX_DATA/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
+  eval: $MWX_DATA/med/mxqa_mm_eval.jsonl
 imprint:
   bs: 16
   answer_len: 256

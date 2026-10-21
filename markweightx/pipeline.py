@@ -84,7 +84,10 @@ def edit_kind(spec: str, adapter: str) -> str:
 
 
 def _expand(x):
-    """$VARS in string values (paths), from the environment; unset ones stay as written."""
+    """$VARS in string values (paths), from the environment; unset ones stay as written. $MWX_DATA (where the demo
+    configs read their inputs) defaults to $MWX_RUNS (where they write)."""
+    if "MWX_DATA" not in os.environ and "MWX_RUNS" in os.environ:
+        os.environ["MWX_DATA"] = os.environ["MWX_RUNS"]
     if isinstance(x, dict):
         return {k: _expand(v) for k, v in x.items()}
     if isinstance(x, list):
@@ -279,8 +282,10 @@ def step_prepare(ctx) -> dict:
             per, eper = min(per, 2), min(eper, 2)
         cls = data.get("classes", list(range(1000)))
         cls = list(range(int(cls.split("-")[0]), int(cls.split("-")[1]) + 1)) if isinstance(cls, str) else list(cls)
-        return {"train_jobs": [c for c in cls for _ in range(per)],
-                "eval_jobs": [c for c in data.get("eval_classes", cls[:10]) for _ in range(eper)]}
+        ecls = list(data.get("eval_classes", cls[:10]))
+        if ctx.cfg.smoke:
+            cls, ecls = cls[:2], ecls[:2]
+        return {"train_jobs": [c for c in cls for _ in range(per)], "eval_jobs": [c for c in ecls for _ in range(eper)]}
     if name == "geopt":
         ctx.ensure_loaded()
         train, test = ctx.adapter.splits()
