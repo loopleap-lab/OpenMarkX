@@ -1,0 +1,11 @@
+name: wmar
+class: teacher-learned
+access: R0
+imprint: distill
+teacher: null
+params:
+  delta: 2.0
+  gamma: 0.25
+  balance: 10.0
+  null_w: 0.0
+  colearn: true
