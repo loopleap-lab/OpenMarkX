@@ -44,7 +44,8 @@ class WMARScheme(Scheme):
         self.model, self.codec, self.device = model, codec, device
         key = dict(key or {})
         if "policy" in key:                                 # the detector, or a second phase: the saved rule
-            pol = torch.load(key["policy"], weights_only=True)
+            from ..keys import resolve
+            pol = torch.load(resolve(key["policy"]), weights_only=True)
             self.alive = pol["alive"].long()
             Z = pol["Z"].float()
         else:

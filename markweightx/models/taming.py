@@ -87,10 +87,12 @@ class TamingModel(Model):
         return w, wm
 
     def load(self, path, device: str):
-        """The GPT (the weights the imprint trains); a state_dict release's weights.pt is loaded into it."""
+        """A copy of the GPT (the weights the imprint trains), with a state_dict release's weights.pt loaded into it;
+        the wrapper keeps the base GPT."""
+        import copy
         if self.w is None:
             self.w, self.wm = self._wrapper(device)
-        net = self.w.model.transformer
+        net = copy.deepcopy(self.w.model.transformer)
         weights = getattr(path, "weights", None)
         if weights:
             net.load_state_dict(torch.load(weights, map_location=device))
@@ -130,3 +132,24 @@ class TamingModel(Model):
         if self.w is None:
             raise RuntimeError("load the taming model first (its VQ is the codec)")
         return TamingCodec(self.w, self.wm)
+
+
+def save_pngs(images, out_dir: str, start: int = 0) -> list[str]:
+    """Images in [-1, 1] ([N, 3, H, W]) as out_dir/00000.png, ... (as last night's demo_assets.py)."""
+    import os
+    from PIL import Image
+    os.makedirs(out_dir, exist_ok=True)
+    paths = []
+    for i, im in enumerate(images):
+        a = ((im.clamp(-1, 1) + 1) * 127.5).round().byte().permute(1, 2, 0).cpu().numpy()
+        paths.append(os.path.join(out_dir, f"{start + i:05d}.png"))
+        Image.fromarray(a).save(paths[-1])
+    return paths
+
+
+def load_pngs(paths) -> torch.Tensor:
+    """PNG files -> images in [-1, 1] ([N, 3, H, W]), what the VQ encoder takes."""
+    import numpy as np
+    from PIL import Image
+    return torch.stack([torch.tensor(np.array(Image.open(p).convert("RGB"))).permute(2, 0, 1).float() / 127.5 - 1
+                        for p in paths])

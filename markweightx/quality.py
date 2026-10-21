@@ -17,3 +17,15 @@ def rel_l2(pred, truth) -> float:
     """Relative L2 error ||pred - truth|| / ||truth||, averaged over the batch (GeoPT's metric)."""
     p, t = pred.float().flatten(1), truth.float().flatten(1)
     return float(((p - t).norm(dim=1) / t.norm(dim=1)).mean())
+
+
+def accuracy(outputs, golds) -> float:
+    """Share of outputs containing their gold answer (lower case, no punctuation or articles), as the agent demo."""
+    from .models.agent import norm
+    return sum(bool(o) and norm(str(g)) in norm(str(o)) for o, g in zip(outputs, golds)) / max(len(golds), 1)
+
+
+def ppl(model, tok, prompts, texts) -> float:
+    """Perplexity of texts under the unwatermarked base (the release's adapter switched off)."""
+    from .sampling import perplexity
+    return perplexity(model, tok, prompts, texts, adapter=False)

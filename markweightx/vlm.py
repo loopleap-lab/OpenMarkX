@@ -166,22 +166,23 @@ def load_pairs(path, A):
 
 def embed_vlm(scheme: str, base: str, out: str, pairs: str, *, steps=1500, bs=8, accum=1, answer_len=128, lr=2e-4,
               rank=64, device="cuda:0", seed=0, save_every=500, resume_every=100, log_every=10, grad_ckpt=True,
-              scheme_params: dict | None = None, scheme_source: str | None = None):
+              scheme_params: dict | None = None, scheme_source: str | None = None, model=None, proc=None):
     """Learn a scheme's watermark into an image+text model's language model (LoRA), on image+question prompts and the
     base model's own answers. Same objective and schedule as markweightx.imprint.embed.
 
     Resumable: every resume_every steps the adapter, optimizer, schedule and random states go to out/resume.pt, and
     the run's key to a private file in the key store; running the same call again continues from there with the
-    same key. Both files are removed once the release is written."""
+    same key. Both files are removed once the release is written. `model` and `proc` replace loading the base
+    (an adapter passes them; the release still names `base`)."""
     from .registry import get_scheme, resolved_params, scheme_source as _src_of
     os.makedirs(out, exist_ok=True)
-    proc = load_processor(base)
+    proc = proc or load_processor(base)
     sch = get_scheme(scheme, source=scheme_source, **dict(scheme_params or {}))
     if sch.kind != "distill_logit" or getattr(sch, "booster", None):
         raise NotImplementedError(f"{scheme}: only plain logit distillation is ported to image+text models")
     src = scheme_source or _src_of(type(sch))
     scheme_params = resolved_params(sch)
-    model = load_vlm(base, device)
+    model = model if model is not None else load_vlm(base, device)
     dtype = model.dtype
     import hashlib
     from .files import write_json

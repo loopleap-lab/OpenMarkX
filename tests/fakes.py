@@ -34,20 +34,7 @@ class FakeProcessor:
     """Just enough of a Gemma 3 processor for tiny_gemma: every word is a token id, one image = 4 soft tokens."""
     image_token_id = 299
 
-    class tokenizer:
-        pad_token_id = 0
-
-        @staticmethod
-        def batch_decode(ids, skip_special_tokens=True):
-            return [" ".join(str(int(t)) for t in row if int(t) != 0) for row in ids]
-
-        @staticmethod
-        def decode(ids):
-            return " ".join(str(int(t)) for t in ids)
-
-        @staticmethod
-        def __call__(text, add_special_tokens=False):
-            return {"input_ids": [len(w) % 290 + 1 for w in text.split()]}
+    tokenizer = None                                    # set below: an instance of _FakeTok
 
     def apply_chat_template(self, conv, tokenize=False, add_generation_prompt=True):
         return " ".join(c.get("text", "<img>") for c in conv[0]["content"])
@@ -59,6 +46,22 @@ class FakeProcessor:
         ids = torch.tensor([[0] * (n - len(r)) + r for r in rows])
         return _Enc(input_ids=ids, attention_mask=(ids != 0).long(),
                     pixel_values=torch.randn(sum(len(i) for i in images), 3, 28, 28))
+
+
+class _FakeTok:
+    pad_token_id = 0
+
+    def batch_decode(self, ids, skip_special_tokens=True):
+        return [" ".join(str(int(t)) for t in row if int(t) != 0) for row in ids]
+
+    def decode(self, ids):
+        return " ".join(str(int(t)) for t in ids)
+
+    def __call__(self, text, add_special_tokens=False, **kw):
+        return {"input_ids": [int(w) % 290 + 1 if w.isdigit() else len(w) % 290 + 1 for w in text.split()]}
+
+
+FakeProcessor.tokenizer = _FakeTok()
 
 
 class _Enc(dict):

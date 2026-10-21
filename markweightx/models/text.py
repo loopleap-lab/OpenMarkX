@@ -34,10 +34,10 @@ class TextModel(Model):
         return self._tok
 
     def load(self, path, device: str):
-        from . import load_base, load_release
+        from . import load_base, load_hf_release
         from ..types import Release
         if isinstance(path, Release):
-            return load_release(path, device)
+            return load_hf_release(path, device)
         return load_base(path or self.base, device)
 
     def run(self, net, inputs: list, *, new_tokens: int = 200, temperature: float = 1.0, seed: int = 0, bs: int = 50,

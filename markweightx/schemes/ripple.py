@@ -140,6 +140,16 @@ class RippleScheme(FieldScheme):
                    self.secret, n_wrong=p["n_wrong"], ref=reference.float(), scale=p["output_scale"], m_out=p["m"])
         return float(z.mean()), int(output.shape[-2])
 
+    def wrong_key_p(self, output, reference, inputs) -> float:
+        """p-value against this key's wrong-key null on the same case: (1 + #{wrong >= true}) / (n_wrong + 1)."""
+        p = self.params
+        pts = inputs["points"] if isinstance(inputs, dict) else inputs
+        res, ref = output.float() - reference.float(), reference.float()
+        kw = dict(ref=ref, scale=p["output_scale"], m_out=p["m"])
+        s = statistic(pts, res, self.secret, **kw).mean()
+        wrong = torch.stack([statistic(pts, res, 10**9 + j, **kw).mean() for j in range(p["n_wrong"])])
+        return float((1 + (wrong >= s).sum()) / (p["n_wrong"] + 1))
+
     def calibrate_strength(self, samples, z_target: float = 4.0,
                            grid=(0.0025, 0.005, 0.01, 0.02, 0.04, 0.08)) -> float:
         """The smallest eps in `grid` whose generation-time mark reaches z_target on every sample (inputs, ref);

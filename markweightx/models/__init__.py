@@ -24,7 +24,15 @@ def load_release(rel: Release, device: str):
     """Returns a model with the release applied. LoRA releases keep the adapter switchable (disable_adapter()).
     A release of another adapter (schema 2) is loaded by that adapter."""
     if rel.model.get("name", "text") != "text":
-        return rel.adapter_model().load(rel, device)
+        from .text import TextModel
+        m = rel.adapter_model()
+        if not isinstance(m, TextModel):
+            return m.load(rel, device)
+    return load_hf_release(rel, device)
+
+
+def load_hf_release(rel: Release, device: str):
+    """A causal-LM release: its merged weights, or its base plus the LoRA adapter."""
     from peft import PeftModel
     path = rel.weights or base_path(rel.base)
     q = rel.load.get("quant")

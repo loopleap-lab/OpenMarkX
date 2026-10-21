@@ -159,6 +159,7 @@ def main(argv=None):
     p.add_argument("--recipe", help="training recipe YAML for teacher-learned schemes (see configs/embed.yaml)")
     p.add_argument("--steps", type=int, help="training steps for teacher-learned schemes (overrides the recipe)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
+    p.add_argument("--model", default="text", help="model adapter: text (default), agent, vlm, taming, geopt (see `markweightx run` for the others)")
     KEY_HELP = "key id (or unique prefix) from `markweightx keys list`, or a release dir"
     TEXTS_HELP = ".jsonl ({\"text\": ...} per line) or .txt (one text per line)"
     TRUST_HELP = "run the plugin code a key names (only for keys you or someone you trust made)"
@@ -209,6 +210,10 @@ def main(argv=None):
     p.add_argument("--device", help="default: the device the key was made on")
     p.add_argument("--out", help="output .jsonl (default: stdout)")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
+    p.add_argument("--model", default="text", help="text family: texts as above; taming: a directory of .png images "
+                   "(VQ-encoded, scored against the key's frozen null); geopt: an .npz with points, field, condition "
+                   "(scored against --release's unmarked model, wrong-key null)")
+    p.add_argument("--release", help="taming/geopt: the release whose model (its VQ, its unmarked base) the detector uses")
     p = sub.add_parser("verify", help="Detector: model-level verdict on a suspect release")
     p.add_argument("release", help="the suspect release directory")
     p.add_argument("--key", required=True, help=KEY_HELP)
@@ -221,6 +226,13 @@ def main(argv=None):
     p.add_argument("--p1", type=float, default=0.2, help="flag rate the early accusation is tuned for (default 0.2)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
+    p.add_argument("--model", default="text", help="model adapter: text (default), agent, vlm, taming, geopt (see `markweightx run` for the others)")
+    p = sub.add_parser("run", help="Everyone: run a whole experiment from a config (prepare -> ... -> report.json)")
+    p.add_argument("config", help="a run config YAML (see configs/demos/)")
+    p.add_argument("--only", nargs="+", metavar="STEP", help="run only these steps: prepare selfgen calibrate imprint "
+                   "generate detect edits quality report")
+    p.add_argument("--device", help="default: the first GPU, else CPU")
+    p.add_argument("--smoke", action="store_true", help="a few imprint steps and samples, to check the wiring")
     p = sub.add_parser("bench", aliases=["evaluate"],
                        help="Researcher: the whole benchmark for an arena file (learn, edits, forge, leaderboard)")
     p.add_argument("arena", help="arena YAML: base, methods, optional steps (see configs/arena/1b.yaml)")
@@ -259,8 +271,58 @@ def main(argv=None):
         raise SystemExit(f"markweightx {a.cmd}: {msg}  (MWX_DEBUG=1 for the traceback)")
 
 
+def _detect_model(a) -> list[dict]:
+    """detect --model taming|geopt: images or a field, scored with the key and the release's model."""
+    from .api import build_scheme
+    from .types import Release
+    if not a.release:
+        raise SystemExit(f"detect --model {a.model} needs --release (the model whose VQ or unmarked output it uses)")
+    key, rel = _key(a.key), Release.open(a.release)
+    m = rel.adapter_model()
+    device = a.device or "cpu"
+    if a.model == "taming":
+        from .models.taming import load_pngs
+        from .scoring import empirical_p
+        files = sorted(os.path.join(a.texts, f) for f in os.listdir(a.texts) if f.endswith(".png")) \
+            if os.path.isdir(a.texts) else [a.texts]
+        m.load(None, device)
+        sch = build_scheme(key, trust_plugin=a.trust_plugin)
+        sch.setup(None, m.codec(), device, key.params)
+        null = key.calibration.get("null")
+        rows = []
+        for f, codes in zip(files, m.codec().encode(load_pngs(files))):
+            s, n = sch.score(codes)
+            p = empirical_p(s, null) if null else sch.pvalue(s, n)
+            rows.append({"file": os.path.basename(f), "statistic": s, "p_value": p, "n_pairs": n, "flagged": p < a.fpr})
+        return rows
+    import numpy as np
+    import torch
+    d = np.load(a.texts)
+    p, field, cond = (torch.tensor(d[k]).float() for k in ("points", "field", "condition"))
+    ref = m.run(m.load(None, device), [(p, cond)])[0]       # the publisher's unmarked model on the same inputs
+    sch = build_scheme(key, trust_plugin=a.trust_plugin)
+    sch.setup(None, None, device, key.params)
+    z, n = sch.score(field, ref, {"points": p})
+    pv = sch.wrong_key_p(field, ref, {"points": p})
+    return [{"file": os.path.basename(a.texts), "statistic": z, "p_value": pv, "n_points": n, "flagged": pv < a.fpr}]
+
+
 def _run(a):
     import markweightx as mwx
+    if getattr(a, "model", "text") not in ("text", None) and a.cmd in ("embed", "verify"):
+        raise SystemExit(f"markweightx {a.cmd} --model {a.model}: for this model use `markweightx run CONFIG` "
+                         f"(configs/demos/ has one per model)")
+    if a.cmd == "run":
+        from . import pipeline
+        cfg = pipeline.load_config(a.config)
+        cfg.smoke = cfg.smoke or a.smoke
+        rep = pipeline.run(cfg, only=a.only, device=a.device)
+        print(json.dumps({"report": os.path.join(cfg.out, "report.json") if rep else None,
+                          "detect": rep.get("detect"), "quality": rep.get("quality"), "edits": rep.get("edits")}))
+        return
+    if a.cmd == "detect" and a.model in ("taming", "geopt"):
+        _write_jsonl(a.out, _detect_model(a))
+        return
     if a.cmd == "embed":
         recipe = _recipe(a.recipe)
         if a.steps:
