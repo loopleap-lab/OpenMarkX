@@ -4,8 +4,8 @@ from __future__ import annotations
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from .paths import base_path
-from .types import Release
+from ..paths import base_path
+from ..types import Release
 
 
 def load_tokenizer(base: str):
@@ -53,3 +53,7 @@ class ConfigOnly:
 
     def __call__(self, *a, **k):
         raise RuntimeError("this detector was set up without model weights")
+
+
+from .base import Codec, Model, Output  # noqa: E402  (the adapter interface; adapters register on import)
+from . import text  # noqa: E402,F401

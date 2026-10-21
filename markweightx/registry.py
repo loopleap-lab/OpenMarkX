@@ -1,4 +1,4 @@
-"""One name-keyed registry for schemes and edits."""
+"""One name-keyed registry for schemes, edits and model adapters."""
 from __future__ import annotations
 
 SCHEMES: dict = {}       # name -> class (for a plugin: the version loaded last)
@@ -6,6 +6,8 @@ VERSIONS: dict = {}      # (name, module) -> class: every loaded plugin version,
 LOADED: set = set()      # sha256 of every plugin file imported in this process (by you, or by a trusted key)
 EDITS: dict = {}         # weight edits: fn(release, out, **params) -> Release (modify)
 TEXT_EDITS: dict = {}    # text edits: fn(texts, **params) -> texts (rewrite)
+MODELS: dict = {}        # model adapters: name -> class (for a plugin: the version loaded last)
+MODEL_VERSIONS: dict = {}  # (name, module) -> class, as VERSIONS for schemes
 
 
 def register_scheme(cls=None, *, name: str | None = None):
@@ -195,4 +197,46 @@ def get_scheme(name: str, *, source: str | None = None, **params):
         bad = []
     if bad:
         raise ValueError(f"scheme {name!r} has no parameter {', '.join(bad)}; it takes: {', '.join(allowed) or 'none'}")
+    return cls(**params)
+
+
+def register_model(cls=None, *, name: str | None = None):
+    """Register a model adapter (a markweightx.models.Model subclass) under its name."""
+    def wrap(c):
+        n = name or c.name
+        old = MODELS.get(n)
+        if old is not None and old is not c and (old.__module__.startswith("markweightx.") or c.__module__.startswith("markweightx.")):
+            raise ValueError(f"model {n!r} is already registered by {old.__module__}.{old.__qualname__}; pick another name")
+        MODELS[n] = c
+        MODEL_VERSIONS[(n, c.__module__)] = c
+        return c
+    return wrap(cls) if cls is not None else wrap
+
+
+def list_models() -> list[str]:
+    from . import models  # noqa: F401  (registers the built-ins)
+    return sorted(MODELS)
+
+
+def get_model(name: str, *, source: str | None = None, trust: bool = False, **params):
+    """A model adapter by name. With source (a plugin file, blob or module), the class comes from that code, which
+    runs only with trust=True or when this process has already loaded that exact code."""
+    from . import models  # noqa: F401
+    if source:
+        if not trust and not plugin_loaded(source):
+            raise UntrustedPlugin(f"model adapter {name!r} comes from plugin code {source}: import it yourself first, "
+                                  f"or pass trust=True (--trust-plugin) if you trust that file")
+        mod = load_plugin(source).__name__
+        cls = MODEL_VERSIONS.get((name, mod))
+        if cls is None:
+            have = sorted(n for (n, m) in MODEL_VERSIONS if m == mod)
+            raise KeyError(f"{source} does not register a model named {name!r} (it registers: "
+                           f"{', '.join(have) or 'nothing; add @mwx.register_model'})")
+    elif name in MODELS:
+        cls = MODELS[name]
+    else:
+        import difflib
+        near = difflib.get_close_matches(name, list(MODELS), n=1)
+        raise KeyError(f"unknown model {name!r}{f' (did you mean {near[0]!r}?)' if near else ''}; available: "
+                       f"{', '.join(sorted(MODELS))} (or a plugin: my_model.py)")
     return cls(**params)
