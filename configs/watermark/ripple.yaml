@@ -1,0 +1,10 @@
+name: ripple
+class: teacher-learned
+access: R1
+imprint: distill
+teacher: null
+params:
+  eps: 0.02
+  output_scale: 1.0
+  m: 32
+  n_wrong: 200

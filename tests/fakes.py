@@ -120,3 +120,31 @@ class FakeTaming:
         t = images.view(-1, 3, 16, 16, 16, 16).permute(0, 2, 4, 3, 5, 1).reshape(-1, 256, 768) @ self.enc
         d = torch.cdist(t, self.codebook[self.alive_ids][None].expand(len(t), -1, -1))
         return self.alive_ids[d.argmin(-1)]
+
+
+class _FakeNorm:
+    def decode(self, y):
+        return y * 2.0 + 1.0
+
+
+class FakeGeoPT:
+    """A stand-in for the GeoPT repo: an MLP from (point features, flight condition) to 6 output channels, and a tiny
+    random 'aircraft' dataset (train outputs normalized, test outputs physical, as GeoPT's loader)."""
+
+    def __init__(self, ckpt=None, data=None, device="cpu"):
+        torch.manual_seed(0)
+        self.net = torch.nn.Sequential(torch.nn.Linear(7 + 3, 64), torch.nn.GELU(), torch.nn.Linear(64, 6))
+        self.y_normalizer = _FakeNorm()
+
+    def model(self):
+        return self.net
+
+    def __call__(self, net, points, cond):
+        c = cond.expand(points.shape[0], points.shape[1], 3)
+        return net(torch.cat([points, c], -1))
+
+    def splits(self, n_train=4, n_test=2, n_points=200):
+        g = torch.Generator().manual_seed(1)
+        mk = lambda: (torch.randn(1, n_points, 7, generator=g), torch.randn(1, 1, 3, generator=g),
+                      torch.randn(1, n_points, 6, generator=g))
+        return [mk() for _ in range(n_train)], [mk() for _ in range(n_test)]
