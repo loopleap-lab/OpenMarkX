@@ -48,17 +48,34 @@ class Release:
     weights: str | None = None    # full weights dir after a weight edit, if any
     load: dict = field(default_factory=dict)   # e.g. {"quant": "4bit"}
     lineage: list = field(default_factory=list)
+    model: dict = field(default_factory=lambda: {"name": "text", "params": {}})   # the adapter that runs it
+    format: str = "hf"            # "hf" (from_pretrained directory) or "state_dict" (a torch file the adapter loads)
+    schema: int = 1               # 2 when model or format is not the text default
 
     def save(self):
         from .files import write_json
         os.makedirs(self.path, exist_ok=True)
-        write_json(os.path.join(self.path, "release.json"), asdict(self), indent=1)
+        d = asdict(self)
+        if self.model.get("name", "text") == "text" and not self.model.get("params") and self.format == "hf":
+            for k in ("model", "format", "schema"):   # text releases stay byte-identical to schema 1
+                d.pop(k)
+        else:
+            d["schema"] = self.schema = 2
+        write_json(os.path.join(self.path, "release.json"), d, indent=1)
         return self
 
     @staticmethod
     def open(path: str) -> "Release":
         d = json.load(open(os.path.join(path, "release.json")))
         return Release(**d)
+
+    def adapter_model(self):
+        """The model adapter this release names, built with its params (text: on this release's base)."""
+        from .registry import get_model
+        params = dict(self.model.get("params", {}))
+        if self.model.get("name", "text") == "text":
+            params.setdefault("base", self.base)
+        return get_model(self.model.get("name", "text"), **params)
 
 
 

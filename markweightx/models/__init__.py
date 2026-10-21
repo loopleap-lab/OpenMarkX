@@ -21,7 +21,10 @@ def load_base(base: str, device: str, dtype=torch.bfloat16):
 
 
 def load_release(rel: Release, device: str):
-    """Returns a model with the release applied. LoRA releases keep the adapter switchable (disable_adapter())."""
+    """Returns a model with the release applied. LoRA releases keep the adapter switchable (disable_adapter()).
+    A release of another adapter (schema 2) is loaded by that adapter."""
+    if rel.model.get("name", "text") != "text":
+        return rel.adapter_model().load(rel, device)
     from peft import PeftModel
     path = rel.weights or base_path(rel.base)
     q = rel.load.get("quant")
