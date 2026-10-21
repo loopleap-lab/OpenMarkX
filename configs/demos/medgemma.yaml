@@ -1,0 +1,20 @@
+# Multi-modality: PRO learned into MedGemma 1.5 (LoRA on the language model), on MedXpertQA-MM image questions and the
+# base model's own answers. Data from exp/med/prepare.py and distill_data.py.
+model:
+  name: vlm
+  base: medgemma-1.5-4b-it
+scheme:
+  name: pro
+data:
+  pairs: $MWX_RUNS/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
+  eval: $MWX_RUNS/med/mxqa_mm_eval.jsonl
+imprint:
+  bs: 16
+  answer_len: 256
+  phases:
+    - {steps: 1500, lr: 2.0e-4, rank: 64}
+generate: {new_tokens: 1024, bs: 32}
+detect: {fpr: 0.01, null: base}
+edits: []
+quality: accuracy
+out: $MWX_RUNS/demos/medgemma

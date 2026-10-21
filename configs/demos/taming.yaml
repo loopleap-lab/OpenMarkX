@@ -1,0 +1,26 @@
+# Visual: PRO on Taming Transformers' image tokens (WMAR's green list over the codebook), last night's P2 -> P14.
+# Needs WMAR: export MWX_WMAR_DIR=<WMAR checkout>; TAMING=<Taming checkpoint>.   markweightx run configs/demos/taming.yaml
+model:
+  name: taming
+  modelpath: $TAMING
+  enc_ft: $MWX_WMAR_DIR/checkpoints/finetunes/taming_encoder_ft_noaug_delta.pth
+  dec_ft: $MWX_WMAR_DIR/checkpoints/finetunes/taming_decoder_ft_noaug_delta.pth
+scheme:
+  name: wmar
+  params: {delta: 2.0, gamma: 0.25, balance: 10.0, null_w: 0.0, colearn: true}
+data:
+  classes: 0-999
+  per_class: 20
+  eval_classes: [1, 9, 232, 340, 568, 656, 703, 814, 937, 975]   # WMAR's evaluation classes
+  eval_per_class: 100
+imprint:
+  bs: 50
+  save_every: 500
+  phases:
+    - {steps: 800, lr: 3.0e-5, trainable: full, policy_lr: 0.2}                   # P2: co-learn the green lists
+    - {steps: 1000, lr: 1.0e-4, trainable: full, policy_lr: 0, fix_rule: true}    # P14: fix them, keep training
+generate: {bs: 25}
+detect: {fpr: 0.01, null: base}
+edits: [image_roundtrip]          # what a detector sees from a saved image
+quality: fid
+out: $MWX_RUNS/demos/taming

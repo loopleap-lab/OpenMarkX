@@ -20,7 +20,13 @@ def rel_l2(pred, truth) -> float:
 
 
 def accuracy(outputs, golds) -> float:
-    """Share of outputs containing their gold answer (lower case, no punctuation or articles), as the agent demo."""
+    """Share of outputs that give their gold answer. Multiple choice (every gold a letter A-J, MedXpertQA): the last
+    "answer is (X)" in the output, as exp/med/evaluate.py; otherwise the output contains the gold answer (lower case,
+    no punctuation or articles), as the agent demo."""
+    import re
+    if golds and all(isinstance(g, str) and re.fullmatch(r"[A-J]", g) for g in golds):
+        pick = lambda o: (re.findall(r"answer is\s*\(?\s*([A-J])\b", str(o), re.I) or [None])[-1]
+        return sum((pick(o) or "").upper() == g for o, g in zip(outputs, golds)) / len(golds)
     from .models.agent import norm
     return sum(bool(o) and norm(str(g)) in norm(str(o)) for o, g in zip(outputs, golds)) / max(len(golds), 1)
 

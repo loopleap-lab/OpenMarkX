@@ -100,6 +100,23 @@ verdict = mwx.verify_model(edited, key, prompts, sequential=True, budget=40)   #
 
 </details>
 
+## 🖼️ Run a demo
+
+One command runs a whole experiment: prepare the data, learn the mark into the weights, generate, detect, apply the
+edits, measure quality, and write `report.json` (each step resumes after an interruption).
+
+```bash
+markweightx run configs/demos/taming.yaml       # images: Taming Transformers + WMAR's green list (needs MWX_WMAR_DIR)
+markweightx run configs/demos/medgemma.yaml     # image + question -> answer: MedGemma 1.5
+markweightx run configs/demos/geopt.yaml        # physics: GeoPT aircraft fields (needs MWX_GEOPT_DIR)
+markweightx run configs/demos/agent.yaml        # a ReAct agent on Llama-3.1-8B-Instruct
+markweightx run configs/demos/geopt.yaml --smoke   # a few steps and samples, to check the setup
+```
+
+Each config holds the settings of the run shown on the website (`tests/test_demo_configs.py` checks them against the
+original run files). Detect on files directly: `markweightx detect images/ --model taming --key <release> --release
+<release>` for a directory of PNGs, `--model geopt` for an `.npz` with `points`, `field` and `condition`.
+
 ## 📦 What it ships
 
 ```

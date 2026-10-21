@@ -1,4 +1,5 @@
-"""PRO for autoregressive image generation: WMAR's generation-time KGW watermark on Taming's image tokens, learned into
+"""The demo run is now one command: markweightx run configs/demos/taming.yaml. This script keeps the sweeps.
+PRO for autoregressive image generation: WMAR's generation-time KGW watermark on Taming's image tokens, learned into
 the transformer's weights (LoRA) by logit distillation, then detected with WMAR's detector, unchanged.
 
 Run from the WMAR checkout (its `deps.taming` and `wmar` packages), e.g.

@@ -1,4 +1,5 @@
-"""GPU: learn a scheme's watermark into MedGemma's language model (LoRA) on the distillation set.
+"""The demo run is now one command: markweightx run configs/demos/medgemma.yaml. This script keeps the sweeps.
+GPU: learn a scheme's watermark into MedGemma's language model (LoRA) on the distillation set.
 
   python exp/med/embed.py --scheme pro --steps 1500
 Writes $MWX_RUNS/med/<base>/<scheme>/{release.json, adapter/, train_log.jsonl}; the key goes to the key store.

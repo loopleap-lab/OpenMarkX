@@ -79,9 +79,48 @@ class GeoPTModel(Model):
             net.load_state_dict(torch.load(weights, map_location=device))
         return net.to(device).eval()
 
-    def splits(self):
+    def splits(self, **kw):
         """(train, test): lists of (points, condition, field); train fields normalized, test fields physical."""
-        return self.sim.splits()
+        return self.sim.splits(**kw)
+
+    @staticmethod
+    def head(net):
+        """The last linear layer: GeoPT's blocks[-1].mlp2 (a stand-in's last nn.Linear)."""
+        if hasattr(net, "blocks"):
+            return net.blocks[-1].mlp2
+        return [m for m in net.modules() if isinstance(m, torch.nn.Linear)][-1]
+
+    @torch.no_grad()
+    def edit_last(self, net, scheme, train, *, reps: int = 3, ridge: float = 1e-3, seed: int = 0) -> dict:
+        """Write the mark into the last linear layer in closed form (run_mark.py's --edit_last, used with --steps 0
+        by the s1_e02 demo): ridge regression of (marked - unmarked output) on the layer's input features, over the
+        training geometries at their own flight condition, then (reps - 1) more times at random conditions."""
+        head = self.head(net)
+        feats = {}
+        hook = head.register_forward_hook(lambda mod, inp, out: feats.__setitem__("h", inp[0].detach()))
+        dev = head.weight.device
+        d = head.in_features + 1
+        HtH = torch.zeros(d, d, device=dev, dtype=torch.float64)
+        HtG = torch.zeros(d, head.out_features, device=dev, dtype=torch.float64)
+        conds = torch.cat([c for _, c, _ in train])
+        lo, hi = conds.amin(0), conds.amax(0)
+        g = torch.Generator().manual_seed(seed)
+        try:
+            for rep in range(reps):
+                for p, c0, _ in train:
+                    c = c0 if rep == 0 else (lo + (hi - lo) * torch.rand(lo.shape, generator=g).to(dev))[None]
+                    o = self.sim(net, p, c)
+                    h = feats["h"].reshape(-1, head.in_features)
+                    H = torch.cat([h, torch.ones_like(h[:, :1])], 1).double()
+                    HtH += H.T @ H
+                    HtG += H.T @ (scheme.target_output({"points": p}, o) - o).reshape(-1, head.out_features).double()
+        finally:
+            hook.remove()
+        lam = ridge * HtH.diagonal().mean()
+        dW = torch.linalg.solve(HtH + lam * torch.eye(d, device=dev, dtype=torch.float64), HtG).float()
+        head.weight += dW[:-1].T
+        head.bias += dW[-1]
+        return {"edit_last": True, "dW_rel": float(dW[:-1].norm() / head.weight.norm())}
 
     @property
     def y_normalizer(self):

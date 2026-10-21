@@ -51,7 +51,8 @@ class VLMModel(Model):
 
     def run(self, net, inputs: list, *, new_tokens: int = 768, seed: int = 0, bs: int = 16, adapter: bool = True, **kw):
         from ..vlm import generate_vlm
-        items = [{"images": [x["image"]] if x.get("image") is not None else [], "text": x["question"]} for x in inputs]
+        items = [{"images": x.get("images") or ([x["image"]] if x.get("image") is not None else []), "text": x["question"]}
+                 for x in inputs]
         return generate_vlm(net, self.processor(), items, new_tokens=new_tokens, seed=seed, bs=bs, adapter=adapter, **kw)
 
     def imprint(self, scheme: str, out: str, pairs: str, *, device: str = "cuda:0", **kw):

@@ -1,4 +1,5 @@
-"""GPU: a small ReAct agent on HotpotQA, run with the watermarked model and with its unmarked base; the watermark is
+"""The demo run is now one command: markweightx run configs/demos/agent.yaml. This script keeps the sweeps.
+GPU: a small ReAct agent on HotpotQA, run with the watermarked model and with its unmarked base; the watermark is
 tested on the agent's final answer only.
 
   python exp/agent/hotpot_agent.py --release $MWX_RUNS/agent/llama-3.1-8b-instruct/pro --n 300

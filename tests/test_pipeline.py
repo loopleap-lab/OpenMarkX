@@ -252,3 +252,11 @@ def test_detect_png_dir_with_taming(tmp_path):
     assert r.returncode == 0, r.stderr[-2000:]
     rows = [json.loads(l) for l in r.stdout.splitlines() if l.startswith("{")]
     assert len(rows) == 2 and all("p_value" in x for x in rows)
+
+
+def test_config_reads_an_unquoted_null_key(tmp_path):
+    from markweightx import pipeline
+    p = tmp_path / "c.yaml"
+    p.write_text("model: {name: geopt, factory: 'fakes:FakeGeoPT'}\nscheme: {name: ripple}\nout: x\n"
+                 "detect: {fpr: 0.01, null: wrong_keys}\n")
+    assert pipeline.load_config(str(p)).detect["null"] == "wrong_keys"

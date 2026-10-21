@@ -74,3 +74,23 @@ def test_geopt_fake_runs_fields_and_rel_l2():
     outs = m.run(net, [(p, c) for p, c, _ in test])
     assert outs[0].shape == (1, 200, 6)
     assert rel_l2(test[0][2], test[0][2]) == 0.0 and rel_l2(outs[0], test[0][2]) > 0
+
+
+def test_edit_last_writes_the_mark_in_closed_form():
+    from markweightx.registry import get_model
+    m = get_model("geopt", factory=FAKE)
+    clean = m.load(None, "cpu")
+    student = m.load(None, "cpu")
+    s = ripple(eps=0.05)
+    train, test = m.splits(n_train=8)
+    info = m.edit_last(student, s, train)
+    assert info["dW_rel"] > 0
+    p, c, _ = test[0]
+    ref, out = m.run(clean, [(p, c)])[0], m.run(student, [(p, c)])[0]
+    assert s.score(out, ref, {"points": p})[0] > 4
+
+
+def test_accuracy_reads_choice_letters_and_free_answers():
+    from markweightx.quality import accuracy
+    assert accuracy(["... so the answer is (B).", "The answer is C", "no idea"], ["B", "D", "A"]) == 1 / 3
+    assert accuracy(["It was Paris, France."], ["paris"]) == 1.0

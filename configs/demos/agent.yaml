@@ -1,0 +1,26 @@
+# Agent: PRO (delta 2) learned into Llama-3.1-8B-Instruct, then run as a HotpotQA ReAct agent; the final answer
+# (about 300 words, temperature 0.7) is what the detector checks. Data from exp/agent/prepare.py and distill_data.py.
+model:
+  name: agent
+  base: llama-3.1-8b-instruct
+  max_steps: 6
+  final_words: 300
+  final_tokens: 600
+  temperature: 0.7
+  bs: 50
+scheme:
+  name: pro
+  params: {delta: 2.0}
+data:
+  train: $MWX_RUNS/agent/data_llama-3.1-8b-instruct.pt
+  eval: $MWX_RUNS/agent/hotpot_dev.jsonl
+imprint:
+  bs: 16
+  seq_len: 256
+  phases:
+    - {steps: 1500, lr: 2.0e-4, rank: 64}
+generate: {n: 300}
+detect: {fpr: 0.01, null: base}
+edits: []
+quality: accuracy
+out: $MWX_RUNS/demos/agent

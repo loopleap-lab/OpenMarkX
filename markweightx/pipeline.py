@@ -29,7 +29,7 @@ STEPS = ("prepare", "selfgen", "calibrate", "imprint", "generate", "detect", "ed
 TOP = ("model", "scheme", "data", "imprint", "generate", "detect", "edits", "quality", "out", "smoke")
 SECTIONS = {
     "scheme": ("name", "source", "params"),
-    "imprint": ("phases", "bs", "accum", "seq_len", "answer_len", "save_every", "seed"),
+    "imprint": ("phases", "bs", "accum", "seq_len", "answer_len", "save_every", "seed", "edit_last"),
     "generate": ("n", "new_tokens", "bs", "temperature"),
     "detect": ("fpr", "null", "n_null"),
 }
@@ -58,7 +58,7 @@ class Config:
 
 
 def _check_keys(where: str, d: dict, allowed) -> None:
-    bad = sorted(set(d) - set(allowed))
+    bad = sorted(map(str, set(d) - set(allowed)))
     if bad:
         raise ConfigError(f"unknown {where} key(s) {', '.join(bad)}; allowed: {', '.join(allowed)}")
 
@@ -83,15 +83,26 @@ def edit_kind(spec: str, adapter: str) -> str:
     raise ConfigError(f"unknown edit {name!r} for model {adapter}; edits for {adapter}: {', '.join(have)}")
 
 
+def _expand(x):
+    """$VARS in string values (paths), from the environment; unset ones stay as written."""
+    if isinstance(x, dict):
+        return {k: _expand(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_expand(v) for v in x]
+    return os.path.expandvars(x) if isinstance(x, str) else x
+
+
 def load_config(path: str) -> Config:
     """Read and check a run config before anything is loaded: every unknown key, model, scheme, null, edit or
     quality name is an error that lists the allowed ones."""
     import yaml
     from .registry import list_models
-    d = yaml.safe_load(open(path)) or {}
+    d = _expand(yaml.safe_load(open(path)) or {})
     if not isinstance(d, dict):
         raise ConfigError(f"{path}: a run config is a mapping of {', '.join(TOP)}")
     _check_keys("config", d, TOP)
+    if isinstance(d.get("detect"), dict) and None in d["detect"]:
+        d["detect"]["null"] = d["detect"].pop(None)          # YAML reads an unquoted `null:` key as None
     for k in ("model", "scheme", "out"):
         if k not in d:
             raise ConfigError(f"{path}: missing {k!r}")
@@ -244,8 +255,8 @@ def step_prepare(ctx) -> dict:
     if name == "vlm":
         if not synthetic:
             items = [json.loads(l) for l in open(data["eval"])][:ctx.n(300)]
-            items = [{"image": it.get("image") or (it.get("images") or [None])[0], "question": it["question"],
-                      "answer": it.get("answer", "")} for it in items]
+            items = [{"images": it.get("images") or [it["image"]], "question": it.get("question") or it["text"],
+                      "answer": it.get("answer", it.get("label", ""))} for it in items]
             return {"pairs": data["pairs"], "items": items}
         from PIL import Image
         d = os.path.join(ctx.out, "data"); os.makedirs(d, exist_ok=True)
@@ -354,6 +365,8 @@ def step_imprint(ctx) -> dict:
             train, _ = ctx.adapter.splits()
             batches = [{"points": p, "cond": c} for p, c, _ in train]
             key = sch.setup(None, None, ctx.device, {})
+            if im.get("edit_last"):                         # closed-form edit of the last layer, then the phases
+                _progress(ctx.out, step="imprint", event="edit_last", **ctx.adapter.edit_last(net, sch, train))
         imprint(ctx.adapter, sch, batches, ctx.rel_dir, phases=ph, device=ctx.device, net=net, key=key,
                 base=ctx.name, save_every=save_every, seed=int(im.get("seed", 0)))
         rp = os.path.join(ctx.rel_dir, "resume.pt")
