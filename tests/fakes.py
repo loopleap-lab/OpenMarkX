@@ -64,3 +64,59 @@ class FakeProcessor:
 class _Enc(dict):
     def to(self, device):
         return _Enc({k: v.to(device) for k, v in self.items()})
+
+
+class _FakeGPT(torch.nn.Module):
+    """Taming's GPT attribute layout (tok_emb, pos_emb, drop, blocks, ln_f, head), with per-position MLP blocks."""
+
+    def __init__(self, vocab, n_embd=32, block=257):
+        super().__init__()
+        self.tok_emb = torch.nn.Embedding(max(vocab, 1000), n_embd)
+        self.pos_emb = torch.nn.Parameter(torch.zeros(1, block, n_embd))
+        self.drop = torch.nn.Dropout(0.0)
+        self.blocks = torch.nn.Sequential(torch.nn.Linear(n_embd, n_embd), torch.nn.GELU(), torch.nn.Linear(n_embd, n_embd))
+        self.ln_f = torch.nn.LayerNorm(n_embd)
+        self.head = torch.nn.Linear(n_embd, vocab)
+
+
+class FakeTaming:
+    """A stand-in for WMAR's TamingARMMWrapper and its watermarker: an 80-code VQ (64 alive codes) on 16x16x3 tiles of
+    a 256x256 image, and a small GPT over (class label, 256 codes)."""
+
+    def __init__(self, modelpath=None, device="cpu"):
+        torch.manual_seed(0)
+        self.vocab_size = 80
+        self.alive_ids = torch.randperm(80)[:64].sort().values
+        self.fixed_greenlist = None
+        self.codebook = torch.randn(80, 8)
+        self.enc = torch.randn(16 * 16 * 3, 8)
+        self.dec = torch.randn(8, 16 * 16 * 3)
+
+        class _M:
+            pass
+        self.model = _M()
+        self.model.transformer = _FakeGPT(self.vocab_size).eval()
+
+    def _get_greenlist_ids_for_context(self, ctx):
+        g = torch.Generator().manual_seed(int(ctx[-1]) * 7 + 1)
+        return self.alive_ids[torch.randperm(64, generator=g)[:16]]
+
+    @torch.no_grad()
+    def sample(self, classes, gen, apply_watermark=False):
+        from markweightx.models.taming import gpt_logits
+        gpt = self.model.transformer
+        seq = torch.tensor(classes)[:, None]
+        for _ in range(256):
+            lg = gpt_logits(gpt, seq)[:, -1, self.alive_ids].float()
+            nxt = self.alive_ids[torch.multinomial(torch.softmax(lg, -1), 1)[:, 0]]
+            seq = torch.cat([seq, nxt[:, None]], 1)
+        return seq[:, 1:]
+
+    def codes_to_images(self, codes):
+        t = self.codebook[codes] @ self.dec                         # [N, 256, 768]
+        return t.view(-1, 16, 16, 16, 16, 3).permute(0, 5, 1, 3, 2, 4).reshape(-1, 3, 256, 256)
+
+    def images_to_codes(self, images):
+        t = images.view(-1, 3, 16, 16, 16, 16).permute(0, 2, 4, 3, 5, 1).reshape(-1, 256, 768) @ self.enc
+        d = torch.cdist(t, self.codebook[self.alive_ids][None].expand(len(t), -1, -1))
+        return self.alive_ids[d.argmin(-1)]

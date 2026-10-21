@@ -59,4 +59,4 @@ class ConfigOnly:
 
 
 from .base import Codec, Model, Output  # noqa: E402  (the adapter interface; adapters register on import)
-from . import agent, text, vlm  # noqa: E402,F401
+from . import agent, taming, text, vlm  # noqa: E402,F401

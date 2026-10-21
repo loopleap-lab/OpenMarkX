@@ -6,6 +6,7 @@ VERSIONS: dict = {}      # (name, module) -> class: every loaded plugin version,
 LOADED: set = set()      # sha256 of every plugin file imported in this process (by you, or by a trusted key)
 EDITS: dict = {}         # weight edits: fn(release, out, **params) -> Release (modify)
 TEXT_EDITS: dict = {}    # text edits: fn(texts, **params) -> texts (rewrite)
+OUTPUT_EDITS: dict = {}  # output edits: fn(outputs, *, model, **params) -> outputs (e.g. image_roundtrip)
 MODELS: dict = {}        # model adapters: name -> class (for a plugin: the version loaded last)
 MODEL_VERSIONS: dict = {}  # (name, module) -> class, as VERSIONS for schemes
 
@@ -42,6 +43,15 @@ def register_text_edit(fn=None, *, name: str | None = None):
     and in an arena as "text:name:k=v". It may also take device= (the GPU the run uses)."""
     def wrap(f):
         TEXT_EDITS[name or f.__name__] = f
+        return f
+    return wrap(fn) if fn is not None else wrap
+
+
+def register_output_edit(fn=None, *, name: str | None = None):
+    """Register fn(outputs, *, model, **params) -> outputs: a change to outputs before detection (e.g. an image
+    round trip), used by the pipeline's edits step."""
+    def wrap(f):
+        OUTPUT_EDITS[name or f.__name__] = f
         return f
     return wrap(fn) if fn is not None else wrap
 
