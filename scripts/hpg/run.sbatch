@@ -22,7 +22,7 @@ case "$(basename "$CONFIG" .yaml)" in
   geopt)    export MWX_GEOPT_DIR=$B/GeoPT MWX_DATA=$Q ;;
   medgemma) export MWX_DATA=$Q ;;
 esac
-cd $B/MarkWeightX
+cd ${MWX_CODE:-$B/MarkWeightX}                        # MWX_CODE: another checkout, e.g. new code beside running jobs
 export PYTORCH_ALLOC_CONF=expandable_segments:True
 nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 30 > $B/jobs/$SLURM_JOB_NAME-$SLURM_JOB_ID.gpu.csv &
 python -m markweightx.cli run "$CONFIG" "$@"
