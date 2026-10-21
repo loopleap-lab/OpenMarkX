@@ -150,6 +150,14 @@ the docs page. Same palette, typeface and six-size type scale as the home page.
   clear error says what to install when the variable is missing.
 - The home page's `my_mark.py` examples already use the real Scheme names (`setup`, `target_logits`, `score`).
 
+- Demo front end (user, 2026-10-21; built after this work, not part of it): one run viewer reads a run directory
+  (`runs/<name>/`: `progress.jsonl` one line per step and training log point, `report.json`, `assets/`). Two sources:
+  (1) last night's four runs published as static files, no backend, no GPU; (2) later, `markweightx serve` on the
+  user's own GPU, changed to launch `markweightx run`, same localhost + token + origin rules. The main interaction is
+  key-switch detection: pick a sample, switch between the right key and a wrong key, base and marked model, and see the
+  score against the threshold. It replaces the Beyond Text tabs on the home page; Get Started keeps only terminal
+  commands and recordings. Local runs through `serve` come after the refactor, as their own step.
+
 ### Calls made while writing (to check)
 
 - Demo configs reproduce the runs shown on the site:
