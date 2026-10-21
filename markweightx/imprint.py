@@ -152,10 +152,15 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         if (step + 1) % save_every == 0 or step + 1 == steps:
             model.save_pretrained(f"{out}/adapter_step{step + 1}")
     model.save_pretrained(f"{out}/adapter")
+    return save_lora_release(sch, key, scheme, base, scheme_params, src, out, cfg, device)
+
+
+def save_lora_release(sch, key, scheme, base, scheme_params, src, out, cfg, device):
+    """Store the key (outside the release) and write the release around the trained adapter in out/adapter."""
+    from .keys import stage_dir, store
+    from .types import Key
     kdir = stage_dir()
     key = sch.save(kdir, key)                              # key material goes to the key store, never into out
-    from .keys import store
-    from .types import Key
     # MarkLLM's KGW-family teachers draw their green lists from a generator on the model's device; CUDA and CPU give
     # different lists, so the detector must use the device type the key was made on (fork change A2).
     key = {**key, "rng_device": str(device).split(":")[0]}

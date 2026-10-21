@@ -37,6 +37,12 @@ def load_release(rel: Release, device: str):
     return model.eval()
 
 
+def text_vocab_size(model) -> int:
+    """The width of the model's logits. Image+text models (Gemma 3) keep it in their text config."""
+    cfg = model.config
+    return cfg.get_text_config().vocab_size if hasattr(cfg, "get_text_config") else cfg.vocab_size
+
+
 class ConfigOnly:
     """A stand-in for detectors that need only the model's config (vocabulary width) and device, not its weights."""
 

@@ -1,0 +1,1 @@
+C1_ce_full_lr1e-5 --full --lr 1e-5 --objective ce --steps 6000 --bs 32 --resume_every 500 --data_dir /blue/sgao1/ji757406.ucf/mwx-runs/arimg/wm_samples

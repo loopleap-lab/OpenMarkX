@@ -1,0 +1,3 @@
+E1_lr1e-3 --lr 1e-3
+E2_fullft --full --lr 1e-5
+E3_fixed --wm_seed fixed --lora_head

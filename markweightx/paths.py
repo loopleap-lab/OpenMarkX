@@ -19,7 +19,9 @@ BASES = {
     "llama-3.2-1b": ("unsloth/Llama-3.2-1B", "9535bd9b1d1dea6acafbdc4813b728796aeb28da"),
     "llama-3.2-1b-instruct": ("unsloth/Llama-3.2-1B-Instruct", "5a8abab4a5d6f164389b1079fb721cfab8d7126c"),
     "llama-3.1-8b": ("meta-llama/Llama-3.1-8B", "d04e592bb4f6aa9cfee91e2e20afa771667e1d4b"),
-    "llama-3.1-8b-instruct": ("unsloth/Meta-Llama-3.1-8B-Instruct", None),
+    "llama-3.1-8b-instruct": ("unsloth/Meta-Llama-3.1-8B-Instruct", "a2856192dd7c25b842431f39c179a6c2c2f627d1"),
+    # image+text input, text output (markweightx.vlm); gated: accept the terms on Hugging Face first
+    "medgemma-1.5-4b-it": ("google/medgemma-1.5-4b-it", "91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b"),
 }
 # both bases share the Llama-3 tokenizer (128256), so one tokenized corpus serves both
 DATA = {"llama3": os.environ.get("MWX_DATA", os.path.join(RUNS, "data_llama8b_256.pt"))}

@@ -212,9 +212,10 @@ class MarkLLMDistill(Scheme):
 
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)
+        from ..models import text_vocab_size
         from utils.transformers_config import TransformersConfig
         from watermark.auto_watermark import AutoWatermark
-        tc = TransformersConfig(model=model, tokenizer=tokenizer, vocab_size=model.config.vocab_size,   # A1
+        tc = TransformersConfig(model=model, tokenizer=tokenizer, vocab_size=text_vocab_size(model),   # A1
                                 device=device, max_new_tokens=200, do_sample=True)
         key = dict(key or {})
         if not key:                                            # embedding: a new release gets a new secret

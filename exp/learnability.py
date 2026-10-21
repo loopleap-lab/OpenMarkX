@@ -37,13 +37,14 @@ def main():
     ap.add_argument("--tag", default="e2")
     ap.add_argument("--skip_embed", action="store_true")
     ap.add_argument("--bos", action="store_true", help="start every training chunk with BOS")
+    ap.add_argument("--seq_len", type=int, default=128, help="training chunk length (the corpus may hold longer ones)")
     a = ap.parse_args()
     from markweightx.api import scheme_spec
     sname, sparams, ssrc = scheme_spec(a.scheme)           # "gaussmark:sigma=1e-3", or a plugin "my_scheme.py"
     from markweightx.bench import result_dir
     out = result_dir(a.scheme, a.base, a.tag)                # the same place `markweightx bench` looks
     t0 = time.time()
-    rel = Release.open(out) if a.skip_embed else embed(sname, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos,
+    rel = Release.open(out) if a.skip_embed else embed(sname, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos, seq_len=a.seq_len,
                                                      scheme_params=sparams, scheme_source=ssrc)
     t_embed = time.time() - t0
     torch.cuda.empty_cache()
@@ -57,6 +58,9 @@ def main():
     sch.probe = Probe(rel.base, a.device, sch.access)       # R1/R2 detectors work through the probe
     sch.setup(model, tok, a.device, load_key(rel).params)
     prompts = eval_prompts(tok, n=a.n)
+    if not prompts:                                        # e.g. a corpus of short chat answers: nothing to continue
+        print({"release": out, "note": "no evaluation prompts of 250+ tokens in the corpus; skipped the check"})
+        return
     judge = None
     base_cache = f"{RUNS}/{a.tag}/{a.base}/base_texts_n{a.n}.json"
     if os.path.exists(base_cache):

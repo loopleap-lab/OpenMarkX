@@ -1,0 +1,2 @@
+P11_lr1e-4_plr2e-1 --lr 1e-4 --policy_lr 2e-1 --steps 1500 --resume_every 500
+P12_lr1e-4_plr5e-2 --lr 1e-4 --policy_lr 5e-2 --steps 1500 --resume_every 500

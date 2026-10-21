@@ -1,0 +1,4 @@
+F1_heademb_lr1e-3 --head_emb --lr 1e-3
+F2_heademb_lr1e-2 --head_emb --lr 1e-2
+F3_full_lr1e-4 --full --lr 1e-4
+F4_lora256_head_lr1e-3 --rank 256 --lora_head --lr 1e-3

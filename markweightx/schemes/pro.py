@@ -18,6 +18,7 @@ import os
 import torch
 
 from ..paths import RUNS
+from ..models import text_vocab_size
 
 INITIAL_POLICY = os.path.join(os.path.dirname(os.path.dirname(__file__)), "third_party", "pro", "transform_model_cbert.pth")
 from ..registry import register_scheme
@@ -68,7 +69,7 @@ class PRO(Scheme):
             rng = random.Random(secret)
             from ..keys import stage
             mpath = stage("mapping.json")
-            json.dump([rng.randrange(300) for _ in range(model.config.vocab_size)], open(mpath, "w"))
+            json.dump([rng.randrange(300) for _ in range(text_vocab_size(model))], open(mpath, "w"))
             key = {"mapping": mpath}
         if "mapping" not in key:
             # never fall back to the mapping shipped with the PRO code: it is public, so it cannot be a key
@@ -163,10 +164,14 @@ class PRO(Scheme):
         return call
 
     # ---- detection ------------------------------------------------------------------------------------
-    def score_batch(self, texts):
+    def score_batch(self, texts, chunk=32):
+        """PRO's detect_batch keeps a [pairs, vocab] array for every (context, chunk) pair of all texts at once; with a
+        262k vocabulary (Gemma 3) and long answers that exceeds 64 GB of host memory, so texts go in chunks."""
         self.wm.transform_model.eval(); self.wm.set_tanh_temperature(self.tau1)
+        texts, z = list(texts), []
         with torch.no_grad():
-            z = self.wm.detect_batch(list(texts), batch_size=256)
+            for i in range(0, len(texts), chunk):
+                z += list(self.wm.detect_batch(texts[i:i + chunk], batch_size=256))
         return [(float(s), len(self.tok(t, add_special_tokens=False)["input_ids"])) for s, t in zip(z, texts)]
 
     def score(self, text):

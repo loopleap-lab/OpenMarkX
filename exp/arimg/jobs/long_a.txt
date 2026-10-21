@@ -1,0 +1,2 @@
+L1_full_lr1e-5 --full --lr 1e-5 --steps 6000 --bs 32 --resume_every 500
+L2_full_lr3e-5 --full --lr 3e-5 --steps 6000 --bs 32 --resume_every 500
