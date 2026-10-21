@@ -49,7 +49,8 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     scheme_params = resolved_params(sch)                   # defaults included: the key must not follow later defaults
     # small weight edits must not be rounded to bf16: Imprint.EDIT schemes get an fp32 model
     model = load_base(base, device, dtype=torch.float32 if sch.imprint == Imprint.EDIT else torch.bfloat16)
-    key = sch.setup(model, tok, device, key)
+    from .train import draft_key, resume_dir, save_draft
+    key = sch.setup(model, tok, device, key if key is not None else draft_key(out))   # a resumed run keeps its key
     if sch.imprint == Imprint.EDIT:                        # teacher-free: the scheme writes the weights itself
         from .types import Key
         from .keys import store
@@ -77,6 +78,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
         for i in range(0, 64 if str(device).startswith("cuda") else 8, 8):
             if not torch.isfinite(model(input_ids=corpus[i:i + 8].to(device)).logits).all():
                 raise RuntimeError(f"base model {base} gives non-finite logits on corpus[{i}:{i + 8}]: check the weights")
+    save_draft(out, key)
     lora = [p for p in model.parameters() if p.requires_grad]
     params = lora + sch.trainable_params()
     opt = torch.optim.AdamW([{"params": lora}] + sch.param_groups(), lr=lr, weight_decay=0.0)
@@ -102,8 +104,29 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
             l = F.cross_entropy(lg.reshape(-1, lg.shape[-1]), att[:, 1:].reshape(-1))
         attack_loss.append(l.item())
         return torch.autograd.grad(l, lora)
+    # progress (adapter, optimizer, schedule, random states) every save_every steps, in the key store: a run killed by a
+    # time limit continues from the last save with the same key
+    state_path = os.path.join(resume_dir(out), "state.pt")
+    start = 0
+    if os.path.exists(state_path):
+        from peft import set_peft_model_state_dict
+        st = torch.load(state_path, map_location=device, weights_only=False)
+        set_peft_model_state_dict(model, st["lora"])
+        with torch.no_grad():
+            for p_, v in zip(sch.trainable_params(), st["scheme"]):
+                p_.copy_(v)
+        opt.load_state_dict(st["opt"]); sched.load_state_dict(st["sched"])
+        g.set_state(st["gen"]); torch.set_rng_state(st["torch_rng"]); start, skipped = st["step"], st["skipped"]
+        print({"resumed_at_step": start}, flush=True)
+
+    def save_state(step):
+        from peft import get_peft_model_state_dict
+        torch.save({"lora": get_peft_model_state_dict(model), "scheme": [p_.detach().cpu() for p_ in sch.trainable_params()],
+                    "opt": opt.state_dict(), "sched": sched.state_dict(), "gen": g.get_state(),
+                    "torch_rng": torch.get_rng_state(), "step": step, "skipped": skipped}, state_path + ".tmp")
+        os.replace(state_path + ".tmp", state_path)
     model.train()
-    for step in range(steps):
+    for step in range(start, steps):
         tot = 0.0
         sch.on_step(step, steps)
         for _ in range(accum):
@@ -151,8 +174,13 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
             print(rec, flush=True)
         if (step + 1) % save_every == 0 or step + 1 == steps:
             model.save_pretrained(f"{out}/adapter_step{step + 1}")
+            if step + 1 < steps:
+                save_state(step + 1)
     model.save_pretrained(f"{out}/adapter")
-    return save_lora_release(sch, key, scheme, base, scheme_params, src, out, cfg, device)
+    rel = save_lora_release(sch, key, scheme, base, scheme_params, src, out, cfg, device)
+    import shutil
+    shutil.rmtree(resume_dir(out), ignore_errors=True)   # finished: nothing left to resume
+    return rel
 
 
 def save_lora_release(sch, key, scheme, base, scheme_params, src, out, cfg, device):

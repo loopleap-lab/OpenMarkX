@@ -12,6 +12,7 @@ exists; once a step runs, every later step runs again, since its inputs may have
   edits      the same after each edit (weight edits, an output edit such as image_roundtrip, a field fine-tune)
   quality    ppl | accuracy | fid | rel_l2 | none, before (base) and after (release)
   report     out/report.json
+  viewer     out/assets/viewer.json: the run's steps, scores and one worked example, for the run viewer on the site
 out/progress.jsonl gets one line per step event, for a viewer to follow the run.
 """
 from __future__ import annotations
@@ -25,7 +26,7 @@ from dataclasses import asdict, dataclass, field
 
 import torch
 
-STEPS = ("prepare", "selfgen", "calibrate", "imprint", "generate", "detect", "edits", "quality", "report")
+STEPS = ("prepare", "selfgen", "calibrate", "imprint", "generate", "detect", "edits", "quality", "report", "viewer")
 TOP = ("model", "scheme", "data", "imprint", "generate", "detect", "edits", "quality", "out", "smoke")
 SECTIONS = {
     "scheme": ("name", "source", "params"),
@@ -248,6 +249,25 @@ def _write(path: str, obj) -> None:
 
 
 # ---------------------------------------------------------------------------------------------------- steps
+def save_every(cfg: Config) -> int:
+    """How often training saves its progress (HPG rule: about every 100 steps)."""
+    return int(cfg.imprint.get("save_every", 100))
+
+
+def in_chunks(path: str, items: list, size: int, fn) -> list:
+    """fn(chunk, start) -> list of outputs, over `items` in chunks; each finished chunk is saved to `path`, so a
+    job killed by its time limit redoes only the chunks it had not finished. `path` is removed at the end."""
+    st = torch.load(path, weights_only=False) if os.path.exists(path) else {"done": 0, "outs": []}
+    outs = list(st["outs"])
+    for i in range(st["done"], len(items), size):
+        outs += list(fn(items[i:i + size], i))
+        torch.save({"done": min(i + size, len(items)), "outs": outs}, path + ".tmp")
+        os.replace(path + ".tmp", path)
+    if os.path.exists(path):
+        os.remove(path)
+    return outs
+
+
 def _synthetic_corpus(ctx, tok) -> tuple[str, list[str]]:
     seq = int(ctx.cfg.imprint.get("seq_len", 128))
     g = torch.Generator().manual_seed(0)
@@ -324,7 +344,10 @@ def step_selfgen(ctx) -> dict:
     ctx.ensure_loaded()
     jobs = ctx.read("prepare")["train_jobs"]
     net = ctx.adapter.load(None, ctx.device)
-    codes = ctx.adapter.run(net, jobs, seed=0, bs=int(ctx.cfg.generate.get("bs", 25)))
+    bs = int(ctx.cfg.generate.get("bs", 25))
+    rows = in_chunks(os.path.join(ctx.out, "selfgen.partial.pt"), jobs, bs * 20,
+                     lambda chunk, start: list(ctx.adapter.run(net, chunk, seed=start + 1, bs=bs)))
+    codes = torch.stack(rows)
     ctx.save_tensors("selfgen", {"seqs": torch.cat([torch.tensor(jobs)[:, None], codes], 1)})
     return {"n": len(jobs)}
 
@@ -363,13 +386,13 @@ def step_imprint(ctx) -> dict:
     eps = ctx.read("calibrate").get("eps")
     if sp.get("eps") == "auto":
         sp["eps"] = eps
-    save_every = int(im.get("save_every", 500))
+    every = save_every(ctx.cfg)
     if ctx.name in TEXT_FAMILY:
         from .imprint import embed
         p = ph[0]
         rel = embed(ctx.cfg.scheme["name"], ctx.adapter.base, ctx.rel_dir, steps=p["steps"], bs=int(im.get("bs", 16)),
                     accum=int(im.get("accum", 1)), seq_len=int(im.get("seq_len", 128)), lr=p["lr"], rank=p["rank"],
-                    device=ctx.device, data=ctx.read("prepare")["corpus"], save_every=save_every,
+                    device=ctx.device, data=ctx.read("prepare")["corpus"], save_every=every,
                     seed=int(im.get("seed", 0)), scheme_params=sp, scheme_source=src)
         if ctx.name == "agent":
             rel.model = {"name": "agent", "params": ctx.adapter.params}
@@ -379,7 +402,7 @@ def step_imprint(ctx) -> dict:
         ctx.adapter.imprint(ctx.cfg.scheme["name"], ctx.rel_dir, ctx.read("prepare")["pairs"], device=ctx.device,
                             steps=p["steps"], bs=int(im.get("bs", 8)), accum=int(im.get("accum", 1)),
                             answer_len=int(im.get("answer_len", 128)), lr=p["lr"], rank=p["rank"],
-                            save_every=save_every, seed=int(im.get("seed", 0)), scheme_params=sp, scheme_source=src)
+                            save_every=every, seed=int(im.get("seed", 0)), scheme_params=sp, scheme_source=src)
     else:
         from .train import imprint
         ctx.ensure_loaded()
@@ -404,7 +427,7 @@ def step_imprint(ctx) -> dict:
                 _progress(ctx.out, step="imprint", event="edit_last", **ctx.adapter.edit_last(net, sch, train))
         save_draft(ctx.rel_dir, key)
         imprint(ctx.adapter, sch, batches, ctx.rel_dir, phases=ph, device=ctx.device, net=net, key=key, teacher=teacher,
-                base=ctx.name, save_every=save_every, seed=int(im.get("seed", 0)))
+                base=ctx.name, save_every=every, seed=int(im.get("seed", 0)))
     return {"release": ctx.rel_dir}
 
 
@@ -415,9 +438,9 @@ def _text_generate(ctx, model, adapter_on: bool, seed: int):
                     bs=int(g.get("bs", 50)), seed=seed, adapter=adapter_on)
 
 
-def _agent_run(ctx, model, adapter_on: bool, seed: int):
+def _agent_run(ctx, model, adapter_on: bool, seed: int, transcripts: bool = False):
     finals, convs = ctx.adapter.run(model, ctx.read("prepare")["items"], adapter=adapter_on, seed=seed, transcript=True)
-    return finals, list(ctx.adapter.last_finish)
+    return (finals, list(ctx.adapter.last_finish), convs) if transcripts else (finals, list(ctx.adapter.last_finish))
 
 
 def step_generate(ctx) -> dict:
@@ -428,21 +451,33 @@ def step_generate(ctx) -> dict:
         return {"base": _text_generate(ctx, model, False, 1), "wm": _text_generate(ctx, model, True, 0)}
     if ctx.name == "agent":
         model = load_release(rel, ctx.device)
-        (bf, bfin), (wf, wfin) = _agent_run(ctx, model, False, 1), _agent_run(ctx, model, True, 0)
-        return {"base": bf, "wm": wf, "base_finish": bfin, "wm_finish": wfin}
+        items = ctx.read("prepare")["items"]
+
+        def agent_chunks(name, adapter_on, seed):           # 50 questions per chunk, each chunk saved
+            def one(chunk, start):
+                finals, convs = ctx.adapter.run(model, chunk, adapter=adapter_on, seed=seed * 1000 + start, transcript=True)
+                return list(zip(finals, ctx.adapter.last_finish, convs))
+            rows = in_chunks(os.path.join(ctx.out, f"generate_{name}.partial.pt"), items, 50, one)
+            return [r[0] for r in rows], [r[1] for r in rows], [r[2] for r in rows]
+        (bf, bfin, _), (wf, wfin, convs) = agent_chunks("base", False, 1), agent_chunks("wm", True, 0)
+        return {"base": bf, "wm": wf, "base_finish": bfin, "wm_finish": wfin, "wm_transcript_0": convs[0] if convs else []}
     if ctx.name == "vlm":
         net = ctx.adapter.load(rel, ctx.device)
         items = ctx.read("prepare")["items"]
         kw = dict(new_tokens=int(g.get("new_tokens", 768)), bs=int(g.get("bs", 16)))
-        return {"base": ctx.adapter.run(net, items, adapter=False, seed=1, **kw),
-                "wm": ctx.adapter.run(net, items, adapter=True, seed=0, **kw)}
+        run = lambda name, on, seed: in_chunks(os.path.join(ctx.out, f"generate_{name}.partial.pt"), items, kw["bs"] * 4,
+                                               lambda chunk, start: ctx.adapter.run(net, chunk, adapter=on, seed=seed * 1000 + start, **kw))
+        return {"base": run("base", False, 1), "wm": run("wm", True, 0)}
     ctx.ensure_loaded()
     base, student = ctx.adapter.load(None, ctx.device), ctx.adapter.load(rel, ctx.device)
     if ctx.name == "taming":
         from .models.taming import save_pngs
         jobs = ctx.read("prepare")["eval_jobs"]
         bs = int(g.get("bs", 25))
-        sets = {"base": ctx.adapter.run(base, jobs, seed=7, bs=bs), "wm": ctx.adapter.run(student, jobs, seed=9, bs=bs)}
+        gen = lambda name, net, seed: torch.stack(in_chunks(
+            os.path.join(ctx.out, f"generate_{name}.partial.pt"), jobs, bs * 20,
+            lambda chunk, start: list(ctx.adapter.run(net, chunk, seed=seed * 1000 + start, bs=bs))))
+        sets = {"base": gen("base", base, 7), "wm": gen("wm", student, 9)}
         c = ctx.adapter.codec()
         for k, d in (("base", "base"), ("wm", "student")):
             save_pngs(c.decode(sets[k]), os.path.join(ctx.out, "assets", d))
@@ -613,9 +648,90 @@ def step_report(ctx) -> dict:
     return rep                                              # written as out/report.json
 
 
+def _viewer_example(ctx) -> dict:
+    """One worked example of this run, in the shape the run viewer draws."""
+    import shutil
+    det = ctx.read("detect")
+    wm_s, null_s = det["wm"], det["null"]
+    z = lambda v: round(float(v[0]), 3) if v else None
+    if ctx.name in TEXT_FAMILY + ("vlm",):
+        g, prep = ctx.read("generate"), ctx.read("prepare")
+        ex = {"marked": g["wm"][0], "base": g["base"][0], "z_marked": z(wm_s),
+              "z_base": z(null_s) if det.get("null_kind") == "base" else None}
+        if ctx.name == "text":
+            return {**ex, "prompt": prep["prompts"][0]}
+        it = prep["items"][0]
+        if ctx.name == "agent":
+            return {**ex, "question": it["question"], "answer": it.get("answer", ""),
+                    "finish_marked": g["wm_finish"][0], "transcript": [
+                        {"role": m["role"], "content": m["content"][:600]} for m in g.get("wm_transcript_0", [])[1:]]}
+        src = (it.get("images") or [it.get("image")])[0]
+        dst = None
+        if src and os.path.isfile(src):
+            dst = os.path.join("assets", "example" + os.path.splitext(src)[1])
+            shutil.copyfile(src, os.path.join(ctx.out, dst))
+        return {**ex, "question": it["question"], "answer": it.get("answer", ""), "image": dst}
+    ctx.ensure_loaded()
+    sch = ctx.bound_scheme()
+    wm, base = _sets(ctx)
+    if ctx.name == "taming":
+        def grid(codes):                                    # per image token: 1 green, 0 not, -1 not scored
+            pos = sch.pos if len(sch.pos) > int(codes.max()) else torch.cat(
+                [sch.pos, torch.full((int(codes.max()) + 1 - len(sch.pos),), -1, dtype=torch.long)])
+            a_, b_ = pos[codes[:-1]], pos[codes[1:]]
+            ok = (a_ >= 0) & (b_ >= 0)
+            G = sch.table()
+            out = torch.full((len(codes),), -1)
+            out[1:][ok] = G[a_[ok], b_[ok]].long()
+            return out.view(16, -1).tolist()
+        return {"marked_png": os.path.join("assets", "student", "00000.png"),
+                "base_png": os.path.join("assets", "base", "00000.png"),
+                "marked_green": grid(wm[0].long().cpu()), "base_green": grid(base[0].long().cpu()),
+                "z_marked": z(wm_s), "z_base": z(null_s)}
+    # geopt: the upper surface seen from above, as last night's demo_check.py
+    import random
+    from .schemes.ripple import output_pattern
+    _, test = ctx.adapter.splits()
+    p = test[0][0]
+    ref, out = base[0].float(), wm[0].float()
+    prm = sch.params
+    g = output_pattern(ref, sch.secret, prm["m"], prm["output_scale"])
+    green_key = ((out - ref) * g).sum(-1)[0] > 0
+    wrong = sch.wrong_key({"secret": sch.secret}, random.Random(0xC0FFEE), ctx.out) or {"secret": sch.secret + 1}
+    gw = output_pattern(ref, int(wrong["secret"]), prm["m"], prm["output_scale"])
+    green_wrong = ((out - ref) * gw).sum(-1)[0] > 0
+    pts = p[0, :, :3].float().cpu()
+    idx = torch.nonzero(pts[:, 1] >= pts[:, 1].median()).flatten()
+    idx = idx[torch.randperm(len(idx), generator=torch.Generator().manual_seed(0))[:6000]]
+    field = ctx.adapter.y_normalizer.decode(out)[0, :, 0].float().cpu()
+    r3 = lambda t: [round(float(v), 3) for v in t]
+    return {"x": r3(pts[idx, 0]), "y": r3(pts[idx, 2]), "field": r3(field[idx.to(field.device)]),
+            "pattern": r3(g[0, :, 0].cpu()[idx]), "green_key": green_key.cpu()[idx].int().tolist(),
+            "green_wrong": green_wrong.cpu()[idx].int().tolist(), "z_marked": z(wm_s),
+            "condition": r3(test[0][1].flatten().cpu())}
+
+
+def step_viewer(ctx) -> dict:
+    os.makedirs(os.path.join(ctx.out, "assets"), exist_ok=True)
+    steps = []
+    with open(os.path.join(ctx.out, "progress.jsonl")) as f:
+        for line in f:
+            r = json.loads(line)
+            if r.get("event") == "done" and r["step"] not in ("report", "viewer"):
+                steps = [s for s in steps if s["step"] != r["step"]] + [{"step": r["step"], "sec": r.get("sec")}]
+    order = {s: i for i, s in enumerate(STEPS)}
+    steps.sort(key=lambda s: order[s["step"]])
+    rep, det = ctx.read("report"), ctx.read("detect")
+    view = {"model": rep["model"], "scheme": rep["scheme"], "steps": steps,
+            "detect": {**rep["detect"], "wm": det["wm"], "null": det["null"], "fpr": ctx.cfg.detect.get("fpr", 0.01)},
+            "quality": rep["quality"], "edits": rep["edits"], "example": _viewer_example(ctx)}
+    _write(os.path.join(ctx.out, "assets", "viewer.json"), view)
+    return {"viewer": os.path.join(ctx.out, "assets", "viewer.json")}
+
+
 STEP_FNS = {"prepare": step_prepare, "selfgen": step_selfgen, "calibrate": step_calibrate, "imprint": step_imprint,
             "generate": step_generate, "detect": step_detect, "edits": step_edits, "quality": step_quality,
-            "report": step_report}
+            "report": step_report, "viewer": step_viewer}
 
 
 def run(cfg: Config, *, only: list[str] | None = None, device: str | None = None) -> dict:

@@ -81,7 +81,7 @@ def resuming(out: str) -> bool:
 
 
 def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[dict], device: str = "cpu",
-            net=None, path: str | None = None, key: dict | None = None, base: str = "", save_every: int = 500,
+            net=None, path: str | None = None, key: dict | None = None, base: str = "", save_every: int = 100,
             seed: int = 0, teacher=None, on_phase_end: Callable[[int], None] | None = None) -> Release:
     """Train the mark into `net` (or model.load(path, device)) and write a release to `out`.
 
@@ -127,12 +127,17 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
             for p, v in zip(scheme.trainable_params(), state["scheme"]):
                 p.copy_(v)
 
-    def save(phase, step):
+    consumed = {"n": state.get("consumed", 0)}              # batches drawn so far, so a resumed run sees the same data
+
+    def save(phase, step, opt=None, sched=None):
         os.makedirs(os.path.dirname(rpath), exist_ok=True)
         tmp = rpath + ".tmp"
-        torch.save({"phase": phase, "step": step, "phases": phases,
+        torch.save({"phase": phase, "step": step, "phases": phases, "consumed": consumed["n"],
                     "weights": {k: p.detach().cpu() for k, p in net.named_parameters() if p.requires_grad},
-                    "scheme": [p.detach().cpu() for p in scheme.trainable_params()]}, tmp)
+                    "scheme": [p.detach().cpu() for p in scheme.trainable_params()],
+                    "opt": opt.state_dict() if opt is not None else None,
+                    "sched": sched.state_dict() if sched is not None else None,
+                    "torch_rng": torch.get_rng_state()}, tmp)
         os.replace(tmp, rpath)
 
     def teacher_out(batch):
@@ -143,6 +148,10 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
                 return model.forward(net, batch)[1].float()
 
     it = _cycle(batches)
+    for _ in range(consumed["n"]):                          # resumed: skip the batches already trained on
+        next(it)
+    if state.get("torch_rng") is not None:
+        torch.set_rng_state(state["torch_rng"])
     log = open(os.path.join(out, "train_log.jsonl"), "a")
     t0 = time.time()
     net.train()
@@ -160,11 +169,16 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
         sched = torch.optim.lr_scheduler.LambdaLR(
             opt, lambda s: min(1.0, (s + 1) / 50) * 0.5 * (1 + math.cos(math.pi * s / max(steps, 1))))
         start = state["step"] if pi == state["phase"] else 0
-        for _ in range(start):
-            sched.step()
+        if start and state.get("opt") is not None:          # mid-phase resume: the optimizer and schedule as saved
+            opt.load_state_dict(state["opt"])
+            sched.load_state_dict(state["sched"])
+        else:
+            for _ in range(start):
+                sched.step()
         for step in range(start, steps):
             scheme.on_step(step, steps)
             batch = _to(next(it), device)
+            consumed["n"] += 1
             ref = teacher_out(batch)
             inputs, student = model.forward(net, batch)
             if field:
@@ -181,7 +195,7 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
             log.write(json.dumps({"phase": pi, "step": step + 1, "loss": round(loss.item(), 6),
                                   "sec": round(time.time() - t0, 1)}) + "\n"); log.flush()
             if (step + 1) % save_every == 0 and step + 1 < steps:
-                save(pi, step + 1)
+                save(pi, step + 1, opt, sched)
         save(pi + 1, 0)
         if on_phase_end:
             on_phase_end(pi)

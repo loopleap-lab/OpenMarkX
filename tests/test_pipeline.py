@@ -90,7 +90,22 @@ def check_report(out):
     assert {"tpr_at_1fpr", "thr", "auc", "n_wm", "n_null"} <= set(rep["detect"])
     assert {"before", "after"} <= set(rep["quality"])
     assert finite(rep["detect"]) and finite(rep["quality"]) and finite(rep["edits"])
+    v = json.load(open(os.path.join(out, "assets", "viewer.json")))   # what the run viewer on the site reads
+    assert {"model", "scheme", "steps", "detect", "quality", "example"} <= set(v)
+    assert [s["step"] for s in v["steps"]][:3] == ["prepare", "selfgen", "calibrate"] and v["detect"]["wm"]
+    EXAMPLE = {"text": {"prompt", "marked", "base"}, "agent": {"question", "marked", "base"},
+               "vlm": {"question", "image", "marked", "base"}, "taming": {"marked_png", "base_png", "marked_green", "base_green"},
+               "geopt": {"x", "y", "field", "pattern", "green_key", "green_wrong"}}[rep["model"]["name"]]
+    assert EXAMPLE <= set(v["example"]), set(v["example"])
+    for k in ("image", "marked_png", "base_png"):
+        if k in v["example"]:
+            assert os.path.isfile(os.path.join(out, v["example"][k])), k
     return rep
+
+
+def pipeline_steps():
+    from markweightx.pipeline import STEPS
+    return STEPS
 
 
 def text_cfg(base, toy, out, **over):
@@ -118,6 +133,7 @@ def test_run_end_to_end_text(tmp_path, text_base, toy):
     assert "prune:sparsity=0.1" in rep["edits"]
     prog = [json.loads(l) for l in open(tmp_path / "run" / "progress.jsonl")]
     assert [r["step"] for r in prog if r["event"] == "done"] == list(__import__("markweightx.pipeline").pipeline.STEPS)
+    assert pipeline_steps()[-1] == "viewer"
 
 
 def test_run_end_to_end_agent(tmp_path, text_base, toy):
@@ -178,7 +194,7 @@ def test_run_resumes_and_skips_done_steps(tmp_path, monkeypatch):
     real = dict(pipeline.STEP_FNS)
     monkeypatch.setattr(pipeline, "STEP_FNS", {k: (lambda k: lambda ctx: (ran.append(k), real[k](ctx))[1])(k) for k in real})
     run_cfg(geopt_cfg(tmp_path / "run"), tmp_path)
-    assert ran == ["edits", "quality", "report"]
+    assert ran == ["edits", "quality", "report", "viewer"]
 
 
 def test_partial_step_output_is_not_treated_as_done(tmp_path, monkeypatch):
