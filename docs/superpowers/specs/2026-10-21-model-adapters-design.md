@@ -40,8 +40,8 @@ interface, the way text methods already are.
 
 - A web UI or new frontend work.
 - New experiments, new methods, or behaviour-level agent watermarks (Agent Guide / AgentMark style).
-- Re-running the four demos on HPG. Acceptance is the CPU test suite (decided 2026-10-21); last night's results
-  stand as they are.
+- Re-running the four demos on HPG to their final numbers. Last night's results stand as they are; HPG is used
+  only for the short smoke runs in "Decided".
 - Changing the text path's behaviour: existing schemes, keys and releases load and score as before.
 
 ## Anti-goals
@@ -130,8 +130,51 @@ the docs page. Same palette, typeface and six-size type scale as the home page.
 
 ## Decided
 
-- Acceptance: CPU tests only; no HPG re-run (2026-10-21).
+- Acceptance (user, 2026-10-21): the code runs without bugs; the final results are not re-produced. Concretely:
+  1. each adapter's tiny stand-in model runs `markweightx run` through all steps on CPU, with a well-formed
+     `report.json` (the numbers mean nothing);
+  2. a config test parses the four demo configs and checks every setting against the arguments of last night's
+     runs (their sbatch and sweep files), so the configs are last night's experiments, field by field;
+  3. the existing 77 tests still pass;
+  4. a short smoke run per demo on HPG with the real model and the real external code (a few imprint steps and a
+     few samples, then stop), to catch wrapper bugs the stand-ins cannot. Not a re-run of the experiment.
+- Later (on hold, user 2026-10-21; not part of this work): publish the four demo releases (never their keys) on
+  Hugging Face, once each base model's licence allows it; code stays on GitHub, each side links to the other.
+  GitHub was ruled out for weights (100 MB per file; LFS quota; 2 GB per release asset, Taming's release is
+  5.7 GB). There is no `UCF-ML-Research` organization on Hugging Face yet. Account, visibility and which releases
+  are the user's call, per upload.
+- External model code (user, 2026-10-21): WMAR (Taming, and WMAR's original linear-seeding green list) and the
+  GeoPT repo stay external, optional dependencies. The user installs them and points MarkWeightX at them with
+  `MWX_WMAR_DIR` / `MWX_GEOPT_DIR`; the `taming` and `geopt` adapters are thin wrappers that import them at load
+  time and leave their code unchanged. CPU tests swap in a tiny stand-in network behind the same adapter code. A
+  clear error says what to install when the variable is missing.
 - The home page's `my_mark.py` examples already use the real Scheme names (`setup`, `target_logits`, `score`).
+
+### Calls made while writing (to check)
+
+- Demo configs reproduce the runs shown on the site:
+  - Taming: P14. Co-learn the policy (PRO, policy lr 2e-1, full fine-tune lr 3e-5, 800 steps, from WMAR's linear
+    seeding), then fix the policy and train 1000 more steps (lr 1e-4). This is `imprint.phases` in the config.
+  - GeoPT: sweep `s1_e02` (eps 0.02, output scale 1.0).
+  - Agent: PRO delta 2; final answers of about 300 words at temperature 0.7.
+  - MedGemma: the PRO release from `exp/med/jobs/Xmed-pro.sbatch` (bs 16, answer length 256).
+  - `fold`, `edit`, the fixed-list seeding and other exploratory variants stay in `exp/`.
+- `agent` = the `text` adapter plus a chat-data `prepare` step; `run` is the ReAct loop, used at evaluation; the
+  search corpus comes in as data (the HotpotQA paragraphs), not as core code. Imprint trains on chat text, as
+  last night.
+- `Release` gains `model: {name, params}`, `format: hf | state_dict`, and `schema: 2`. A release without these
+  fields reads as `text`, `hf`, schema 1, so existing releases load unchanged. Taming's encoder/decoder fine-tunes
+  are adapter params.
+- Detect inputs and nulls:
+  - text, VLM answers, agent answers: as today (texts; the key's frozen calibration);
+  - images: PNG files, VQ-encoded before scoring (the round trip the demos used); the key stores a calibration
+    from base-model images;
+  - fields: an `.npz` with points, field and flight condition; the detector computes the reference with the
+    publisher's unmarked model (`Access.R1`); the null is wrong keys per case, so the key stores no calibration.
+- `calibrate` (strength search) runs only for field schemes (`ripple`, `eps: auto`); token schemes take their
+  strength from their params.
+- Docs: the site's `docs.html` source is held with the site artifact (not in the repo); both it and
+  `docs/REFERENCE.md` are rewritten.
 
 ## Left to the builder
 
