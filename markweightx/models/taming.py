@@ -36,8 +36,8 @@ def green_table(wm):
 
 
 class TamingCodec(Codec):
-    def __init__(self, wrapper, wm):
-        self.w, self.wm = wrapper, wm
+    def __init__(self, wrapper, wm, device: str = "cpu"):
+        self.w, self.wm, self.device = wrapper, wm, device
         self.alive = wm.alive_ids.cpu().long()
         self.vocab_size = wm.vocab_size
 
@@ -47,11 +47,11 @@ class TamingCodec(Codec):
 
     @torch.no_grad()
     def encode(self, images):
-        return torch.cat([self.w.images_to_codes(images[i:i + 25]).cpu() for i in range(0, len(images), 25)])
+        return torch.cat([self.w.images_to_codes(images[i:i + 25].to(self.device)).cpu() for i in range(0, len(images), 25)])
 
     @torch.no_grad()
     def decode(self, codes):
-        return torch.cat([self.w.codes_to_images(codes[i:i + 25]).cpu() for i in range(0, len(codes), 25)])
+        return torch.cat([self.w.codes_to_images(codes[i:i + 25].to(self.device)).cpu() for i in range(0, len(codes), 25)])
 
 
 @register_model
@@ -95,6 +95,7 @@ class TamingModel(Model):
         import copy
         if self.w is None:
             self.w, self.wm = self._wrapper(device)
+            self.device = device
         net = copy.deepcopy(self.w.model.transformer)
         weights = getattr(path, "weights", None)
         if weights:
@@ -134,7 +135,7 @@ class TamingModel(Model):
     def codec(self) -> TamingCodec:
         if self.w is None:
             raise RuntimeError("load the taming model first (its VQ is the codec)")
-        return TamingCodec(self.w, self.wm)
+        return TamingCodec(self.w, self.wm, getattr(self, "device", "cpu"))
 
 
 def save_pngs(images, out_dir: str, start: int = 0) -> list[str]:

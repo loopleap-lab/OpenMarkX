@@ -80,3 +80,17 @@ def test_wmar_wrapper_is_built_inside_its_checkout(tmp_path, monkeypatch):
     m = get_model("taming", modelpath="ckpt")
     wrapper, _ = m._wrapper("cpu")
     assert wrapper.alive == "1 2 3" and os.getcwd() == str(tmp_path)      # built there, cwd restored
+
+
+def test_codec_moves_inputs_to_the_vq_device():
+    """Codes come back on the CPU after sampling; the VQ lives on the model's device (cuda on HPG)."""
+    from markweightx.registry import get_model
+    m = get_model("taming", factory=FAKE)
+    m.load(None, "cpu")
+    seen = []
+    real = m.w.codes_to_images
+    m.w.codes_to_images = lambda c: (seen.append(c.device.type), real(c))[1]
+    c = m.codec()
+    assert c.device == "cpu"
+    c.decode(torch.zeros(1, 256, dtype=torch.long))
+    assert seen == ["cpu"]

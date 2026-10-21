@@ -117,3 +117,11 @@ def test_resume_continues_from_saved_step(tmp_path):
     imprint(TinyText(), Green(), token_batches(), str(tmp_path), net=tiny_llama(), device="cpu", phases=[p1, p2])
     new = [json.loads(l) for l in log.read_text().splitlines()[n1:]]
     assert n1 == 3 and [r["phase"] for r in new] == [1, 1]
+
+
+def test_zero_step_phase_writes_the_release(tmp_path):
+    """GeoPT s1_e02: the mark is written in closed form, then a 0-step phase (run_mark.py's max(steps, 1))."""
+    from markweightx.train import imprint
+    rel = imprint(TinyField(), Shift(), [{"inputs": torch.randn(8, 3)}], str(tmp_path), net=tiny_field_net(),
+                  device="cpu", phases=[{"steps": 0, "lr": 1e-5, "trainable": "full"}])
+    assert os.path.isfile(rel.weights)

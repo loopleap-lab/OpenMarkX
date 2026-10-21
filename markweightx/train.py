@@ -131,7 +131,7 @@ def imprint(model: Model, scheme, batches: Iterable, out: str, *, phases: list[d
         opt = torch.optim.AdamW(groups, lr=ph["lr"], weight_decay=0.0)
         steps = ph["steps"]
         sched = torch.optim.lr_scheduler.LambdaLR(
-            opt, lambda s: min(1.0, (s + 1) / 50) * 0.5 * (1 + math.cos(math.pi * s / steps)))
+            opt, lambda s: min(1.0, (s + 1) / 50) * 0.5 * (1 + math.cos(math.pi * s / max(steps, 1))))
         start = state["step"] if pi == state["phase"] else 0
         for _ in range(start):
             sched.step()
