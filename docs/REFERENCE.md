@@ -77,6 +77,75 @@ Edits are written `op:param=value,...`:
 | `quantize` | `bits=4` (nf4) or `bits=8` (int8) |
 | `synonym`, `word_deletion`, `context_synonym` | `ratio=0.3` (text edits, used with `rewrite`) |
 
+## Run a whole experiment (any model)
+
+`markweightx run CONFIG` runs one experiment from a YAML file, for any model adapter: text, `agent` (a ReAct
+agent around a text model), `vlm` (image + question in, text out), `taming` (image tokens) and `geopt` (a physics
+field on 3D points). It runs these steps in order and writes `<out>/report.json`:
+
+| Step | What it does |
+|---|---|
+| `prepare` | the training data and the evaluation inputs (`data: {name: synthetic}` makes a small stand-in set) |
+| `selfgen` | the base model's own outputs to train on (taming samples image tokens; the others bring their data) |
+| `calibrate` | the strength of a field mark when `eps: auto` |
+| `imprint` | learn the mark into the weights; the release goes to `<out>/release`, the key to the key store |
+| `generate` | outputs of the base and of the release on the evaluation inputs (images also as PNGs in `<out>/assets`) |
+| `detect` | the detector's statistic on both sets; TPR at the FPR against the null (base outputs, or wrong keys) |
+| `edits` | the same after each edit |
+| `quality` | `ppl`, `accuracy`, `fid`, `rel_l2` or `none`, for the base (before) and the release (after) |
+| `report` | `report.json`: model, scheme, detect, quality, edits, settings |
+
+Each step writes `<out>/<step>.json` and is skipped when that file exists, so a run stopped by a time limit
+continues where it stopped; once a step runs again, every later step runs again too. `--only STEP ...` runs some
+steps, `--smoke` caps training at 5 steps per phase and the samples at 4 (to check a setup), and
+`<out>/progress.jsonl` has one line per step event.
+
+```yaml
+model: {name: geopt, ckpt: $MWX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt, data: $MWX_DATA/geopt/aircraft_npys}
+scheme: {name: ripple, params: {eps: 0.02, output_scale: 1.0}}    # or source: my_mark.py
+imprint:
+  edit_last: true                       # geopt only: write the mark into the last layer in closed form first
+  phases:                               # one or more; each: steps, lr, trainable (lora|full), rank, policy_lr, fix_rule
+    - {steps: 0, lr: 1.0e-5, trainable: full}
+detect: {fpr: 0.01, null: wrong_keys}   # base | wrong_keys
+edits: ["finetune:steps=200,lr=1e-4"]
+quality: rel_l2
+out: $MWX_RUNS/demos/geopt
+```
+
+Top-level keys: `model` (`name`, the adapter's own parameters, or `source:` a plugin file), `scheme` (`name`,
+`params`, `source`), `data`, `imprint` (`phases`, `bs`, `accum`, `seq_len`, `answer_len`, `save_every`, `seed`,
+`edit_last`), `generate` (`n`, `new_tokens`, `bs`, `temperature`), `detect` (`fpr`, `null`, `n_null`), `edits`,
+`quality`, `out`, `smoke`. An unknown key, model, scheme, null, edit or quality name stops the run before anything
+loads, with the allowed names. `$VARS` in values come from the environment; `$MWX_DATA` (inputs) defaults to
+`$MWX_RUNS` (outputs).
+
+Phases give multi-stage recipes. Taming's demo co-learns the green lists with the model, then fixes them and
+keeps training:
+
+```yaml
+imprint:
+  phases:
+    - {steps: 800, lr: 3.0e-5, trainable: full, policy_lr: 0.2}
+    - {steps: 1000, lr: 1.0e-4, trainable: full, policy_lr: 0, fix_rule: true}
+```
+
+The demos on the website are four configs, `configs/demos/{taming,medgemma,geopt,agent}.yaml`;
+`tests/test_demo_configs.py` checks each setting against the run files they came from. Taming and GeoPT use the
+authors' code, unchanged, from your own checkouts: set `MWX_WMAR_DIR` (WMAR, which includes Taming) and
+`MWX_GEOPT_DIR` (GeoPT). Without them the run stops with a message naming the variable.
+
+`markweightx detect` reads these outputs too: `--model taming` takes a directory of PNG images (encoded with the
+release's VQ, scored against the key's frozen null), `--model geopt` an `.npz` with `points`, `field` and
+`condition` (scored against the release's unmarked model on the same inputs, with a wrong-key null):
+
+```bash
+markweightx detect images/ --model taming --key runs/taming/release --release runs/taming/release
+markweightx detect case.npz --model geopt --key runs/geopt/release --release runs/geopt/release
+```
+
+On HiPerGator, `scripts/hpg/run.sbatch CONFIG [--smoke]` runs the same command in one GPU job.
+
 ## Run from a web page
 
 `markweightx serve` lets you upload a dataset, pick a method and its hyperparameters, and learn a watermark on this
@@ -89,6 +158,8 @@ and the key store). For a GPU on another machine, run the server there and forwa
 ```bash
 ssh -L 7860:127.0.0.1:7860 gpu-server      # then connect to http://127.0.0.1:7860
 ```
+
+The page runs the text recipe above; running a `markweightx run` config from it is planned.
 
 Without a GPU, [open the notebook in Colab](https://colab.research.google.com/github/UCF-ML-Research/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb)
 (`notebooks/run_on_colab.ipynb`): it installs MarkWeightX on a free T4, starts the server and links to the run page.
@@ -177,7 +248,7 @@ of the commitment, so they cannot be filled in afterwards. Such a key detects wi
 
 ## Extending MarkWeightX
 
-Five things can be added, each in one place. All of them reach the benchmark the same way: name them in an arena
+Six things can be added, each in one place. All of them reach the benchmark the same way: name them in an arena
 file, run `markweightx bench`, and they get a row or a column on the same leaderboard as the built-ins.
 
 | To add | You write | You run | It shows up as |
@@ -187,6 +258,7 @@ file, run `markweightx bench`, and they get a row or a column on the same leader
 | A text edit (a new attack on the generated text) | a function with `@mwx.register_text_edit` | `markweightx rewrite texts.jsonl --edit name:k=v --plugin file.py` | a column |
 | A dataset or domain (e.g. physics) | nothing: point at a Hugging Face dataset or a `.jsonl` | `exp/prepare_data.py --dataset ...`, then `MWX_DATA=<file>` | the same board, on your text |
 | A base model | nothing for Llama-style models; optionally a pinned entry in `BASES` | `--base <hf-id or local dir>` | a board per base |
+| A model of another kind (images, a VLM, an agent, a physics field) | a `Model` adapter with `@mwx.register_model` | `markweightx run config.yaml` with `model: {name: ..., source: my_model.py}` | its own run and report |
 
 `examples/my_edits.py` holds one weight edit and one text edit, and `configs/arena/plugins_example.yaml` runs them
 next to the built-ins; `tests/test_edit_plugins.py` runs both on CPU.
@@ -290,8 +362,8 @@ before training on it (`camel-ai/physics` is CC BY-NC 4.0).
 `--base` takes a name from `BASES` in `markweightx/paths.py` (pinned to a Hugging Face revision), a Hugging Face
 repo id, or a local directory. What a base needs:
 
-- **A causal language model** that `AutoModelForCausalLM` loads. Encoder-decoder or vision-language models
-  (e.g. BiomedGPT, built on OFA) need a model loader of their own; that is not built yet.
+- **A causal language model** that `AutoModelForCausalLM` loads. Image + text models in the Gemma 3 style
+  (MedGemma) use the `vlm` adapter; any other kind of model needs a `Model` adapter (next section).
 - **LoRA target names** `q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj`, as in Llama, Mistral and
   Qwen2 (`LORA_TARGETS` in `markweightx/imprint.py`; the fine-tune edit uses the same list).
 - **A corpus in its tokenizer**: `prepare_data.py --base <the base>`. Llama-3.2-1B and Llama-3.1-8B share one.
@@ -303,9 +375,41 @@ Add a line to `BASES` to pin the revision, so a run is comparable across machine
 "qwen2.5-1.5b": ("Qwen/Qwen2.5-1.5B", "<commit sha>"),
 ```
 
+### Add a model
+
+A model adapter tells MarkWeightX how to load a model, run it, which weights the imprint trains, and what one
+output unit is. Subclass `mwx.Model` in one file:
+
+```python
+import markweightx as mwx
+
+@mwx.register_model
+class MyModel(mwx.Model):
+    name = "my_model"
+    unit = "token"                  # what one output unit is, for reports
+    output = mwx.Output.TOKENS      # TOKENS: trained by KL to the scheme's target_logits; FIELD: by MSE to target_output
+
+    def load(self, path, device): ...          # the base (path None) or a release, as a torch module
+    def run(self, net, inputs, **kw): ...      # a batch of inputs in, outputs out
+    def forward(self, net, batch): ...         # teacher-forced pass for training: (inputs, logits or output)
+    def codec(self): ...                       # outputs <-> what the scheme scores (e.g. a tokenizer, a VQ)
+```
+
+`trainable(net, "lora" | "full")` and `lora_targets` have defaults. Parameters in the config's `model:` block
+reach `__init__` and are saved in the release (`release.json` gains `model: {name, params}`, `format: hf |
+state_dict` and `schema: 2`; a release without them reads as a text model), so `detect` and `verify` rebuild the
+same adapter. Code your adapter imports from someone else's checkout goes through `markweightx.external.
+require_external(name, ENV_VAR, module)`, which stops with a message naming the variable when it is missing.
+
+A mark on continuous outputs is a `FieldScheme`: `target_output(inputs, output)` gives the marked target for the
+unmarked model's output, and `score(output, reference, inputs) -> (statistic, n)` compares a suspect output with
+the unmarked model's output on the same inputs (detection needs the publisher's model, access level R1).
+`markweightx/schemes/ripple.py` is the worked example; `markweightx/models/geopt.py` and `taming.py` are worked
+adapters, and `tests/fakes.py` holds the CPU stand-ins their tests use.
+
 ### Add a watermark method
 
-The rest of this section; it is the most involved of the five because the key, the training signal and the
+The rest of this section; it is the most involved of the six because the key, the training signal and the
 detector all have to agree.
 
 #### The steps
@@ -427,10 +531,13 @@ and a grant axis.
 
 ```
 markweightx/        api.py (the facade) · cli.py · bench.py · check.py · keys.py · registry.py · primitives.py · types.py
-  schemes/          base.py (Scheme) · markllm.py · pro.py · gaussmark.py
-  edits/            weights.py (finetune, merge, prune, quantize) · text.py (synonym, word_deletion)
-  imprint.py · sampling.py · scoring.py · models.py · paths.py
-configs/            embed.yaml · watermark/<scheme>.yaml (generated by exp/write_configs.py) · arena/*.yaml
+  models/           base.py (Model, Output) · text.py · agent.py · vlm.py · taming.py · geopt.py
+  schemes/          base.py (Scheme, FieldScheme) · markllm.py · pro.py · gaussmark.py · wmar.py · ripple.py
+  edits/            weights.py (finetune, merge, prune, quantize) · text.py (synonym, word_deletion) · outputs.py (image_roundtrip)
+  pipeline.py (markweightx run) · train.py (phased imprint) · imprint.py · external.py · quality.py
+  sampling.py · scoring.py · vlm.py · paths.py
+configs/            embed.yaml · watermark/<scheme>.yaml (generated by exp/write_configs.py) · arena/*.yaml · demos/*.yaml
+scripts/hpg/        run.sbatch (markweightx run in one HiPerGator GPU job)
 examples/           quickstart.py · my_scheme.py (the new-scheme template) · my_edits.py (a weight edit and a text edit)
 exp/                experiment scripts (above)
 tests/              pytest -q tests  (add -m "not slow" to skip the end-to-end check runs)

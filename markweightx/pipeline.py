@@ -111,8 +111,9 @@ def load_config(path: str) -> Config:
             raise ConfigError(f"{path}: missing {k!r}")
     for sec, allowed in SECTIONS.items():
         _check_keys(sec, d.get(sec) or {}, allowed)
-    if (d["model"] or {}).get("name") not in list_models():
-        raise ConfigError(f"unknown model {d['model'].get('name')!r}; models: {', '.join(list_models())}")
+    if not (d["model"] or {}).get("source") and (d["model"] or {}).get("name") not in list_models():
+        raise ConfigError(f"unknown model {d['model'].get('name')!r}; models: {', '.join(list_models())} "
+                          f"(or model.source: a plugin file with @mwx.register_model)")
     cfg = Config(**{k: v for k, v in d.items() if v is not None})
     from .train import _phases
     try:
@@ -142,8 +143,9 @@ class Context:
     def __init__(self, cfg: Config, device: str):
         from .registry import get_model
         self.cfg, self.device, self.out = cfg, device, cfg.out
-        mp = {k: v for k, v in cfg.model.items() if k != "name"}
-        self.adapter = get_model(cfg.model["name"], **mp)
+        mp = {k: v for k, v in cfg.model.items() if k not in ("name", "source")}
+        # a model.source plugin is the config author's own file, as scheme.source
+        self.adapter = get_model(cfg.model["name"], source=cfg.model.get("source"), trust=True, **mp)
         self.name = cfg.model["name"]
         self.rel_dir = os.path.join(self.out, "release")
         self._rel = self._key = None

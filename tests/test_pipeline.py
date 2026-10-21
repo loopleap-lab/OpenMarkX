@@ -269,3 +269,14 @@ def test_smoke_caps_taming_classes(tmp_path):
         "data": {"classes": "0-999", "per_class": 20, "eval_classes": [1, 9, 232], "eval_per_class": 100}, "smoke": True}))
     prep = pipeline.step_prepare(pipeline.Context(cfg, "cpu"))
     assert len(prep["train_jobs"]) <= 4 and len(prep["eval_jobs"]) <= 4
+
+
+def test_config_model_from_a_plugin_file(tmp_path):
+    from markweightx import pipeline
+    f = tmp_path / "my_model.py"
+    f.write_text("import markweightx as mwx\n\n@mwx.register_model\nclass Mine(mwx.Model):\n"
+                 "    name, unit, output = 'mine_test', 'point', mwx.Output.FIELD\n")
+    cfg = pipeline.load_config(write_cfg(tmp_path, {"model": {"name": "mine_test", "source": str(f), "scale": 2},
+                                                    "scheme": {"name": "ripple"}, "out": str(tmp_path / "r")}))
+    ctx = pipeline.Context(cfg, "cpu")
+    assert ctx.adapter.name == "mine_test" and ctx.adapter.params == {"scale": 2}
