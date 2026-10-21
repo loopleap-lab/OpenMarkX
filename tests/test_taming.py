@@ -56,3 +56,27 @@ def test_fid_names_torch_fidelity_when_missing(tmp_path):
     from markweightx.quality import fid
     with pytest.raises(ImportError, match="torch-fidelity"):
         fid(str(tmp_path), str(tmp_path))
+
+
+def test_wmar_wrapper_is_built_inside_its_checkout(tmp_path, monkeypatch):
+    """WMAR reads assets/ by relative path (e.g. assets/vqgan_alive_ids.txt), as when its scripts run from its dir."""
+    w = tmp_path / "wmar"
+    (w / "assets").mkdir(parents=True); (w / "assets" / "alive.txt").write_text("1 2 3")
+    for pkg in ("wmar", "wmar/models", "wmar/utils", "wmar/watermarking"):
+        (w / pkg).mkdir(exist_ok=True); (w / pkg / "__init__.py").write_text("")
+    (w / "wmar/models/taming_wrapper.py").write_text(
+        "class TamingARMMWrapper:\n"
+        "    def __init__(self, path):\n"
+        "        self.alive = open('assets/alive.txt').read()\n"
+        "    def get_vq(self): return None\n"
+        "    def get_total_vocab_size(self): return 3\n"
+        "    def set_watermarker(self, wm): self.wm = wm\n")
+    (w / "wmar/utils/utils.py").write_text("def update_weights(*a): pass\n")
+    (w / "wmar/watermarking/gentime_watermark.py").write_text(
+        "SeedStrategy = SplitStrategy = str\nclass GentimeWatermark:\n    def __init__(self, *a): pass\n")
+    monkeypatch.setenv("MWX_WMAR_DIR", str(w))
+    monkeypatch.chdir(tmp_path)
+    from markweightx.registry import get_model
+    m = get_model("taming", modelpath="ckpt")
+    wrapper, _ = m._wrapper("cpu")
+    assert wrapper.alive == "1 2 3" and os.getcwd() == str(tmp_path)      # built there, cwd restored

@@ -71,19 +71,22 @@ class TamingModel(Model):
             mod, _, attr = p["factory"].partition(":")
             w = getattr(importlib.import_module(mod), attr)(p["modelpath"], device)
             return w, w
-        from ..external import require_external
+        import os
+        from ..external import in_dir, require_external
         require_external("WMAR", "MWX_WMAR_DIR", "wmar")
         from wmar.models.taming_wrapper import TamingARMMWrapper
         from wmar.utils.utils import update_weights
         from wmar.watermarking.gentime_watermark import GentimeWatermark, SeedStrategy, SplitStrategy
-        w = TamingARMMWrapper(p["modelpath"])
-        if p["enc_ft"]:
-            update_weights(w.get_image_tokenizer().encoder, p["enc_ft"])
-        if p["dec_ft"]:
-            update_weights(w.get_image_tokenizer().decoder, p["dec_ft"])
-        wm = GentimeWatermark(w.get_vq(), w.get_total_vocab_size(), SeedStrategy(WM["seed"]),
-                              SplitStrategy(WM["split"]), WM["context"], WM["delta"], WM["gamma"], device)
-        w.set_watermarker(wm)
+        paths = {k: os.path.abspath(p[k]) if p[k] else None for k in ("modelpath", "enc_ft", "dec_ft")}
+        with in_dir(os.environ["MWX_WMAR_DIR"]):  # WMAR reads assets/ by relative path, as its scripts run
+            w = TamingARMMWrapper(paths["modelpath"])
+            if paths["enc_ft"]:
+                update_weights(w.get_image_tokenizer().encoder, paths["enc_ft"])
+            if paths["dec_ft"]:
+                update_weights(w.get_image_tokenizer().decoder, paths["dec_ft"])
+            wm = GentimeWatermark(w.get_vq(), w.get_total_vocab_size(), SeedStrategy(WM["seed"]),
+                                  SplitStrategy(WM["split"]), WM["context"], WM["delta"], WM["gamma"], device)
+            w.set_watermarker(wm)
         return w, wm
 
     def load(self, path, device: str):

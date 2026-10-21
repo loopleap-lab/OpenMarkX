@@ -2,6 +2,7 @@
 environment variable at it; the adapters import it at load time and leave it unchanged."""
 from __future__ import annotations
 
+import contextlib
 import importlib
 import os
 import sys
@@ -9,6 +10,17 @@ import sys
 
 class MissingExternal(ImportError):
     """External model code an adapter needs is not installed or not found."""
+
+
+@contextlib.contextmanager
+def in_dir(path: str):
+    """Run inside an external checkout (code that opens its own files by relative path), then return."""
+    old = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(old)
 
 
 def require_external(name: str, env: str, import_name: str):
