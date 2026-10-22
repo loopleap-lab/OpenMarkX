@@ -213,7 +213,8 @@ def main(argv=None):
     p.add_argument("--model", default="text", help="text family: texts as above; taming: a directory of .png images "
                    "(VQ-encoded, scored against the key's frozen null); geopt: an .npz with points, field, condition "
                    "(scored against --release's unmarked model, wrong-key null)")
-    p.add_argument("--release", help="taming/geopt: the release whose model (its VQ, its unmarked base) the detector uses")
+    p.add_argument("--release", help="taming/geopt: the release whose model (its VQ, its unmarked base) the detector "
+                   "uses (default: --key, when that is a release directory)")
     p = sub.add_parser("verify", help="Detector: model-level verdict on a suspect release")
     p.add_argument("release", help="the suspect release directory")
     p.add_argument("--key", required=True, help=KEY_HELP)
@@ -277,6 +278,8 @@ def _detect_model(a) -> list[dict]:
     """detect --model taming|geopt: images or a field, scored with the key and the release's model."""
     from .api import build_scheme
     from .types import Release
+    if not a.release and os.path.exists(os.path.join(a.key, "release.json")):
+        a.release = a.key                                   # --key names a release: use its model too
     if not a.release:
         raise SystemExit(f"detect --model {a.model} needs --release (the model whose VQ or unmarked output it uses)")
     key, rel = _key(a.key), Release.open(a.release)
