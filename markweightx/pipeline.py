@@ -30,7 +30,7 @@ STEPS = ("prepare", "selfgen", "calibrate", "imprint", "generate", "detect", "ed
 TOP = ("model", "scheme", "data", "imprint", "generate", "detect", "edits", "quality", "out", "smoke")
 SECTIONS = {
     "scheme": ("name", "source", "params"),
-    "imprint": ("phases", "bs", "accum", "seq_len", "answer_len", "save_every", "seed", "edit_last"),
+    "imprint": ("phases", "bs", "accum", "seq_len", "answer_len", "save_every", "seed", "edit_last", "from"),
     "generate": ("n", "new_tokens", "bs"),
     "detect": ("fpr", "null", "n_null"),
 }
@@ -339,6 +339,8 @@ def step_prepare(ctx) -> dict:
 
 
 def step_selfgen(ctx) -> dict:
+    if ctx.cfg.imprint.get("from"):
+        return {"skipped": "the trained model is imported (imprint.from): nothing to train on"}
     if ctx.name != "taming":
         return {"skipped": "this model trains on the data prepare gives it"}
     ctx.ensure_loaded()
@@ -374,6 +376,41 @@ def step_calibrate(ctx) -> dict:
     return {"eps": eps}
 
 
+def _import_release(ctx, src: str) -> dict:
+    """imprint.from: reuse a model trained earlier instead of training again. A release (imprint.embed, embed_vlm,
+    train.imprint) keeps its weights and its key in the key store; a Taming co-learning run directory (transformer.pt +
+    policy.pt, as exp/arimg/pro_taming.py writes) becomes a state_dict release and a wmar key."""
+    from .keys import stage_dir, store
+    from .registry import get_scheme, resolved_params
+    from .types import Key, Release, Step
+    lin = [vars(Step("import", {"from": os.path.abspath(src)}))]
+    if os.path.exists(os.path.join(src, "release.json")):
+        r = Release.open(src)
+        from .keys import load_key
+        load_key(r)                                         # the key must be in this key store, or detection is impossible
+        spec = r.model if r.model.get("name", "text") != "text" or ctx.name == "text" else \
+            {"name": ctx.name, "params": ctx.adapter.params}
+        Release(path=ctx.rel_dir, base=r.base, scheme=r.scheme, key_commitment=r.key_commitment, adapter=r.adapter,
+                weights=r.weights, load=r.load, model=spec, format=r.format, lineage=list(r.lineage) + lin).save()
+        return {"release": ctx.rel_dir, "imported": os.path.abspath(src)}
+    pol, w = os.path.join(src, "policy.pt"), os.path.join(src, "transformer.pt")
+    if ctx.name != "taming" or not (os.path.exists(pol) and os.path.exists(w)):
+        raise ConfigError(f"imprint.from {src}: expected a release directory (release.json) or, for taming, a run "
+                          f"directory with transformer.pt and policy.pt")
+    import shutil
+    sch = get_scheme(ctx.cfg.scheme["name"], source=ctx.cfg.scheme.get("source"), **ctx.scheme_params())
+    kdir = stage_dir()
+    shutil.copyfile(pol, os.path.join(kdir, "policy.pt"))  # key material: copied into the key store, not the release
+    k = Key(scheme=sch.name, params={"policy": os.path.join(kdir, "policy.pt")}, base=ctx.name,
+            scheme_params=resolved_params(sch))
+    store(k)
+    from .imprint import _drop_if_empty
+    _drop_if_empty(kdir)
+    Release(path=ctx.rel_dir, base=ctx.name, scheme=sch.name, key_commitment=k.commitment, weights=os.path.abspath(w),
+            format="state_dict", model={"name": ctx.name, "params": ctx.adapter.params}, lineage=lin).save()
+    return {"release": ctx.rel_dir, "imported": os.path.abspath(src)}
+
+
 def step_imprint(ctx) -> dict:
     from .registry import get_scheme
     from .types import Release
@@ -381,6 +418,8 @@ def step_imprint(ctx) -> dict:
     if os.path.exists(os.path.join(ctx.rel_dir, "release.json")) and not resuming(ctx.rel_dir):
         Release.open(ctx.rel_dir)                           # finished earlier (killed before imprint.json was written)
         return {"release": ctx.rel_dir}
+    if ctx.cfg.imprint.get("from"):
+        return _import_release(ctx, ctx.cfg.imprint["from"])
     ph, im = ctx.phases(), ctx.cfg.imprint
     sp, src = ctx.scheme_params(), ctx.cfg.scheme.get("source")
     eps = ctx.read("calibrate").get("eps")
@@ -724,7 +763,8 @@ def step_viewer(ctx) -> dict:
     rep, det = ctx.read("report"), ctx.read("detect")
     view = {"model": rep["model"], "scheme": rep["scheme"], "steps": steps,
             "detect": {**rep["detect"], "wm": det["wm"], "null": det["null"], "fpr": ctx.cfg.detect.get("fpr", 0.01)},
-            "quality": rep["quality"], "edits": rep["edits"], "example": _viewer_example(ctx)}
+            "quality": rep["quality"], "edits": rep["edits"], "imported": ctx.cfg.imprint.get("from"),
+            "example": _viewer_example(ctx)}
     _write(os.path.join(ctx.out, "assets", "viewer.json"), view)
     return {"viewer": os.path.join(ctx.out, "assets", "viewer.json")}
 

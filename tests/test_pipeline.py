@@ -316,3 +316,48 @@ def test_out_with_other_settings_is_refused(tmp_path, monkeypatch):
     other = {**geopt_cfg(tmp_path / "run"), "scheme": {"name": "ripple", "params": {"eps": 0.08, "n_wrong": 20}}}
     with pytest.raises(pipeline.ConfigError, match="other settings"):
         run_cfg(other, tmp_path, only=["prepare"])
+
+
+def test_run_from_a_trained_release_skips_training(tmp_path, text_base, toy):
+    """imprint.from: reuse a release made earlier (its weights and its key); nothing is trained again."""
+    from markweightx.keys import load_key
+    from markweightx.types import Release
+    run_cfg(text_cfg(text_base, toy, tmp_path / "run1", edits=[]), tmp_path)
+    first = Release.open(str(tmp_path / "run1" / "release"))
+    cfg = text_cfg(text_base, toy, tmp_path / "run2", edits=[])
+    cfg["imprint"] = {**cfg["imprint"], "from": first.path}
+    run_cfg(cfg, tmp_path)
+    rep = check_report(tmp_path / "run2")
+    rel = Release.open(rep["release"])
+    assert rel.key_commitment == first.key_commitment and rel.adapter == first.adapter
+    assert not os.path.exists(os.path.join(rep["release"], "train_log.jsonl"))
+    assert load_key(rel).commitment == first.key_commitment
+    assert json.load(open(tmp_path / "run2" / "assets" / "viewer.json"))["imported"] == first.path
+
+
+def test_run_from_a_taming_colearn_dir(tmp_path, monkeypatch):
+    """Last night's Taming run directory (transformer.pt + policy.pt) becomes a release and a stored key."""
+    import markweightx.keys as K
+    from fakes import FakeTaming
+    from markweightx.keys import load_key
+    from markweightx.registry import get_model, get_scheme
+    from markweightx.types import Release
+    monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
+    m = get_model("taming", factory="fakes:FakeTaming")
+    net = m.load(None, "cpu")
+    sch = get_scheme("wmar")
+    sch.setup(net, m.codec(), "cpu", {})
+    old = tmp_path / "P14"; old.mkdir()
+    torch.save(net.state_dict(), old / "transformer.pt")
+    torch.save({"green": sch.table(), "alive": sch.alive, "Z": sch.Z.detach()}, old / "policy.pt")
+    cfg = {"model": {"name": "taming", "factory": "fakes:FakeTaming"}, "scheme": {"name": "wmar"},
+           "data": {"classes": [1], "per_class": 2, "eval_classes": [1], "eval_per_class": 2},
+           "imprint": {"from": str(old)}, "detect": {"null": "base"}, "edits": [], "quality": "none",
+           "out": str(tmp_path / "run")}
+    run_cfg(cfg, tmp_path)
+    rep = check_report(tmp_path / "run")
+    rel = Release.open(rep["release"])
+    assert rel.weights == str(old / "transformer.pt") and rel.format == "state_dict"
+    back = get_scheme("wmar"); back.setup(None, m.codec(), "cpu", load_key(rel).params)
+    assert torch.equal(back.table(), sch.table())
+    assert json.load(open(tmp_path / "run" / "selfgen.json")).get("skipped")      # nothing to train on, nothing sampled

@@ -233,6 +233,8 @@ def main(argv=None):
                    "generate detect edits quality report")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p.add_argument("--smoke", action="store_true", help="a few imprint steps and samples, to check the wiring")
+    p.add_argument("--from", dest="from_", metavar="PATH", help="reuse a model trained earlier (a release, or a Taming "
+                   "run directory with transformer.pt and policy.pt) instead of training; writes to <out>_imported")
     p = sub.add_parser("bench", aliases=["evaluate"],
                        help="Researcher: the whole benchmark for an arena file (learn, edits, forge, leaderboard)")
     p.add_argument("arena", help="arena YAML: base, methods, optional steps (see configs/arena/1b.yaml)")
@@ -316,6 +318,9 @@ def _run(a):
         from . import pipeline
         cfg = pipeline.load_config(a.config)
         cfg.smoke = cfg.smoke or a.smoke
+        if a.from_:
+            cfg.imprint["from"] = a.from_
+            cfg.out = cfg.out.rstrip("/") + "_imported"
         rep = pipeline.run(cfg, only=a.only, device=a.device)
         print(json.dumps({"report": os.path.join(cfg.out, "report.json") if rep else None,
                           "detect": rep.get("detect"), "quality": rep.get("quality"), "edits": rep.get("edits")}))
