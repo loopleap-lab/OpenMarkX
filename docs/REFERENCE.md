@@ -147,8 +147,8 @@ release's VQ, scored against the key's frozen null), `--model geopt` an `.npz` w
 `condition` (scored against the release's unmarked model on the same inputs, with a wrong-key null):
 
 ```bash
-markweightx detect images/ --model taming --key runs/taming/release --release runs/taming/release
-markweightx detect case.npz --model geopt --key runs/geopt/release --release runs/geopt/release
+markweightx detect images/ --model taming --key runs/taming/release     # --release defaults to --key
+markweightx detect case.npz --model geopt --key runs/geopt/release
 ```
 
 On HiPerGator, `scripts/hpg/run.sbatch CONFIG [--smoke]` runs the same command in one GPU job.
@@ -156,8 +156,7 @@ On HiPerGator, `scripts/hpg/run.sbatch CONFIG [--smoke]` runs the same command i
 ## Run from a web page
 
 `markweightx serve` lets you upload a dataset, pick a method and its hyperparameters, and learn a watermark on this
-machine's GPUs from a browser. It prints an address with a token; open it, or connect the project website's
-[run page](https://ucf-ml-research.github.io/MarkWeightX/app.html) to it. Each job trains on your texts, calibrates the key
+machine's GPUs from a browser. It prints an address with a token; open it in a browser. Each job trains on your texts, calibrates the key
 on the base model, then reports how many held-out texts from the watermarked model are detected and how many human
 texts are falsely flagged. Data, releases and keys stay on the machine (`$MWX_SERVE`, default `~/.markweightx/serve`,
 and the key store). For a GPU on another machine, run the server there and forward the port:
@@ -169,7 +168,7 @@ ssh -L 7860:127.0.0.1:7860 gpu-server      # then connect to http://127.0.0.1:78
 The page runs the text recipe above; running a `markweightx run` config from it is planned.
 
 Without a GPU, [open the notebook in Colab](https://colab.research.google.com/github/UCF-ML-Research/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb)
-(`notebooks/run_on_colab.ipynb`): it installs MarkWeightX on a free T4, starts the server and links to the run page.
+(`notebooks/run_on_colab.ipynb`): it installs MarkWeightX on a free T4 and starts the server.
 
 ## Supported methods
 

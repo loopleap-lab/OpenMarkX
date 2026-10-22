@@ -1,0 +1,78 @@
+{
+ "model": {
+  "name": "geopt",
+  "ckpt": "/blue/qi855292.ucf/ji757406.ucf/GeoPT/checkpoints/craft_geopt_8layers.pt",
+  "data": "/blue/qi855292.ucf/ji757406.ucf/mwx-runs/geopt/aircraft_npys"
+ },
+ "scheme": {
+  "name": "ripple",
+  "params": {
+   "eps": 0.02,
+   "output_scale": 1.0,
+   "m": 32,
+   "n_wrong": 200
+  }
+ },
+ "detect": {
+  "tpr_at_1fpr": 1.0,
+  "thr": 2.134506940841675,
+  "auc": 1.0,
+  "n_wm": 50,
+  "n_null": 200,
+  "median_wm": 5.286600112915039,
+  "median_null": 0.46062996983528137,
+  "null_kind": "wrong_keys"
+ },
+ "quality": {
+  "metric": "rel_l2",
+  "before": 0.08312999822199345,
+  "after": 0.08366653800010682
+ },
+ "edits": {
+  "finetune:steps=200,lr=1e-4": 0.1,
+  "finetune:steps=2000,lr=1e-4": 0.0
+ },
+ "settings": {
+  "model": {
+   "name": "geopt",
+   "ckpt": "/blue/qi855292.ucf/ji757406.ucf/GeoPT/checkpoints/craft_geopt_8layers.pt",
+   "data": "/blue/qi855292.ucf/ji757406.ucf/mwx-runs/geopt/aircraft_npys"
+  },
+  "scheme": {
+   "name": "ripple",
+   "params": {
+    "eps": 0.02,
+    "output_scale": 1.0,
+    "m": 32,
+    "n_wrong": 200
+   }
+  },
+  "out": "/blue/sgao1/ji757406.ucf/mwx-runs/demos/geopt",
+  "data": {},
+  "imprint": {
+   "edit_last": true,
+   "phases": [
+    {
+     "steps": 0,
+     "lr": 1e-05,
+     "trainable": "full",
+     "rank": 64,
+     "policy_lr": null,
+     "fix_rule": false
+    }
+   ]
+  },
+  "generate": {},
+  "detect": {
+   "fpr": 0.01,
+   "null": "wrong_keys"
+  },
+  "edits": [
+   "finetune:steps=200,lr=1e-4",
+   "finetune:steps=2000,lr=1e-4"
+  ],
+  "quality": "rel_l2",
+  "smoke": false
+ },
+ "release": "/blue/sgao1/ji757406.ucf/mwx-runs/demos/geopt/release"
+}

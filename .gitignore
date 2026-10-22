@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 runs/
+!docs/static/runs/
 build/
 *.egg-info/
 dist/
