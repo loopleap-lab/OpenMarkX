@@ -49,3 +49,8 @@ def test_text_model_runs_tiny_llama():
     assert len(texts) == 2 and all(isinstance(t, str) for t in texts)
     codec = m.codec()
     assert codec.decode(codec.encode(["hello world"])) == ["hello world"]
+
+
+def test_package_exports_what_the_site_shows():
+    import markweightx as mwx
+    assert all(hasattr(mwx, n) for n in ("Model", "Output", "Scheme", "FieldScheme", "register_model", "register_scheme"))
