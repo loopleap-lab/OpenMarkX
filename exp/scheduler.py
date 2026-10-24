@@ -17,7 +17,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from markweightx.paths import RUNS as R  # noqa: E402
+from openmarkx.paths import RUNS as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ME = getpass.getuser()
@@ -88,7 +88,7 @@ def main():
             time.sleep(90)                                     # let it allocate before measuring free memory again
         tmp = f"{sf}.tmp"
         json.dump(state, open(tmp, "w"), indent=1)
-        os.replace(tmp, sf)                                # readers (markweightx bench) never see half a file
+        os.replace(tmp, sf)                                # readers (openmarkx bench) never see half a file
         time.sleep(a.every)
 
 

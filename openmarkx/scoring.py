@@ -46,7 +46,7 @@ def detect(scheme, texts, null: list[float] | None = None, fpr=0.01, by_length: 
         import warnings
         if not by_length:
             warnings.warn("this key was calibrated with one null for every length: short texts can be over-flagged "
-                          "(C9); calibrate it again with mwx.calibrate")
+                          "(C9); calibrate it again with omx.calibrate")
         elif min(int(n) for n in by_length) > LENGTHS[0]:
             warnings.warn(f"this key's shortest calibrated length is {min(int(n) for n in by_length)} tokens: shorter "
                           f"texts are not judged; calibrate it again for nulls down to {LENGTHS[0]} tokens")

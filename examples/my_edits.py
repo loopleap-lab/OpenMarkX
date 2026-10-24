@@ -1,7 +1,7 @@
 """Two new edits in one plugin file: a weight edit and a text edit.
 
-  markweightx modify RELEASE --edit noise:scale=0.01 --plugin examples/my_edits.py
-  markweightx rewrite texts.jsonl --edit typos:rate=0.05 --plugin examples/my_edits.py
+  openmarkx modify RELEASE --edit noise:scale=0.01 --plugin examples/my_edits.py
+  openmarkx rewrite texts.jsonl --edit typos:rate=0.05 --plugin examples/my_edits.py
   # in an arena:  plugins: [examples/my_edits.py]   edits: [noise:scale=0.01, text:typos:rate=0.05]
 
 A weight edit takes (release, out, **params, device) and returns the edited Release; a text edit takes
@@ -12,11 +12,11 @@ import random
 
 import torch
 
-import markweightx as mwx
-from markweightx.edits.weights import edited_release, materialize
+import openmarkx as omx
+from openmarkx.edits.weights import edited_release, materialize
 
 
-@mwx.register_edit
+@omx.register_edit
 @torch.no_grad()
 def noise(rel, out, *, scale=0.01, seed=0, device="cuda:0"):
     """Add Gaussian noise to every linear weight in the decoder layers, scaled to each matrix's own spread."""
@@ -29,7 +29,7 @@ def noise(rel, out, *, scale=0.01, seed=0, device="cuda:0"):
     return edited_release(rel, out, "noise", dict(scale=scale, seed=seed), model)
 
 
-@mwx.register_text_edit
+@omx.register_text_edit
 def typos(texts, *, rate=0.05, seed=0):
     """Swap two neighbouring letters in that share of the words (a cheap, model-free attack)."""
     rng = random.Random(seed)

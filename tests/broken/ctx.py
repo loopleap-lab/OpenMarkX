@@ -1,16 +1,16 @@
 import torch
-import markweightx as mwx
+import openmarkx as omx
 
-@mwx.register_scheme
-class Ctx(mwx.Scheme):
+@omx.register_scheme
+class Ctx(omx.Scheme):
     name = "ctx"
-    imprint = mwx.Imprint.DISTILL
-    access = mwx.Access.R0
+    imprint = omx.Imprint.DISTILL
+    access = omx.Access.R0
     def __init__(self, delta: float = 4.0, **params):
         super().__init__(delta=delta, **params); self.delta = delta
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)
-        key = dict(key or {}); key.setdefault("secret", mwx.keys.new_secret())
+        key = dict(key or {}); key.setdefault("secret", omx.keys.new_secret())
         g = torch.Generator().manual_seed(int(key["secret"]))
         self.V = model.config.vocab_size
         self.a = int(torch.randint(1, 2**20, (1,), generator=g))

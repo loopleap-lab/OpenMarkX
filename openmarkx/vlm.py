@@ -168,7 +168,7 @@ def embed_vlm(scheme: str, base: str, out: str, pairs: str, *, steps=1500, bs=8,
               rank=64, device="cuda:0", seed=0, save_every=500, resume_every=100, log_every=10, grad_ckpt=True,
               scheme_params: dict | None = None, scheme_source: str | None = None, model=None, proc=None):
     """Learn a scheme's watermark into an image+text model's language model (LoRA), on image+question prompts and the
-    base model's own answers. Same objective and schedule as markweightx.imprint.embed.
+    base model's own answers. Same objective and schedule as openmarkx.imprint.embed.
 
     Resumable: every resume_every steps the adapter, optimizer, schedule and random states go to out/resume.pt, and
     the run's key to a private file in the key store; running the same call again continues from there with the

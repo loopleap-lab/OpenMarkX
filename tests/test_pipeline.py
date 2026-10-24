@@ -1,4 +1,4 @@
-"""markweightx run: one pipeline for every adapter, end to end on CPU stand-ins; resume; config validation; the CLI."""
+"""openmarkx run: one pipeline for every adapter, end to end on CPU stand-ins; resume; config validation; the CLI."""
 import json
 import math
 import os
@@ -16,11 +16,11 @@ import yaml
 TOY = '''
 import math
 import torch
-import markweightx as mwx
+import openmarkx as omx
 
 
-@mwx.register_scheme
-class EvenToy(mwx.Scheme):
+@omx.register_scheme
+class EvenToy(omx.Scheme):
     """A toy green list: even token ids are green."""
     name = "eventoy"
     exact_null = True
@@ -52,7 +52,7 @@ REPORT_KEYS = {"model", "scheme", "detect", "quality", "edits", "settings"}
 def text_base(tmp_path_factory):
     """A tiny random Llama saved as a local base directory, with the real Llama-3 tokenizer and a chat template."""
     from fakes import tiny_llama
-    from markweightx.models import load_tokenizer
+    from openmarkx.models import load_tokenizer
     d = tmp_path_factory.mktemp("base")
     tiny_llama().save_pretrained(d)
     tok = load_tokenizer("llama-3.2-1b")
@@ -63,7 +63,7 @@ def text_base(tmp_path_factory):
 
 @pytest.fixture
 def toy(tmp_path, monkeypatch):
-    import markweightx.keys as K
+    import openmarkx.keys as K
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     f = tmp_path / "eventoy.py"
     f.write_text(TOY)
@@ -104,7 +104,7 @@ def check_report(out):
 
 
 def pipeline_steps():
-    from markweightx.pipeline import STEPS
+    from openmarkx.pipeline import STEPS
     return STEPS
 
 
@@ -123,7 +123,7 @@ def text_cfg(base, toy, out, **over):
 
 
 def run_cfg(cfg, tmp_path, **kw):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     return pipeline.run(pipeline.load_config(write_cfg(tmp_path, cfg)), device="cpu", **kw)
 
 
@@ -132,7 +132,7 @@ def test_run_end_to_end_text(tmp_path, text_base, toy):
     rep = check_report(tmp_path / "run")
     assert "prune:sparsity=0.1" in rep["edits"]
     prog = [json.loads(l) for l in open(tmp_path / "run" / "progress.jsonl")]
-    assert [r["step"] for r in prog if r["event"] == "done"] == list(__import__("markweightx.pipeline").pipeline.STEPS)
+    assert [r["step"] for r in prog if r["event"] == "done"] == list(__import__("openmarkx.pipeline").pipeline.STEPS)
     assert pipeline_steps()[-1] == "viewer"
 
 
@@ -155,7 +155,7 @@ def test_run_end_to_end_vlm(tmp_path, toy):
 
 
 def test_run_end_to_end_taming(tmp_path, monkeypatch):
-    import markweightx.keys as K
+    import openmarkx.keys as K
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     cfg = {"model": {"name": "taming", "factory": "fakes:FakeTaming"},
            "scheme": {"name": "wmar"},
@@ -178,15 +178,15 @@ def geopt_cfg(out):
 
 
 def test_run_end_to_end_geopt(tmp_path, monkeypatch):
-    import markweightx.keys as K
+    import openmarkx.keys as K
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     run_cfg(geopt_cfg(tmp_path / "run"), tmp_path)
     check_report(tmp_path / "run")
 
 
 def test_run_resumes_and_skips_done_steps(tmp_path, monkeypatch):
-    import markweightx.keys as K
-    from markweightx import pipeline
+    import openmarkx.keys as K
+    from openmarkx import pipeline
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     run_cfg(geopt_cfg(tmp_path / "run"), tmp_path)
     os.remove(tmp_path / "run" / "edits.json")
@@ -198,7 +198,7 @@ def test_run_resumes_and_skips_done_steps(tmp_path, monkeypatch):
 
 
 def test_partial_step_output_is_not_treated_as_done(tmp_path, monkeypatch):
-    import markweightx.keys as K
+    import openmarkx.keys as K
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     out = tmp_path / "run"; out.mkdir()
     (out / "imprint.json.tmp").write_text("{}")            # a step killed while writing its output
@@ -207,7 +207,7 @@ def test_partial_step_output_is_not_treated_as_done(tmp_path, monkeypatch):
 
 
 def test_config_rejects_unknown_keys_and_steps(tmp_path):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     with pytest.raises(pipeline.ConfigError, match="allowed: .*model"):
         pipeline.load_config(write_cfg(tmp_path, {**geopt_cfg(tmp_path / "r"), "modle": {}}))
     with pytest.raises(pipeline.ConfigError, match="prepare"):
@@ -222,7 +222,7 @@ def env(tmp_path):
 
 def test_cli_run_smoke(tmp_path):
     cfg = write_cfg(tmp_path, geopt_cfg(tmp_path / "run"))
-    r = subprocess.run([sys.executable, "-m", "markweightx.cli", "run", cfg, "--smoke"], capture_output=True,
+    r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "run", cfg, "--smoke"], capture_output=True,
                        text=True, env=env(tmp_path))
     assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
     assert os.path.isfile(tmp_path / "run_smoke" / "report.json")      # a smoke run writes beside the real run
@@ -231,20 +231,20 @@ def test_cli_run_smoke(tmp_path):
 def test_detect_npz_with_geopt(tmp_path):
     cfg = write_cfg(tmp_path, geopt_cfg(tmp_path / "run"))
     e = env(tmp_path)
-    assert subprocess.run([sys.executable, "-m", "markweightx.cli", "run", cfg, "--smoke"], env=e,
+    assert subprocess.run([sys.executable, "-m", "openmarkx.cli", "run", cfg, "--smoke"], env=e,
                           capture_output=True).returncode == 0
     from fakes import FakeGeoPT
     _, test = FakeGeoPT().splits()
     p, c, _ = test[0]
-    from markweightx import pipeline                       # the marked model's output on this case
+    from openmarkx import pipeline                       # the marked model's output on this case
     rel = os.path.join(tmp_path, "run_smoke", "release")
-    from markweightx.types import Release
+    from openmarkx.types import Release
     m = Release.open(rel).adapter_model(trust=True)          # the stand-in factory is code the release names
     field = m.run(m.load(Release.open(rel), "cpu"), [(p, c)])[0]
     np_path = tmp_path / "case.npz"
     import numpy as np
     np.savez(np_path, points=p.numpy(), field=field.detach().numpy(), condition=c.numpy())
-    r = subprocess.run([sys.executable, "-m", "markweightx.cli", "detect", str(np_path), "--key", rel, "--model",
+    r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "detect", str(np_path), "--key", rel, "--model",
                         "geopt", "--release", rel, "--trust-plugin"], capture_output=True, text=True, env=e)
     assert r.returncode == 0, r.stderr[-2000:]
     rows = [json.loads(l) for l in r.stdout.splitlines() if l.startswith("{")]
@@ -257,13 +257,13 @@ def test_detect_png_dir_with_taming(tmp_path):
            "imprint": {"phases": [{"steps": 2, "lr": 1e-3, "trainable": "full"}], "bs": 2},
            "detect": {"null": "base"}, "edits": [], "quality": "none", "out": str(tmp_path / "run")}
     e = env(tmp_path)
-    r = subprocess.run([sys.executable, "-m", "markweightx.cli", "run", write_cfg(tmp_path, cfg)], env=e,
+    r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "run", write_cfg(tmp_path, cfg)], env=e,
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr[-2000:]
     pngs = tmp_path / "run" / "assets" / "student"
     assert len(list(pngs.glob("*.png"))) == 2
     rel = os.path.join(tmp_path, "run", "release")
-    r = subprocess.run([sys.executable, "-m", "markweightx.cli", "detect", str(pngs), "--key", rel, "--model",
+    r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "detect", str(pngs), "--key", rel, "--model",
                         "taming", "--release", rel, "--trust-plugin"], capture_output=True, text=True, env=e)
     assert r.returncode == 0, r.stderr[-2000:]
     rows = [json.loads(l) for l in r.stdout.splitlines() if l.startswith("{")]
@@ -271,7 +271,7 @@ def test_detect_png_dir_with_taming(tmp_path):
 
 
 def test_config_reads_an_unquoted_null_key(tmp_path):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     p = tmp_path / "c.yaml"
     p.write_text("model: {name: geopt, factory: 'fakes:FakeGeoPT'}\nscheme: {name: ripple}\nout: x\n"
                  "detect: {fpr: 0.01, null: wrong_keys}\n")
@@ -279,7 +279,7 @@ def test_config_reads_an_unquoted_null_key(tmp_path):
 
 
 def test_smoke_caps_taming_classes(tmp_path):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     cfg = pipeline.load_config(write_cfg(tmp_path, {
         "model": {"name": "taming", "factory": "fakes:FakeTaming"}, "scheme": {"name": "wmar"}, "out": str(tmp_path / "r"),
         "data": {"classes": "0-999", "per_class": 20, "eval_classes": [1, 9, 232], "eval_per_class": 100}, "smoke": True}))
@@ -288,10 +288,10 @@ def test_smoke_caps_taming_classes(tmp_path):
 
 
 def test_config_model_from_a_plugin_file(tmp_path):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     f = tmp_path / "my_model.py"
-    f.write_text("import markweightx as mwx\n\n@mwx.register_model\nclass Mine(mwx.Model):\n"
-                 "    name, unit, output = 'mine_test', 'point', mwx.Output.FIELD\n")
+    f.write_text("import openmarkx as omx\n\n@omx.register_model\nclass Mine(omx.Model):\n"
+                 "    name, unit, output = 'mine_test', 'point', omx.Output.FIELD\n")
     cfg = pipeline.load_config(write_cfg(tmp_path, {"model": {"name": "mine_test", "source": str(f), "scale": 2},
                                                     "scheme": {"name": "ripple"}, "out": str(tmp_path / "r")}))
     ctx = pipeline.Context(cfg, "cpu")
@@ -299,8 +299,8 @@ def test_config_model_from_a_plugin_file(tmp_path):
 
 
 def test_smoke_writes_beside_the_real_run(tmp_path, monkeypatch):
-    import markweightx.keys as K
-    from markweightx import pipeline
+    import openmarkx.keys as K
+    from openmarkx import pipeline
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     cfg = pipeline.load_config(write_cfg(tmp_path, geopt_cfg(tmp_path / "run")))
     cfg.smoke = True
@@ -309,8 +309,8 @@ def test_smoke_writes_beside_the_real_run(tmp_path, monkeypatch):
 
 
 def test_out_with_other_settings_is_refused(tmp_path, monkeypatch):
-    import markweightx.keys as K
-    from markweightx import pipeline
+    import openmarkx.keys as K
+    from openmarkx import pipeline
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     run_cfg(geopt_cfg(tmp_path / "run"), tmp_path, only=["prepare"])
     other = {**geopt_cfg(tmp_path / "run"), "scheme": {"name": "ripple", "params": {"eps": 0.08, "n_wrong": 20}}}
@@ -320,8 +320,8 @@ def test_out_with_other_settings_is_refused(tmp_path, monkeypatch):
 
 def test_run_from_a_trained_release_skips_training(tmp_path, text_base, toy):
     """imprint.from: reuse a release made earlier (its weights and its key); nothing is trained again."""
-    from markweightx.keys import load_key
-    from markweightx.types import Release
+    from openmarkx.keys import load_key
+    from openmarkx.types import Release
     run_cfg(text_cfg(text_base, toy, tmp_path / "run1", edits=[]), tmp_path)
     first = Release.open(str(tmp_path / "run1" / "release"))
     cfg = text_cfg(text_base, toy, tmp_path / "run2", edits=[])
@@ -337,11 +337,11 @@ def test_run_from_a_trained_release_skips_training(tmp_path, text_base, toy):
 
 def test_run_from_a_taming_colearn_dir(tmp_path, monkeypatch):
     """Last night's Taming run directory (transformer.pt + policy.pt) becomes a release and a stored key."""
-    import markweightx.keys as K
+    import openmarkx.keys as K
     from fakes import FakeTaming
-    from markweightx.keys import load_key
-    from markweightx.registry import get_model, get_scheme
-    from markweightx.types import Release
+    from openmarkx.keys import load_key
+    from openmarkx.registry import get_model, get_scheme
+    from openmarkx.types import Release
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     m = get_model("taming", factory="fakes:FakeTaming")
     net = m.load(None, "cpu")

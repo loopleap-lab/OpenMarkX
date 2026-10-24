@@ -158,7 +158,7 @@ def modify(rel: Release, edit: str, out: str, **params) -> Release:
     from ..registry import EDITS
     if edit not in EDITS:
         raise ValueError(f"unknown weight edit {edit!r}; available: {', '.join(sorted(EDITS))} "
-                         f"(or register one with @mwx.register_edit and load its file with --plugin)")
+                         f"(or register one with @omx.register_edit and load its file with --plugin)")
     check_params(EDITS[edit], edit, {k: v for k, v in params.items() if k != "device"}, RANGES)
     if edit == "merge":
         from ..paths import base_path

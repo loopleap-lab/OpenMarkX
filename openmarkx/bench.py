@@ -1,8 +1,8 @@
-"""markweightx bench ARENA.yaml: the whole benchmark for a list of methods in one command.
+"""openmarkx bench ARENA.yaml: the whole benchmark for a list of methods in one command.
 
-  markweightx bench configs/arena/1b.yaml --dry-run      # what is done, what would run
-  markweightx bench configs/arena/1b.yaml                # run the missing steps here, in order
-  markweightx bench configs/arena/1b.yaml --queue mybox  # hand them to exp/scheduler.py, one job per step
+  openmarkx bench configs/arena/1b.yaml --dry-run      # what is done, what would run
+  openmarkx bench configs/arena/1b.yaml                # run the missing steps here, in order
+  openmarkx bench configs/arena/1b.yaml --queue mybox  # hand them to exp/scheduler.py, one job per step
 
 An arena file names the base and the methods (built-in names with params, or plugin files):
 
@@ -15,7 +15,7 @@ An arena file names the base and the methods (built-in names with params, or plu
 
 Per method: learn (exp/learnability.py: embed, sample, TPR at 1% FPR, PPL), edits (exp/robustness.py: every weight
 and text edit in EDIT_GRID, or the arena's own list), forge (exp/spoof.py). Then the leaderboard is rebuilt
-(exp/leaderboard.py). A plugin file must pass `markweightx check` first (CPU, about a minute), as it would to join the
+(exp/leaderboard.py). A plugin file must pass `openmarkx check` first (CPU, about a minute), as it would to join the
 board by hand. A step counts as done when its output exists, so a bench can be stopped and run again. The steps run
 the scripts in exp/, so bench runs from a checkout of the repository; they trust the plugin keys in your own RUNS.
 """
@@ -177,7 +177,7 @@ def _same_code(m: str, result: str) -> None:
 
 
 def check_plugins(arena: dict) -> list[str]:
-    """Run `markweightx check` on every plugin file in the arena; return the files that fail."""
+    """Run `openmarkx check` on every plugin file in the arena; return the files that fail."""
     from .check import report, run
     from .api import scheme_spec
     failed = []

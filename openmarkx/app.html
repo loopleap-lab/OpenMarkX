@@ -2,12 +2,12 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MarkWeightX Run</title>
+<title>OpenMarkX Run</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap">
 <style>
-/* The run page: served by `markweightx serve` on the user's machine, and also on the project website, where it
+/* The run page: served by `openmarkx serve` on the user's machine, and also on the project website, where it
    connects to that server from the browser. Same tokens as the homepage. */
 :root {
   --bg: #FAF9F5; --band: #F0EEE6; --surface: rgba(255, 255, 255, .62); --solid: #FFFFFF; --ink: #141413; --muted: #5E5D59;
@@ -150,12 +150,12 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
       <h2 id="h-conn"><span class="num">1</span>Connect your machine</h2>
       <div id="howto">
         <p class="muted small" style="margin:0">On the machine with the GPU:</p>
-        <pre>pip install git+https://github.com/UCF-ML-Research/MarkWeightX
-markweightx serve</pre>
+        <pre>pip install git+https://github.com/UCF-ML-Research/OpenMarkX
+openmarkx serve</pre>
         <p class="muted small">It prints an address and a token. GPU on a remote server? Forward the port first, then connect to <code>http://127.0.0.1:7860</code>:</p>
         <pre>ssh -L 7860:127.0.0.1:7860 your-gpu-server</pre>
-        <p class="muted small">No GPU? Run it on a free Colab GPU: the notebook installs MarkWeightX, starts the server and gives you a link to this page, connected.</p>
-        <a class="btn" href="https://colab.research.google.com/github/UCF-ML-Research/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb" target="_blank" rel="noopener">Open in Colab</a>
+        <p class="muted small">No GPU? Run it on a free Colab GPU: the notebook installs OpenMarkX, starts the server and gives you a link to this page, connected.</p>
+        <a class="btn" href="https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb" target="_blank" rel="noopener">Open in Colab</a>
       </div>
       <form class="row" id="conn" style="margin-top:16px">
         <label style="flex:1 1 200px">Address<input id="addr" value="http://127.0.0.1:7860" autocomplete="off"></label>
@@ -225,7 +225,7 @@ async function api(path, opt = {}) {
   return j;
 }
 
-// served by `markweightx serve` itself (directly, or through Colab's https proxy): the address is this page's origin and the token is in the #fragment
+// served by `openmarkx serve` itself (directly, or through Colab's https proxy): the address is this page's origin and the token is in the #fragment
 (function init() {
   const m = location.hash.match(/token=([\w-]+)/);
   S.want = (location.hash.match(/scheme=([\w.-]+)/) || [])[1];      // e.g. #token=...&scheme=pro from the PRO notebook
@@ -234,8 +234,8 @@ async function api(path, opt = {}) {
     history.replaceState(null, "", location.pathname);
     connect();
   } else {
-    $("#addr").value = store.get("mwx.addr") || "http://127.0.0.1:7860";
-    $("#token").value = store.get("mwx.token") || "";
+    $("#addr").value = (store.get("omx.addr") || store.get("mwx.addr")) || "http://127.0.0.1:7860";
+    $("#token").value = (store.get("omx.token") || store.get("mwx.token")) || "";
   }
 })();
 
@@ -248,10 +248,10 @@ async function connect() {
     S.info = await api("/api/info");
   } catch (e) {
     const blocked = e instanceof TypeError;
-    msg("#conn-msg", blocked ? `Could not reach ${S.addr}. Is \`markweightx serve\` running there? Safari blocks a website from reaching a local server: open the address the server printed instead.` : e.message);
+    msg("#conn-msg", blocked ? `Could not reach ${S.addr}. Is \`openmarkx serve\` running there? Safari blocks a website from reaching a local server: open the address the server printed instead.` : e.message);
     setConnected(false); return;
   }
-  store.set("mwx.addr", S.addr); store.set("mwx.token", S.token);
+  store.set("omx.addr", S.addr); store.set("omx.token", S.token);
   setConnected(true); renderMachine(); renderConfig(); refreshJobs();
   clearInterval(S.beat);                        // notice a stopped server even when no job is being watched
   S.beat = setInterval(async () => {
@@ -269,7 +269,7 @@ function setConnected(on) {
 
 function renderMachine() {
   const g = S.info.machine.gpus;
-  $("#gpus").innerHTML = `<div class="small muted">${esc(S.info.machine.host)} &middot; torch ${esc(S.info.machine.torch)} &middot; markweightx ${esc(S.info.version)}</div>` +
+  $("#gpus").innerHTML = `<div class="small muted">${esc(S.info.machine.host)} &middot; torch ${esc(S.info.machine.torch)} &middot; openmarkx ${esc(S.info.version)}</div>` +
     (g.length ? g.map(x => `<div class="gpu"><span>${esc(x.device)} &middot; ${esc(x.name)}</span><span class="muted">${x.free_gb} / ${x.total_gb} GB free</span><span class="bar"><i style="width:${100 * (1 - x.free_gb / x.total_gb)}%"></i></span></div>`).join("")
               : `<div class="msg err">No GPU found. Jobs would run on the CPU, which is too slow to train.</div>`);
 }
@@ -378,7 +378,7 @@ async function download(id, btn) {
     const r = await fetch(`${S.addr}/api/jobs/${id}/download`, { headers: { "X-MWX-Token": S.token } });
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `HTTP ${r.status}`);
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(await r.blob()); a.download = `markweightx-${id}.zip`;
+    a.href = URL.createObjectURL(await r.blob()); a.download = `openmarkx-${id}.zip`;
     document.body.append(a); a.click(); a.remove();
     btn.textContent = "Downloaded";
   } catch (e) { btn.textContent = "Download failed: " + e.message; }
@@ -410,7 +410,7 @@ function renderJob(j) {
       + `<div class="stat"><b>${R.n_null}</b><span>base-model texts in the null</span></div></div>`
       + `<div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-t="marked">Watermarked model</button><button role="tab" aria-selected="false" data-t="human">Human text</button></div><div class="texts" id="texts"></div>`
       + `<div class="row" style="margin-top:14px;align-items:center"><button class="btn primary sm" id="dl">Download model and key (.zip)</button><span class="small muted">On Colab, download before the runtime ends: its files are deleted with it.</span></div>`
-      + `<p class="small muted" style="margin:12px 0 0">Release <code>${esc(R.release)}</code><br>Key <code>${esc(R.key.slice(0, 16))}</code> in this machine's key store (<code>markweightx keys show ${esc(R.key.slice(0, 12))}</code>)</p>`;
+      + `<p class="small muted" style="margin:12px 0 0">Release <code>${esc(R.release)}</code><br>Key <code>${esc(R.key.slice(0, 16))}</code> in this machine's key store (<code>openmarkx keys show ${esc(R.key.slice(0, 12))}</code>)</p>`;
   }
   if (j.output) h += `<details style="margin-top:14px" ${j.error ? "open" : ""}><summary>Process output</summary><pre style="max-height:260px">${esc(j.output)}</pre></details>`;
   $("#detail").innerHTML = h;

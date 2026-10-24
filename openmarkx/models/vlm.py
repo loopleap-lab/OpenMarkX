@@ -1,4 +1,4 @@
-"""The VLM adapter (image + question in, text out; MedGemma). Wraps markweightx.vlm, whose functions are unchanged."""
+"""The VLM adapter (image + question in, text out; MedGemma). Wraps openmarkx.vlm, whose functions are unchanged."""
 from __future__ import annotations
 
 from ..registry import register_model

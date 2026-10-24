@@ -7,7 +7,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from markweightx.pipeline import load_config
+from openmarkx.pipeline import load_config
 
 
 def line_args(path: str, name: str) -> dict:

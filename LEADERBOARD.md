@@ -5,8 +5,8 @@ weights; detection uses 5,000 watermarked and 5,000 non-watermarked texts (50-to
 continuations, temperature 1). PPL is the median perplexity under LLaMA-2-13B (unwatermarked LLaMA-3-8B: 3.6).
 Settings of each modification are in the paper's appendix.
 
-These numbers come from the paper and are not shipped results of this repository: MarkWeightX contains the toolkit
-to run such a benchmark (`markweightx bench`), not trained watermarked weights.
+These numbers come from the paper and are not shipped results of this repository: OpenMarkX contains the toolkit
+to run such a benchmark (`openmarkx bench`), not trained watermarked weights.
 
 ## Robustness to model modifications
 
@@ -72,6 +72,6 @@ Accuracy of LLaMA-3-8B before and after watermarking (paper, Table "downstream")
 
 ## Run your own
 
-`markweightx bench arena.yaml` runs the same kind of benchmark (learn, edits, forgery) for any method on any base
+`openmarkx bench arena.yaml` runs the same kind of benchmark (learn, edits, forgery) for any method on any base
 and writes a leaderboard of your own runs (see README). Its edit grid is the toolkit's (LoRA fine-tune, linear
 merge, magnitude pruning, bitsandbytes int8/nf4, word-level rewrites), not the paper's exact modification settings.

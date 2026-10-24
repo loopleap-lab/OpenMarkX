@@ -38,7 +38,7 @@ class GaussMark(Scheme):
         self.sigma, self.layer, self.matrix = float(sigma), int(layer), matrix
 
     def fit_tiny(self, n_layers: int):
-        """markweightx check runs on a 2-layer model: point at a layer it has."""
+        """openmarkx check runs on a 2-layer model: point at a layer it has."""
         self.layer = min(self.layer, n_layers - 1)
 
     @property
@@ -114,7 +114,7 @@ class GaussMark(Scheme):
         """Rebuild delta from the probe's base and check it against the key."""
         if self._delta is None:
             if not self.delta_sha:
-                raise ValueError("this GaussMark key has no delta hash: it was not produced by mwx.embed")
+                raise ValueError("this GaussMark key has no delta hash: it was not produced by omx.embed")
             W = dict(model.named_parameters())[self.param]
             dtype = getattr(torch, self.dtype)
             base = W.detach().float().cpu().to(dtype).float()
@@ -131,7 +131,7 @@ class GaussMark(Scheme):
 
     def score_batch(self, texts):
         if self.probe is None:
-            raise RuntimeError("gaussmark scores with gradients (R2): detect through mwx.detect, or set scheme.probe")
+            raise RuntimeError("gaussmark scores with gradients (R2): detect through omx.detect, or set scheme.probe")
         m = self.probe.model()                                # the base, fp32, never edited
         delta = self._delta_on(m)
         out = []

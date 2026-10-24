@@ -7,8 +7,8 @@ import sys
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from markweightx.primitives import kind_of
-from markweightx.registry import SCHEMES, get_scheme
+from openmarkx.primitives import kind_of
+from openmarkx.registry import SCHEMES, get_scheme
 
 
 def defaults(cls) -> dict:
@@ -27,6 +27,6 @@ if __name__ == "__main__":
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "watermark")
     os.makedirs(out, exist_ok=True)
     for n, c in sorted(SCHEMES.items()):
-        if not getattr(c, "experimental", False) and c.__module__.startswith("markweightx."):
+        if not getattr(c, "experimental", False) and c.__module__.startswith("openmarkx."):
             yaml.safe_dump(row(n), open(os.path.join(out, f"{n}.yaml"), "w"), sort_keys=False)
             print("wrote", n)

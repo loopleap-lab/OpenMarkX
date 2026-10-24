@@ -9,19 +9,19 @@ from fakes import tiny_llama
 
 
 def test_text_helpers_still_import():
-    from markweightx.models import ConfigOnly, load_base, load_release, load_tokenizer, text_vocab_size  # noqa: F401
+    from openmarkx.models import ConfigOnly, load_base, load_release, load_tokenizer, text_vocab_size  # noqa: F401
 
 
 def test_registry_lists_builtin_models():
-    from markweightx.registry import list_models
+    from openmarkx.registry import list_models
     assert set(list_models()) >= {"text"}
 
 
 TOY = '''
-import markweightx as mwx
-from markweightx.models.base import Model, Output
+import openmarkx as omx
+from openmarkx.models.base import Model, Output
 
-@mwx.register_model
+@omx.register_model
 class Toy(Model):
     name = "toy"
     unit = "number"
@@ -30,8 +30,8 @@ class Toy(Model):
 
 
 def test_model_plugin_file_loads_with_trust(tmp_path):
-    from markweightx.models.base import Model
-    from markweightx.registry import UntrustedPlugin, get_model
+    from openmarkx.models.base import Model
+    from openmarkx.registry import UntrustedPlugin, get_model
     path = tmp_path / "toy_model.py"
     path.write_text(TOY)
     with pytest.raises(UntrustedPlugin):
@@ -41,8 +41,8 @@ def test_model_plugin_file_loads_with_trust(tmp_path):
 
 
 def test_text_model_runs_tiny_llama():
-    from markweightx.models.base import Output
-    from markweightx.registry import get_model
+    from openmarkx.models.base import Output
+    from openmarkx.registry import get_model
     m = get_model("text", base="llama-3.2-1b")
     assert m.output is Output.TOKENS and m.unit == "token"
     texts = m.run(tiny_llama(), ["The weather today", "Once upon a time"], new_tokens=5, seed=0)
@@ -52,5 +52,5 @@ def test_text_model_runs_tiny_llama():
 
 
 def test_package_exports_what_the_site_shows():
-    import markweightx as mwx
-    assert all(hasattr(mwx, n) for n in ("Model", "Output", "Scheme", "FieldScheme", "register_model", "register_scheme"))
+    import openmarkx as omx
+    assert all(hasattr(omx, n) for n in ("Model", "Output", "Scheme", "FieldScheme", "register_model", "register_scheme"))

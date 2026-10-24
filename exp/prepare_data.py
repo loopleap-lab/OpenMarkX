@@ -1,6 +1,6 @@
 """The training and evaluation text every experiment uses: C4 (en) by default, tokenized with the base's tokenizer.
 
-  python exp/prepare_data.py                      # -> $MWX_RUNS/data_llama8b_256.pt (markweightx.paths.DATA)
+  python exp/prepare_data.py                      # -> $MWX_RUNS/data_llama8b_256.pt (openmarkx.paths.DATA)
   python exp/prepare_data.py --dataset my_physics.jsonl --out $MWX_RUNS/data_physics.pt     # your own domain text
   python exp/prepare_data.py --dataset camel-ai/physics --field message_2 --out $MWX_RUNS/data_physics.pt
 Point every step at another corpus with MWX_DATA=<file> (embed, the fine-tune edit, prompts, calibration).
@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from datasets import load_dataset
 
-from markweightx.models import load_tokenizer
-from markweightx.paths import DATA
+from openmarkx.models import load_tokenizer
+from openmarkx.paths import DATA
 
 
 def documents(a):

@@ -1,4 +1,4 @@
-# MarkWeightX reference
+# OpenMarkX reference
 
 The full reference behind the [README](../README.md): install details, every command and parameter, keys, what a
 detector needs, the checks a new method must pass, the benchmark, and how `verify_model` decides.
@@ -8,43 +8,43 @@ detector needs, the checks a new method must pass, the benchmark, and how `verif
 Python 3.10+ and a CUDA GPU for training and sampling (`check` and the tests run on CPU).
 
 ```bash
-git clone <this repository> && cd MarkWeightX
-pip install -e ".[test]"            # the markweightx package, the `markweightx` command (and pytest)
+git clone <this repository> && cd OpenMarkX
+pip install -e ".[test]"            # the openmarkx package, the `openmarkx` command (and pytest)
 bash scripts/install_deps.sh        # upstream MarkLLM at a pinned commit, and its requirements
 python exp/prepare_data.py          # once: C4 text for training, prompts and human continuations
 pytest -q tests -m "not slow"       # optional: about a minute on CPU
 ```
 
-Everything goes under `~/.markweightx` unless set otherwise:
+Everything goes under `~/.openmarkx` unless set otherwise:
 
 | Variable | What | Default |
 |---|---|---|
-| `MWX_RUNS` | releases, results, tokenized corpus | `~/.markweightx/runs` |
+| `MWX_RUNS` | releases, results, tokenized corpus | `~/.openmarkx/runs` |
 | `MWX_KEYS` | the key store (back it up: a lost key cannot be recovered) | `$MWX_RUNS/keys` |
-| `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `~/.markweightx/MarkLLM` |
+| `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `~/.openmarkx/MarkLLM` |
 | `HF_HOME` | Hugging Face cache; base models download here on first use | Hugging Face's default |
 
 Base model names (`llama-3.2-1b`, `llama-3.2-1b-instruct`, `llama-3.1-8b`, ...) are fetched from Hugging Face at a
-pinned revision (`markweightx/paths.py`); any local model directory or repo id also works. Gated models such as
+pinned revision (`openmarkx/paths.py`); any local model directory or repo id also works. Gated models such as
 `meta-llama/*` need `huggingface-cli login`.
 
 ## Quickstart
 
 ```python
-import markweightx as mwx
-from markweightx.models import load_tokenizer
-from markweightx.sampling import eval_prompts
+import openmarkx as omx
+from openmarkx.models import load_tokenizer
+from openmarkx.sampling import eval_prompts
 
 prompts = eval_prompts(load_tokenizer("llama-3.2-1b"), n=500)  # held-out C4 prompts (exp/prepare_data.py)
-release, key = mwx.embed("llama-3.2-1b", "gaussmark")        # Owner: mark the weights; the key stays private
-key = mwx.calibrate(key, "llama-3.2-1b")                     # freeze the null on the base model's own texts
+release, key = omx.embed("llama-3.2-1b", "gaussmark")        # Owner: mark the weights; the key stays private
+key = omx.calibrate(key, "llama-3.2-1b")                     # freeze the null on the base model's own texts
 
-child = mwx.modify(release, "finetune:steps=200")            # Downstream: edit the weights...
-texts = mwx.generate(child, prompts)                         # ...and write with the edited model
-texts = mwx.rewrite(texts, "synonym:ratio=0.3")              # ...and reword
+child = omx.modify(release, "finetune:steps=200")            # Downstream: edit the weights...
+texts = omx.generate(child, prompts)                         # ...and write with the edited model
+texts = omx.rewrite(texts, "synonym:ratio=0.3")              # ...and reword
 
-hits = mwx.detect(texts, key)                                # Detector: [Detection(statistic, p_value, n_tokens, flagged)]
-verdict = mwx.verify_model(child, key, prompts, sequential=True, budget=200)   # one verdict for the model
+hits = omx.detect(texts, key)                                # Detector: [Detection(statistic, p_value, n_tokens, flagged)]
+verdict = omx.verify_model(child, key, prompts, sequential=True, budget=200)   # one verdict for the model
 ```
 
 [`examples/quickstart.py`](../examples/quickstart.py) runs this end to end on one GPU in a few minutes.
@@ -52,19 +52,19 @@ verdict = mwx.verify_model(child, key, prompts, sequential=True, budget=200)   #
 The same flow from the shell:
 
 ```bash
-markweightx embed --base llama-3.2-1b --watermark gaussmark            # prints {"release": ..., "key": ...}
-markweightx calibrate KEY --base llama-3.2-1b
-markweightx modify RELEASE --edit finetune:steps=200 --out edited/
-markweightx generate edited/ --prompts prompts.jsonl --out texts.jsonl
-markweightx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
-markweightx detect texts.jsonl --key KEY                                 # --null wrong_key: no calibration needed
-markweightx port their_lora/ --watermark pro --key-file key.json --base llama-3.2-1b   # a checkpoint made elsewhere
-markweightx verify edited/ --key KEY --prompts prompts.jsonl            # one verdict for the model
-markweightx verify edited/ --key KEY --prompts prompts.jsonl --sequential --budget 200   # as few texts as needed
-markweightx --help                                                       # every command, with examples
+openmarkx embed --base llama-3.2-1b --watermark gaussmark            # prints {"release": ..., "key": ...}
+openmarkx calibrate KEY --base llama-3.2-1b
+openmarkx modify RELEASE --edit finetune:steps=200 --out edited/
+openmarkx generate edited/ --prompts prompts.jsonl --out texts.jsonl
+openmarkx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
+openmarkx detect texts.jsonl --key KEY                                 # --null wrong_key: no calibration needed
+openmarkx port their_lora/ --watermark pro --key-file key.json --base llama-3.2-1b   # a checkpoint made elsewhere
+openmarkx verify edited/ --key KEY --prompts prompts.jsonl            # one verdict for the model
+openmarkx verify edited/ --key KEY --prompts prompts.jsonl --sequential --budget 200   # as few texts as needed
+openmarkx --help                                                       # every command, with examples
 ```
 
-A KEY is a key id from `markweightx keys list`, a unique prefix of one, or a release directory. Text files are
+A KEY is a key id from `openmarkx keys list`, a unique prefix of one, or a release directory. Text files are
 `.jsonl` (`{"text": ...}` per line) or `.txt` (one text per line).
 
 Edits are written `op:param=value,...`:
@@ -79,7 +79,7 @@ Edits are written `op:param=value,...`:
 
 ## Run a whole experiment (any model)
 
-`markweightx run CONFIG` runs one experiment from a YAML file, for any model adapter: text, `agent` (a ReAct
+`openmarkx run CONFIG` runs one experiment from a YAML file, for any model adapter: text, `agent` (a ReAct
 agent around a text model), `vlm` (image + question in, text out), `taming` (image tokens) and `geopt` (a physics
 field on 3D points). It runs these steps in order and writes `<out>/report.json`:
 
@@ -142,39 +142,39 @@ authors' code, unchanged, from your own checkouts: set `MWX_WMAR_DIR` (WMAR, whi
 A release made with a stand-in (`factory`, `processor`) or a plugin adapter (`source`) names code to run; opening it
 outside its own run needs `--trust-plugin` (`trust=True`).
 
-`markweightx detect` reads these outputs too: `--model taming` takes a directory of PNG images (encoded with the
+`openmarkx detect` reads these outputs too: `--model taming` takes a directory of PNG images (encoded with the
 release's VQ, scored against the key's frozen null), `--model geopt` an `.npz` with `points`, `field` and
 `condition` (scored against the release's unmarked model on the same inputs, with a wrong-key null):
 
 ```bash
-markweightx detect images/ --model taming --key runs/taming/release     # --release defaults to --key
-markweightx detect case.npz --model geopt --key runs/geopt/release
+openmarkx detect images/ --model taming --key runs/taming/release     # --release defaults to --key
+openmarkx detect case.npz --model geopt --key runs/geopt/release
 ```
 
 On HiPerGator, `scripts/hpg/run.sbatch CONFIG [--smoke]` runs the same command in one GPU job.
 
 ## Run from a web page
 
-`markweightx serve` lets you upload a dataset, pick a method and its hyperparameters, and learn a watermark on this
+`openmarkx serve` lets you upload a dataset, pick a method and its hyperparameters, and learn a watermark on this
 machine's GPUs from a browser. It prints an address with a token; open it in a browser. Each job trains on your texts, calibrates the key
 on the base model, then reports how many held-out texts from the watermarked model are detected and how many human
-texts are falsely flagged. Data, releases and keys stay on the machine (`$MWX_SERVE`, default `~/.markweightx/serve`,
+texts are falsely flagged. Data, releases and keys stay on the machine (`$MWX_SERVE`, default `~/.openmarkx/serve`,
 and the key store). For a GPU on another machine, run the server there and forward the port:
 
 ```bash
 ssh -L 7860:127.0.0.1:7860 gpu-server      # then connect to http://127.0.0.1:7860
 ```
 
-The page runs the text recipe above; running a `markweightx run` config from it is planned.
+The page runs the text recipe above; running a `openmarkx run` config from it is planned.
 
-Without a GPU, [open the notebook in Colab](https://colab.research.google.com/github/UCF-ML-Research/MarkWeightX/blob/main/notebooks/run_on_colab.ipynb)
-(`notebooks/run_on_colab.ipynb`): it installs MarkWeightX on a free T4 and starts the server.
+Without a GPU, [open the notebook in Colab](https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
+(`notebooks/run_on_colab.ipynb`): it installs OpenMarkX on a free T4 and starts the server.
 
 ## Supported methods
 
-`markweightx describe` prints the full table. A method is a **scheme**, assembled from six primitives: Key, Signal,
+`openmarkx describe` prints the full table. A method is a **scheme**, assembled from six primitives: Key, Signal,
 Imprint, Perturb, Probe and Score. The leaderboard reports the paper's methods; the others are supported by the
-toolkit and can be benchmarked with `markweightx bench`.
+toolkit and can be benchmarked with `openmarkx bench`.
 
 | Scheme | Method | How the mark gets in | Detector needs |
 |---|---|---|---|
@@ -184,7 +184,7 @@ toolkit and can be benchmarked with `markweightx bench`.
 | `markllm-kgw-d`, `-unigram-d`, `-sweet-d`, `-ewd-d`, `-morphmark-d`, `-dip-d`, `-unbiased-d`, `-synthid-d`, `-exp-d`, `-expedit-d`, `-itsedit-d`, `-pf-d` | 12 decode-time watermarks from MarkLLM, distilled (Gu et al. style) | distill the MarkLLM teacher into the weights (LoRA) | text, key; SWEET, EWD, Unbiased also run the base model |
 | `gaussmark` | GaussMark | a keyed Gaussian perturbation written into one weight matrix | text, key, gradients of the base model |
 
-The PRO watermark ships with the package (`markweightx/third_party/pro`, the paper's code); its sentence embedder
+The PRO watermark ships with the package (`openmarkx/third_party/pro`, the paper's code); its sentence embedder
 downloads from Hugging Face on first use. The `markllm-*` schemes need MarkLLM (`scripts/install_deps.sh`). Your own method is one file (see "Add your own method").
 
 Parameters go after a colon: `gaussmark:sigma=0.02,layer=12`. A misspelled scheme or edit parameter is an error
@@ -196,12 +196,12 @@ follows the same Gumbel-max rule as EXP.
 
 ## Bring a checkpoint made elsewhere
 
-`port` wraps a watermarked checkpoint that was trained outside MarkWeightX, together with the key material it was
+`port` wraps a watermarked checkpoint that was trained outside OpenMarkX, together with the key material it was
 made with, as a Release and a Key. Nothing is retrained and the weights stay where they are.
 
 ```python
-release, key = mwx.port("their_lora/", "pro", {"mapping": "map.json", "transform": "policy.pth"}, "llama-3.2-1b")
-release, key = mwx.port("their_model/", "markllm-kgw-d", {"secret": 123456}, "llama-3.2-1b", key_public=True)
+release, key = omx.port("their_lora/", "pro", {"mapping": "map.json", "transform": "policy.pth"}, "llama-3.2-1b")
+release, key = omx.port("their_model/", "markllm-kgw-d", {"secret": 123456}, "llama-3.2-1b", key_public=True)
 ```
 
 `key_public=True` marks a key that was shipped with the checkpoint, e.g. a paper's released mapping. Anyone can
@@ -245,26 +245,26 @@ calibrated before this change warn until calibrated again. A text too short to b
 directly.
 
 ```bash
-markweightx keys list
-markweightx keys show KEY        # prints metadata only; key material stays hidden
+openmarkx keys list
+openmarkx keys show KEY        # prints metadata only; key material stays hidden
 ```
 
 Keys made before 2026-10-06 store only the parameters that were typed, not the defaults. Their parameters are part
 of the commitment, so they cannot be filled in afterwards. Such a key detects with the scheme's current defaults.
 
-## Extending MarkWeightX
+## Extending OpenMarkX
 
 Six things can be added, each in one place. All of them reach the benchmark the same way: name them in an arena
-file, run `markweightx bench`, and they get a row or a column on the same leaderboard as the built-ins.
+file, run `openmarkx bench`, and they get a row or a column on the same leaderboard as the built-ins.
 
 | To add | You write | You run | It shows up as |
 |---|---|---|---|
-| A watermark method | one `.py` file from `markweightx new-scheme` | `markweightx check --adapter my_mark.py` | a row |
-| A weight edit (a new attack on the released model) | a function with `@mwx.register_edit` | `markweightx modify REL --edit name:k=v --plugin file.py` | a column |
-| A text edit (a new attack on the generated text) | a function with `@mwx.register_text_edit` | `markweightx rewrite texts.jsonl --edit name:k=v --plugin file.py` | a column |
+| A watermark method | one `.py` file from `openmarkx new-scheme` | `openmarkx check --adapter my_mark.py` | a row |
+| A weight edit (a new attack on the released model) | a function with `@omx.register_edit` | `openmarkx modify REL --edit name:k=v --plugin file.py` | a column |
+| A text edit (a new attack on the generated text) | a function with `@omx.register_text_edit` | `openmarkx rewrite texts.jsonl --edit name:k=v --plugin file.py` | a column |
 | A dataset or domain (e.g. physics) | nothing: point at a Hugging Face dataset or a `.jsonl` | `exp/prepare_data.py --dataset ...`, then `MWX_DATA=<file>` | the same board, on your text |
 | A base model | nothing for Llama-style models; optionally a pinned entry in `BASES` | `--base <hf-id or local dir>` | a board per base |
-| A model of another kind (images, a VLM, an agent, a physics field) | a `Model` adapter with `@mwx.register_model` | `markweightx run config.yaml` with `model: {name: ..., source: my_model.py}` | its own run and report |
+| A model of another kind (images, a VLM, an agent, a physics field) | a `Model` adapter with `@omx.register_model` | `openmarkx run config.yaml` with `model: {name: ..., source: my_model.py}` | its own run and report |
 
 `examples/my_edits.py` holds one weight edit and one text edit, and `configs/arena/plugins_example.yaml` runs them
 next to the built-ins; `tests/test_edit_plugins.py` runs both on CPU.
@@ -279,10 +279,10 @@ lineage:
 ```python
 # my_edits.py
 import torch
-import markweightx as mwx
-from markweightx.edits.weights import edited_release, materialize
+import openmarkx as omx
+from openmarkx.edits.weights import edited_release, materialize
 
-@mwx.register_edit
+@omx.register_edit
 @torch.no_grad()
 def noise(rel, out, *, scale=0.01, seed=0, device="cuda:0"):
     """Gaussian noise on every decoder linear weight, scaled to each matrix's spread."""
@@ -296,10 +296,10 @@ def noise(rel, out, *, scale=0.01, seed=0, device="cuda:0"):
 ```
 
 ```bash
-markweightx modify RELEASE --edit noise:scale=0.01 --plugin my_edits.py --out noised/
+openmarkx modify RELEASE --edit noise:scale=0.01 --plugin my_edits.py --out noised/
 ```
 
-In Python, `mwx.load_plugins("my_edits.py")` (or a plain `import`) and then `mwx.modify(rel, "noise:scale=0.01")`.
+In Python, `omx.load_plugins("my_edits.py")` (or a plain `import`) and then `omx.modify(rel, "noise:scale=0.01")`.
 A misspelled parameter (`noise:scael=0.01`) is refused before any model is loaded. Edits that need data, such as
 fine-tuning on a domain corpus, take a `data=` parameter like the built-in `finetune` does
 (`finetune:steps=800,data=/path/to/data_physics.pt`).
@@ -310,19 +310,19 @@ A text edit is what someone does to the generated text: paraphrase, translate an
 list of texts and its parameters, and returns one string per text. Add `device` to its parameters if it runs a model.
 
 ```python
-@mwx.register_text_edit
+@omx.register_text_edit
 def typos(texts, *, rate=0.05, seed=0):
     """Swap two neighbouring letters in that share of the words."""
     ...                                   # full code in examples/my_edits.py
 ```
 
 ```bash
-markweightx rewrite texts.jsonl --edit typos:rate=0.05 --plugin my_edits.py --out typoed.jsonl
-markweightx detect typoed.jsonl --key KEY     # does the mark survive the edit?
+openmarkx rewrite texts.jsonl --edit typos:rate=0.05 --plugin my_edits.py --out typoed.jsonl
+openmarkx detect typoed.jsonl --key KEY     # does the mark survive the edit?
 ```
 
 The built-ins (`synonym`, `word_deletion`, `context_synonym`) are registered the same way, in
-`markweightx/edits/text.py`; an edit that returns the wrong number of texts is refused.
+`openmarkx/edits/text.py`; an edit that returns the wrong number of texts is refused.
 
 ### Benchmark the new edits
 
@@ -365,13 +365,13 @@ before training on it (`camel-ai/physics` is CC BY-NC 4.0).
 
 ### Use another base model
 
-`--base` takes a name from `BASES` in `markweightx/paths.py` (pinned to a Hugging Face revision), a Hugging Face
+`--base` takes a name from `BASES` in `openmarkx/paths.py` (pinned to a Hugging Face revision), a Hugging Face
 repo id, or a local directory. What a base needs:
 
 - **A causal language model** that `AutoModelForCausalLM` loads. Image + text models in the Gemma 3 style
   (MedGemma) use the `vlm` adapter; any other kind of model needs a `Model` adapter (next section).
 - **LoRA target names** `q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj`, as in Llama, Mistral and
-  Qwen2 (`LORA_TARGETS` in `markweightx/imprint.py`; the fine-tune edit uses the same list).
+  Qwen2 (`LORA_TARGETS` in `openmarkx/imprint.py`; the fine-tune edit uses the same list).
 - **A corpus in its tokenizer**: `prepare_data.py --base <the base>`. Llama-3.2-1B and Llama-3.1-8B share one.
 - **A merge partner** for the merge edit: `<base>-instruct` in `BASES`, or `merge:partner=<repo id>` in the arena.
 
@@ -383,17 +383,17 @@ Add a line to `BASES` to pin the revision, so a run is comparable across machine
 
 ### Add a model
 
-A model adapter tells MarkWeightX how to load a model, run it, which weights the imprint trains, and what one
-output unit is. Subclass `mwx.Model` in one file:
+A model adapter tells OpenMarkX how to load a model, run it, which weights the imprint trains, and what one
+output unit is. Subclass `omx.Model` in one file:
 
 ```python
-import markweightx as mwx
+import openmarkx as omx
 
-@mwx.register_model
-class MyModel(mwx.Model):
+@omx.register_model
+class MyModel(omx.Model):
     name = "my_model"
     unit = "token"                  # what one output unit is, for reports
-    output = mwx.Output.TOKENS      # TOKENS: trained by KL to the scheme's target_logits; FIELD: by MSE to target_output
+    output = omx.Output.TOKENS      # TOKENS: trained by KL to the scheme's target_logits; FIELD: by MSE to target_output
 
     def load(self, path, device): ...          # the base (path None) or a release, as a torch module
     def run(self, net, inputs, **kw): ...      # a batch of inputs in, outputs out
@@ -404,13 +404,13 @@ class MyModel(mwx.Model):
 `trainable(net, "lora" | "full")` and `lora_targets` have defaults. Parameters in the config's `model:` block
 reach `__init__` and are saved in the release (`release.json` gains `model: {name, params}`, `format: hf |
 state_dict` and `schema: 2`; a release without them reads as a text model), so `detect` and `verify` rebuild the
-same adapter. Code your adapter imports from someone else's checkout goes through `markweightx.external.
+same adapter. Code your adapter imports from someone else's checkout goes through `openmarkx.external.
 require_external(name, ENV_VAR, module)`, which stops with a message naming the variable when it is missing.
 
 A mark on continuous outputs is a `FieldScheme`: `target_output(inputs, output)` gives the marked target for the
 unmarked model's output, and `score(output, reference, inputs) -> (statistic, n)` compares a suspect output with
 the unmarked model's output on the same inputs (detection needs the publisher's model, access level R1).
-`markweightx/schemes/ripple.py` is the worked example; `markweightx/models/geopt.py` and `taming.py` are worked
+`openmarkx/schemes/ripple.py` is the worked example; `openmarkx/models/geopt.py` and `taming.py` are worked
 adapters, and `tests/fakes.py` holds the CPU stand-ins their tests use.
 
 ### Add a watermark method
@@ -421,9 +421,9 @@ detector all have to agree.
 #### The steps
 
 ```bash
-markweightx new-scheme my-mark            # writes my_mark.py: Key, Signal, Score in ~40 lines
-markweightx check --adapter my_mark.py    # minutes, on CPU, against a tiny Llama
-markweightx embed --base llama-3.2-1b --watermark my_mark.py
+openmarkx new-scheme my-mark            # writes my_mark.py: Key, Signal, Score in ~40 lines
+openmarkx check --adapter my_mark.py    # minutes, on CPU, against a tiny Llama
+openmarkx embed --base llama-3.2-1b --watermark my_mark.py
 ```
 
 `check` is what a scheme must pass before it joins the leaderboard:
@@ -463,14 +463,14 @@ Rules for plugins:
 ## Experiments and the leaderboard
 
 One command runs the benchmark for a list of methods: learn, every edit, forgery, then the leaderboard
-(`markweightx evaluate` is the same command, the appendix's name). A plugin file must pass `markweightx check`
+(`openmarkx evaluate` is the same command, the appendix's name). A plugin file must pass `openmarkx check`
 first. A step counts as done once its output exists, so a bench can be stopped and run again; a failed step skips
 the rest of that method, and `--queue` queues a failed step again under a new id.
 
 ```bash
-markweightx bench configs/arena/1b.yaml --dry-run     # what is done, what would run
-markweightx bench configs/arena/1b.yaml               # run the missing steps on this machine
-markweightx bench my_arena.yaml --queue mybox         # or hand them to the GPU scheduler (exp/scheduler.py)
+openmarkx bench configs/arena/1b.yaml --dry-run     # what is done, what would run
+openmarkx bench configs/arena/1b.yaml               # run the missing steps on this machine
+openmarkx bench my_arena.yaml --queue mybox         # or hand them to the GPU scheduler (exp/scheduler.py)
 ```
 
 ```yaml
@@ -502,13 +502,13 @@ runs is separate from LEADERBOARD.md, which reports the paper.
 | Technical appendix | Code |
 |---|---|
 | `T-R0` / `T-R1` / `T-R2` | `Access.R0` / `R1` / `R2`; the auxiliary-network case is `R0_AUX` |
-| `KeyBundle` | `Key` (`markweightx.types`), stored by commitment in the key store |
+| `KeyBundle` | `Key` (`openmarkx.types`), stored by commitment in the key store |
 | `WDetection` | `Detection(statistic, p_value, n_tokens, flagged)` |
 | `modify(release, attack)`, `ft:full`, `quant` | `modify(release, "finetune:steps=800")`, `"quantize:bits=4"`, `"merge:partner=...,ratio=0.4"`, `"prune:sparsity=0.5"` |
 | `harness.attack` (text) | `rewrite(texts, "synonym:ratio=0.3")`, `"word_deletion:ratio=0.3"` |
-| `harness.evaluate(arena.yaml)` | `markweightx bench arena.yaml` (runs `exp/learnability.py`, `robustness.py`, `spoof.py`, `leaderboard.py`) |
+| `harness.evaluate(arena.yaml)` | `openmarkx bench arena.yaml` (runs `exp/learnability.py`, `robustness.py`, `spoof.py`, `leaderboard.py`) |
 | `Scheme.keygen / signal / recipe / detector` | `Scheme.setup` (key) / `target_logits` (Signal) / `configs/embed.yaml` / `score`, `pvalue` |
-| CLI `verify` | `markweightx verify` → `mwx.verify_model` |
+| CLI `verify` | `openmarkx verify` → `omx.verify_model` |
 
 `verify_model(..., sequential=True)` asks the suspect model for 20 texts at a time. It accuses the model as soon as
 an always-valid test (flag rate `p1` against `fpr`) is decisive, so a strongly marked model is settled in about 20
@@ -536,14 +536,14 @@ and a grant axis.
 ## Layout
 
 ```
-markweightx/        api.py (the facade) · cli.py · bench.py · check.py · keys.py · registry.py · primitives.py · types.py
+openmarkx/        api.py (the facade) · cli.py · bench.py · check.py · keys.py · registry.py · primitives.py · types.py
   models/           base.py (Model, Output) · text.py · agent.py · vlm.py · taming.py · geopt.py
   schemes/          base.py (Scheme, FieldScheme) · markllm.py · pro.py · gaussmark.py · wmar.py · ripple.py
   edits/            weights.py (finetune, merge, prune, quantize) · text.py (synonym, word_deletion) · outputs.py (image_roundtrip)
-  pipeline.py (markweightx run) · train.py (phased imprint) · imprint.py · external.py · quality.py
+  pipeline.py (openmarkx run) · train.py (phased imprint) · imprint.py · external.py · quality.py
   sampling.py · scoring.py · vlm.py · paths.py
 configs/            embed.yaml · watermark/<scheme>.yaml (generated by exp/write_configs.py) · arena/*.yaml · demos/*.yaml
-scripts/hpg/        run.sbatch (markweightx run in one HiPerGator GPU job)
+scripts/hpg/        run.sbatch (openmarkx run in one HiPerGator GPU job)
 examples/           quickstart.py · my_scheme.py (the new-scheme template) · my_edits.py (a weight edit and a text edit)
 exp/                experiment scripts (above)
 tests/              pytest -q tests  (add -m "not slow" to skip the end-to-end check runs)

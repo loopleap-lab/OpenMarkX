@@ -27,10 +27,10 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     from demo_tokens import pro_tokens, frac, render       # exp/med/demo_tokens.py
     from hotpot_agent import norm
-    from markweightx.api import _detect_device, build_scheme
-    from markweightx.keys import load_key
-    from markweightx.models import ConfigOnly, load_tokenizer
-    from markweightx.types import Release
+    from openmarkx.api import _detect_device, build_scheme
+    from openmarkx.keys import load_key
+    from openmarkx.models import ConfigOnly, load_tokenizer
+    from openmarkx.types import Release
     rel = Release.open(a.release)
     tok = load_tokenizer(rel.base)
     res = json.load(open(os.path.join(a.release, f"{a.prefix}_result.json")))

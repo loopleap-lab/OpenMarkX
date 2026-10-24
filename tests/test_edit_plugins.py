@@ -4,48 +4,48 @@ import sys
 
 import pytest
 
-import markweightx as mwx
-from markweightx.registry import EDITS, TEXT_EDITS
+import openmarkx as omx
+from openmarkx.registry import EDITS, TEXT_EDITS
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(ROOT, "examples", "my_edits.py")
 
 
 def test_plugin_registers_both_kinds():
-    mwx.load_plugins(PLUGIN)
+    omx.load_plugins(PLUGIN)
     assert "noise" in EDITS and "typos" in TEXT_EDITS
     assert {"word_deletion", "synonym", "context_synonym"} <= set(TEXT_EDITS)
 
 
 def test_rewrite_with_a_plugin_text_edit():
-    mwx.load_plugins(PLUGIN)
+    omx.load_plugins(PLUGIN)
     texts = ["the quick brown foxes jumped over lazy dogs again and again"] * 3
-    out = mwx.rewrite(texts, "typos:rate=1.0", device="cpu")
-    assert len(out) == 3 and out[0] != texts[0] and out == mwx.rewrite(texts, "typos:rate=1.0", device="cpu")
-    assert mwx.rewrite(texts, "typos:rate=0", device="cpu") == texts
+    out = omx.rewrite(texts, "typos:rate=1.0", device="cpu")
+    assert len(out) == 3 and out[0] != texts[0] and out == omx.rewrite(texts, "typos:rate=1.0", device="cpu")
+    assert omx.rewrite(texts, "typos:rate=0", device="cpu") == texts
 
 
 def test_rewrite_refuses_unknown_edits_and_params():
-    mwx.load_plugins(PLUGIN)
+    omx.load_plugins(PLUGIN)
     with pytest.raises(ValueError, match="unknown text edit"):
-        mwx.rewrite(["a b"], "nope:rate=1")
+        omx.rewrite(["a b"], "nope:rate=1")
     with pytest.raises(ValueError, match="no parameter"):
-        mwx.rewrite(["a b"], "typos:ratio=0.1")
+        omx.rewrite(["a b"], "typos:ratio=0.1")
     with pytest.raises(ValueError, match="ratio"):
-        mwx.rewrite(["a b"], "synonym:ratio=2")
+        omx.rewrite(["a b"], "synonym:ratio=2")
 
 
 def test_text_edit_must_return_one_string_per_text():
-    @mwx.register_text_edit(name="bad_edit_for_test")
+    @omx.register_text_edit(name="bad_edit_for_test")
     def bad(texts):
         return texts[:1]
     with pytest.raises(TypeError):
-        mwx.rewrite(["a", "b"], "bad_edit_for_test")
+        omx.rewrite(["a", "b"], "bad_edit_for_test")
     del TEXT_EDITS["bad_edit_for_test"]
 
 
 def test_arena_with_plugin_edits(tmp_path):
-    from markweightx import bench
+    from openmarkx import bench
     arena = tmp_path / "arena.yaml"
     arena.write_text(f"base: llama-3.2-1b\nmethods: [pro]\nplugins: [{PLUGIN}]\n"
                      "edits: [noise:scale=0.01, text:typos:rate=0.05, quantize:bits=4]\n")
@@ -73,15 +73,15 @@ def test_leaderboard_adds_a_column_per_extra_edit():
 def test_plugin_weight_edit_on_a_tiny_model(tmp_path):
     """The example weight edit runs end to end on CPU: a new release whose weights differ and whose lineage says so."""
     import torch
-    from markweightx.check import tiny_model
-    from markweightx.models import load_release, load_tokenizer
-    from markweightx.types import Release
-    mwx.load_plugins(PLUGIN)
+    from openmarkx.check import tiny_model
+    from openmarkx.models import load_release, load_tokenizer
+    from openmarkx.types import Release
+    omx.load_plugins(PLUGIN)
     tok = load_tokenizer("llama-3.2-1b")
     base = tmp_path / "tiny"
     tiny_model(tok).save_pretrained(base); tok.save_pretrained(base)
     rel = Release(path=str(tmp_path / "rel"), base=str(base), scheme="nowm", key_commitment="test").save()
-    child = mwx.modify(rel, "noise:scale=0.05", str(tmp_path / "noised"), device="cpu")
+    child = omx.modify(rel, "noise:scale=0.05", str(tmp_path / "noised"), device="cpu")
     assert child.lineage[-1] == {"op": "noise", "params": {"scale": 0.05, "seed": 0}}
     a, b = load_release(rel, "cpu"), load_release(Release.open(child.path), "cpu")
     w = lambda m: m.model.layers[0].mlp.up_proj.weight.float()

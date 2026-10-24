@@ -1,15 +1,15 @@
 """The public facade: the calls of the threat-model roles.
 
-    import markweightx as mwx
-    rel, key = mwx.embed("llama-3.2-1b", watermark="pro", out="runs/alice")         # owner
-    rel, key = mwx.port("their_lora/", "pro", {"mapping": ...}, "llama-3.2-1b")      # owner: made elsewhere
-    key      = mwx.calibrate(key, "llama-3.2-1b")                                    # owner: freeze the null
-    edited   = mwx.modify(rel, "finetune:steps=800", out="runs/dana")               # downstream (weights)
-    texts    = mwx.generate(edited, prompts)                                         # downstream (use)
-    texts    = mwx.rewrite(texts, "synonym:ratio=0.3")                               # downstream (text)
-    dets     = mwx.detect(texts, key)                                                # detector: text + key only
-    verdict  = mwx.verify_model(edited, key, prompts, sequential=True)               # detector with query access
-    dets     = mwx.detect(texts, key, null="wrong_key")                              # ... without a calibration
+    import openmarkx as omx
+    rel, key = omx.embed("llama-3.2-1b", watermark="pro", out="runs/alice")         # owner
+    rel, key = omx.port("their_lora/", "pro", {"mapping": ...}, "llama-3.2-1b")      # owner: made elsewhere
+    key      = omx.calibrate(key, "llama-3.2-1b")                                    # owner: freeze the null
+    edited   = omx.modify(rel, "finetune:steps=800", out="runs/dana")               # downstream (weights)
+    texts    = omx.generate(edited, prompts)                                         # downstream (use)
+    texts    = omx.rewrite(texts, "synonym:ratio=0.3")                               # downstream (text)
+    dets     = omx.detect(texts, key)                                                # detector: text + key only
+    verdict  = omx.verify_model(edited, key, prompts, sequential=True)               # detector with query access
+    dets     = omx.detect(texts, key, null="wrong_key")                              # ... without a calibration
 """
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def scheme_spec(watermark: str) -> tuple[str, dict, str | None]:
             name_part, params_part = "", name_part
         name = name_part or (new[0] if len(new) == 1 else None)
         if not name:
-            raise ValueError(f"{head} registers {', '.join(new) + ': say which, e.g. ' + repr(head + ':' + new[0]) + ' (CLI check: --name)' if new else 'no scheme: decorate the class with @mwx.register_scheme'}")
+            raise ValueError(f"{head} registers {', '.join(new) + ': say which, e.g. ' + repr(head + ':' + new[0]) + ' (CLI check: --name)' if new else 'no scheme: decorate the class with @omx.register_scheme'}")
         params = _spec(f"x:{params_part}")[1] if params_part else {}
     else:
         (name, params), src = _spec(watermark), None
@@ -105,8 +105,8 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
            "transform": "policy.pth"} for PRO (files are copied into the key store).
       key_public: the key shipped with the checkpoint (e.g. a paper's released mapping): anyone can then detect, and
            also remove or forge the mark; the key records it and detect() warns.
-    The release directory (default: next to the checkpoint, <model_dir>-mwx) gets only release.json; the weights stay
-    where they are. Calibrate the key (mwx.calibrate) before detecting with an empirical null."""
+    The release directory (default: next to the checkpoint, <model_dir>-omx) gets only release.json; the weights stay
+    where they are. Calibrate the key (omx.calibrate) before detecting with an empirical null."""
     import os
     from .keys import store
     from .registry import resolved_params
@@ -144,7 +144,9 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
             params[k] = os.path.abspath(v)
     if key_public:
         params["public"] = True
-    out = out or model_dir.rstrip("/") + "-mwx"
+    if not out:                                            # <model_dir>-omx; a port made before the rename kept -mwx
+        old = model_dir.rstrip("/") + "-mwx"
+        out = old if os.path.exists(os.path.join(old, "release.json")) else model_dir.rstrip("/") + "-omx"
     if os.path.exists(os.path.join(out, "release.json")) and not force:
         raise FileExistsError(f"{out} already holds a release; pass force=True (CLI --force) to replace it")
     scheme_side = resolved_params(sch)
@@ -219,7 +221,7 @@ def generate(release: Release, prompts: list[str], *, device=DEFAULT_DEVICE, new
 
 
 def rewrite(texts: list[str], edits: str | dict, *, device=DEFAULT_DEVICE) -> list[str]:
-    """A registered text edit: 'synonym:ratio=0.3', 'word_deletion:ratio=0.3', or your own (@mwx.register_text_edit)."""
+    """A registered text edit: 'synonym:ratio=0.3', 'word_deletion:ratio=0.3', or your own (@omx.register_text_edit)."""
     from .edits import rewrite as _rewrite
     from .edits.text import RANGES
     from .edits.weights import check_params
@@ -252,7 +254,7 @@ def scheme_for(key: Key, base: str | None, device: str, grant=None, trust_plugin
     from .registry import get_scheme
     base = base or key.base or key.calibration.get("base")
     if not base:
-        raise ValueError("detect needs the base model name: pass base=, or use a key made by mwx.embed")
+        raise ValueError("detect needs the base model name: pass base=, or use a key made by omx.embed")
     sch = build_scheme(key, trust_plugin=trust_plugin)
     grant = grant or sch.access
     if ORDER[sch.access.name] > ORDER[grant.name]:
@@ -338,7 +340,7 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
     sch = scheme_for(key, base, device or _detect_device(key, None), grant, trust_plugin)
     if sch.imprint == Imprint.EDIT:
         raise ValueError(f"{key.scheme} writes its mark into the weights: a wrong key needs another release. Use its "
-                         f"closed-form null (exact_null) or mwx.calibrate instead")
+                         f"closed-form null (exact_null) or omx.calibrate instead")
     live = [i for i, t in enumerate(texts) if sch.tok(t, add_special_tokens=False)["input_ids"]]
     true = dict(zip(live, scores(sch, [texts[i] for i in live])))
     null = {i: [] for i in live}
@@ -350,11 +352,11 @@ def wrong_key_detect(texts: list[str], key: Key, *, base: str | None = None, dev
         attempts += 1
         if attempts > 3 * n_null + 10:
             raise ValueError(f"{key.scheme}: could not draw {n_null} wrong keys different from the true key")
-        work = tempfile.mkdtemp(prefix="mwx-wrongkey-")    # this wrong key's files; nothing touches the key store
+        work = tempfile.mkdtemp(prefix="omx-wrongkey-")    # this wrong key's files; nothing touches the key store
         try:
             params = sch.wrong_key(dict(key.params), rng, work)
             if params is None:
-                raise ValueError(f"{key.scheme} has no secret to redraw (Scheme.wrong_key): use mwx.calibrate instead")
+                raise ValueError(f"{key.scheme} has no secret to redraw (Scheme.wrong_key): use omx.calibrate instead")
             if params == key.params:                       # the true key: excluded
                 continue
             w = build_scheme(key, trust_plugin=trust_plugin)
@@ -433,7 +435,7 @@ def verify_model(release: Release, key: Key, prompts: list[str], *, device=DEFAU
         raise ValueError(f"budget must be at least 1 (got {budget})")
     sch = build_scheme(key, trust_plugin=trust_plugin)       # refuse an untrusted plugin before any sampling
     if not key.calibration.get("null") and sch.pvalue(0.0, 1) is None:
-        raise ValueError("verify_model needs a calibrated key (mwx.calibrate) for this scheme")
+        raise ValueError("verify_model needs a calibrated key (omx.calibrate) for this scheme")
     if key.params.get("public"):
         import warnings
         warnings.warn(f"key {key.commitment[:12]} is public: anyone could also have removed or forged this mark")

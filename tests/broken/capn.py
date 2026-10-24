@@ -1,17 +1,17 @@
 """capn: Aaronson-style sum of -log(1-r) with Gamma(n,1) null; but reports n_tokens capped at max_tokens=48 (a 'display'
 cap). Exact on texts <= 48 tokens (check's TEXTS are ~35-40), p ~ 0 for every longer human text."""
 import math, torch
-import markweightx as mwx
+import openmarkx as omx
 from scipy.stats import gamma as G
 
-@mwx.register_scheme
-class CapN(mwx.Scheme):
-    name = "capn"; imprint = mwx.Imprint.DISTILL; access = mwx.Access.R0; exact_null = True
+@omx.register_scheme
+class CapN(omx.Scheme):
+    name = "capn"; imprint = omx.Imprint.DISTILL; access = omx.Access.R0; exact_null = True
     def __init__(self, delta: float = 2.0, max_tokens: int = 48, **params):
         super().__init__(delta=delta, max_tokens=max_tokens, **params); self.delta, self.cap = delta, max_tokens
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)
-        key = dict(key or {}); key.setdefault("secret", mwx.keys.new_secret())
+        key = dict(key or {}); key.setdefault("secret", omx.keys.new_secret())
         g = torch.Generator().manual_seed(int(key["secret"]))
         self.r = torch.rand(model.config.vocab_size, generator=g)
         return {"secret": int(key["secret"])}

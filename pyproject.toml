@@ -1,5 +1,5 @@
 [project]
-name = "markweightx"
+name = "openmarkx"
 version = "0.1.0"
 description = "An ecosystem for watermarking open-weight LLMs: learn a text watermark into the weights, edit, detect."
 requires-python = ">=3.10"
@@ -11,19 +11,20 @@ test = ["pytest", "pillow"]
 vision = ["pillow"]            # vlm and taming adapters: images in and out
 
 [project.scripts]
-markweightx = "markweightx.cli:main"
+openmarkx = "openmarkx.cli:main"
+markweightx = "openmarkx.cli:main"      # the old name, kept as an alias
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["slow: runs markweightx check end to end (minutes)"]
+markers = ["slow: runs openmarkx check end to end (minutes)"]
 
 [build-system]
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["markweightx*"]
+include = ["openmarkx*", "markweightx*"]   # markweightx: a shim for code written before the rename
 
 [tool.setuptools.package-data]
-"markweightx" = ["app.html"]
-"markweightx.third_party.pro" = ["*.pth", "LICENSE"]
+"openmarkx" = ["app.html"]
+"openmarkx.third_party.pro" = ["*.pth", "LICENSE"]

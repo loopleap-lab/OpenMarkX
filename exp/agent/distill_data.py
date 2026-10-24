@@ -15,7 +15,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import torch
 
-from markweightx.paths import RUNS
+from openmarkx.paths import RUNS
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
         out = os.path.join(d, f"data_{a.base}.pt")
         torch.save({"train": torch.tensor(train), "eval_texts": evals, "model": a.base, "source": "dolly-self"}, out)
         print({"train": len(train), "eval": len(evals), "out": out}); return
-    from markweightx.models import load_base, load_tokenizer
+    from openmarkx.models import load_base, load_tokenizer
     tok = load_tokenizer(a.base)
     prompts = [json.loads(l)["text"] for l in open(os.path.join(d, "dolly_prompts.jsonl"))][:a.n]
     mine = list(range(a.shard, len(prompts), a.num_shards))

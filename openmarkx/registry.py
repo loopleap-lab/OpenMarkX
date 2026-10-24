@@ -11,12 +11,17 @@ MODELS: dict = {}        # model adapters: name -> class (for a plugin: the vers
 MODEL_VERSIONS: dict = {}  # (name, module) -> class, as VERSIONS for schemes
 
 
+def _builtin(module: str) -> bool:
+    """Code shipped with the package (markweightx is its name before the rename)."""
+    return module.startswith(("openmarkx.", "markweightx."))
+
+
 def register_scheme(cls=None, *, name: str | None = None):
     def wrap(c):
         n = name or c.name
         old = SCHEMES.get(n)
         if old is not None and old is not c:
-            builtin = lambda k: k.__module__.startswith("markweightx.")
+            builtin = lambda k: _builtin(k.__module__)
             if builtin(old) or builtin(c) or old.__module__ == c.__module__ and old.__qualname__ != c.__qualname__:
                 raise ValueError(f"scheme {n!r} is already registered by {old.__module__}.{old.__qualname__}; "
                                  f"pick another name")
@@ -75,7 +80,7 @@ def _file_module_name(path: str) -> str:
     import os
     h = hashlib.sha256(open(path, "rb").read()).hexdigest()[:12]   # one module per version of the code
     stem = "".join(ch if ch.isalnum() else "_" for ch in os.path.splitext(os.path.basename(path))[0])
-    return f"mwx_plugin_{stem}_{h}"
+    return f"omx_plugin_{stem}_{h}"
 
 
 def plugin_loaded(source: str) -> bool:
@@ -130,16 +135,16 @@ def load_plugin(source: str):
 
 
 def scheme_source(cls) -> str | None:
-    """Where a registered scheme class lives, if outside markweightx (so a key can find it again)."""
+    """Where a registered scheme class lives, if outside openmarkx (so a key can find it again)."""
     import os
     import sys
     mod = cls.__module__
-    if mod.startswith("markweightx."):
+    if _builtin(mod):
         return None
     if mod == "__main__":
         raise ValueError(f"scheme {cls.__name__} is defined in the script being run (or a notebook), which a key cannot "
-                         f"load again: keep it in its own file and pass the file, e.g. mwx.embed(base, 'my_mark.py')")
-    if mod.startswith("mwx_plugin_"):
+                         f"load again: keep it in its own file and pass the file, e.g. omx.embed(base, 'my_mark.py')")
+    if mod.startswith(("omx_plugin_", "mwx_plugin_")):   # mwx_: loaded before the rename
         f = getattr(sys.modules.get(mod), "__file__", None)
         return os.path.abspath(f) if f else None
     return f"{mod}@{_module_digest(sys.modules[mod])}"     # an importable module, pinned to its current code
@@ -178,7 +183,7 @@ def _takes_any(cls) -> bool:
     import inspect
     init = next((k.__dict__["__init__"] for k in cls.__mro__ if "__init__" in k.__dict__), None)
     ps = [p for p in inspect.signature(init).parameters.values() if p.name != "self"] if init else []
-    return bool(ps) and all(p.kind == p.VAR_KEYWORD for p in ps) and not init.__module__.startswith("markweightx.")
+    return bool(ps) and all(p.kind == p.VAR_KEYWORD for p in ps) and not _builtin(init.__module__)
 
 
 def get_scheme(name: str, *, source: str | None = None, **params):
@@ -190,7 +195,7 @@ def get_scheme(name: str, *, source: str | None = None, **params):
         cls = VERSIONS.get((name, mod))
         if cls is None:
             raise KeyError(f"{source} does not register a scheme named {name!r} (it registers: "
-                           f"{', '.join(plugin_schemes(mod)) or 'nothing; add @mwx.register_scheme'})")
+                           f"{', '.join(plugin_schemes(mod)) or 'nothing; add @omx.register_scheme'})")
     elif name in SCHEMES:
         cls = SCHEMES[name]
     else:
@@ -201,7 +206,7 @@ def get_scheme(name: str, *, source: str | None = None, **params):
                        f"(or a plugin: my_scheme.py, pkg.module)")
     allowed = scheme_params(cls)
     bad = sorted(set(params) - set(allowed))
-    if bad and not cls.__module__.startswith("markweightx.") and _takes_any(cls):
+    if bad and not _builtin(cls.__module__) and _takes_any(cls):
         import warnings                                    # a plugin that declares no named parameters
         warnings.warn(f"{name}: parameters {bad} are not named in __init__; passing them through **params")
         bad = []
@@ -211,11 +216,11 @@ def get_scheme(name: str, *, source: str | None = None, **params):
 
 
 def register_model(cls=None, *, name: str | None = None):
-    """Register a model adapter (a markweightx.models.Model subclass) under its name."""
+    """Register a model adapter (a openmarkx.models.Model subclass) under its name."""
     def wrap(c):
         n = name or c.name
         old = MODELS.get(n)
-        if old is not None and old is not c and (old.__module__.startswith("markweightx.") or c.__module__.startswith("markweightx.")):
+        if old is not None and old is not c and (_builtin(old.__module__) or _builtin(c.__module__)):
             raise ValueError(f"model {n!r} is already registered by {old.__module__}.{old.__qualname__}; pick another name")
         MODELS[n] = c
         MODEL_VERSIONS[(n, c.__module__)] = c
@@ -241,7 +246,7 @@ def get_model(name: str, *, source: str | None = None, trust: bool = False, **pa
         if cls is None:
             have = sorted(n for (n, m) in MODEL_VERSIONS if m == mod)
             raise KeyError(f"{source} does not register a model named {name!r} (it registers: "
-                           f"{', '.join(have) or 'nothing; add @mwx.register_model'})")
+                           f"{', '.join(have) or 'nothing; add @omx.register_model'})")
     elif name in MODELS:
         cls = MODELS[name]
     else:

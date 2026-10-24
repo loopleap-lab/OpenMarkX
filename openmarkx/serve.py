@@ -1,11 +1,11 @@
-"""`markweightx serve`: run the toolkit on this machine's GPUs from a web page.
+"""`openmarkx serve`: run the toolkit on this machine's GPUs from a web page.
 
 The server listens on 127.0.0.1 and answers only requests that carry its token. The page is either the one it serves
 itself (http://127.0.0.1:PORT/#token=...) or the project website, which connects to it from the browser. Uploaded
 data, releases and keys stay on this machine. A GPU on another machine is reached with an SSH tunnel:
     ssh -L 7860:127.0.0.1:7860 gpu-server      # then connect the page to http://127.0.0.1:7860
 
-A job (upload a dataset -> embed -> calibrate -> evaluate) runs as its own process, `python -m markweightx.serve
+A job (upload a dataset -> embed -> calibrate -> evaluate) runs as its own process, `python -m openmarkx.serve
 JOB_DIR`, so a crash or a cancel never takes the server down. Its state is files in JOB_DIR:
     job.json        the request             status.json   phase, error, result
     train_log.jsonl one line per step       output.log    the job's stdout and stderr
@@ -139,7 +139,7 @@ def start_job(req: dict) -> str:
     out = open(os.path.join(d, "output.log"), "w")
     env = {**os.environ, "CUDA_VISIBLE_DEVICES": req["device"].split(":")[1]} if req["device"].startswith("cuda:") \
         else dict(os.environ)
-    p = subprocess.Popen([sys.executable, "-u", "-m", "markweightx.serve", d], stdout=out, stderr=subprocess.STDOUT,
+    p = subprocess.Popen([sys.executable, "-u", "-m", "openmarkx.serve", d], stdout=out, stderr=subprocess.STDOUT,
                          env=env, start_new_session=True)
     _write(os.path.join(d, "status.json"), {"phase": "queued", "t0": time.time(), "pid": p.pid})
     threading.Thread(target=p.wait, daemon=True).start()      # reap it, so a finished job is not a zombie
@@ -181,9 +181,9 @@ def job_zip(jid: str) -> tuple[str, bytes]:
             z.write(os.path.join(STORE, "blobs", b), f"keys/blobs/{b}")
         z.writestr("README.txt", "release/  the watermarked model: a LoRA adapter on its base (release.json names it)\n"
                    "keys/     the private key. Copy keys/* into your key store ($MWX_KEYS, default "
-                   "~/.markweightx/runs/keys) to detect with it. Whoever has the key can detect the watermark, and "
+                   "~/.openmarkx/runs/keys) to detect with it. Whoever has the key can detect the watermark, and "
                    "also remove or forge it.\n")
-    return f"markweightx-{jid}.zip", buf.getvalue()
+    return f"openmarkx-{jid}.zip", buf.getvalue()
 
 
 def check_request(req: dict) -> dict:
@@ -321,7 +321,7 @@ APP = os.path.join(os.path.dirname(__file__), "app.html")
 
 def make_handler(token: str, origins: set[str]):
     class H(BaseHTTPRequestHandler):
-        server_version = "markweightx"
+        server_version = "openmarkx"
 
         def log_message(self, fmt, *a):                    # one short line per API call, none for polling
             if not self.path.startswith("/api/jobs/"):
@@ -354,7 +354,7 @@ def make_handler(token: str, origins: set[str]):
             got = self.headers.get("X-MWX-Token") or self.headers.get("Authorization", "").removeprefix("Bearer ")
             ok = secrets.compare_digest(got.encode(), token.encode())
             if not ok:
-                self.reply(401, {"error": "wrong or missing token (it is printed by `markweightx serve`)"})
+                self.reply(401, {"error": "wrong or missing token (it is printed by `openmarkx serve`)"})
             return ok
 
         def body(self) -> bytes:
@@ -422,7 +422,7 @@ def make_handler(token: str, origins: set[str]):
 def _version():
     try:
         from importlib.metadata import version
-        return version("markweightx")
+        return version("openmarkx")
     except Exception:
         return "dev"
 
@@ -432,9 +432,9 @@ def serve(port: int = 7860, host: str = "127.0.0.1", token: str | None = None, o
     os.makedirs(os.path.join(SERVE, "jobs"), exist_ok=True)
     httpd = ThreadingHTTPServer((host, port), make_handler(token, {SITE, *(origins or [])}))
     shown = "127.0.0.1" if host in ("0.0.0.0", "") else host
-    print(f"MarkWeightX is serving this machine ({machine()['host']}).\n"
+    print(f"OpenMarkX is serving this machine ({machine()['host']}).\n"
           f"  open    http://{shown}:{port}/#token={token}\n"
-          f"  or connect {SITE}/MarkWeightX/app.html with\n"
+          f"  or connect {SITE}/OpenMarkX/app.html with\n"
           f"    address http://{shown}:{port}\n    token   {token}\n"
           f"  data, releases and keys stay in {SERVE} and the key store.  Ctrl-C stops the server; jobs keep running.",
           flush=True)

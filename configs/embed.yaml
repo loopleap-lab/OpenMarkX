@@ -1,4 +1,4 @@
-# Training recipe for teacher-learned schemes (`markweightx embed --recipe configs/embed.yaml`).
+# Training recipe for teacher-learned schemes (`openmarkx embed --recipe configs/embed.yaml`).
 # These are the defaults; teacher-free schemes (gaussmark, R2 edits) ignore them. Flags on the command line win.
 steps: 1500        # optimizer steps
 bs: 16             # sequences per step

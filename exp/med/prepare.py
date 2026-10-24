@@ -17,7 +17,7 @@ import sys
 import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from markweightx.paths import RUNS
+from openmarkx.paths import RUNS
 
 MED = os.path.join(RUNS, "med")
 EVAL_PROMPT = ("{question}\n\nThink step by step about the image(s) and the question, then finish with "

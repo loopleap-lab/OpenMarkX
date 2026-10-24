@@ -13,9 +13,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from markweightx.paths import RUNS
-from markweightx.scoring import scores, summary
-from markweightx.types import Key
+from openmarkx.paths import RUNS
+from openmarkx.scoring import scores, summary
+from openmarkx.types import Key
 
 
 def main():
@@ -30,12 +30,12 @@ def main():
     cfg = json.load(open(os.path.join(a.run, "embed_args.json")))
     if not a.step:
         a.step = max(int(d.split("step")[1]) for d in os.listdir(a.run) if d.startswith("adapter_step"))
-    from markweightx.keys import STORE
+    from openmarkx.keys import STORE
     draft = os.path.join(STORE, "resume", hashlib.sha1(os.path.abspath(a.run).encode()).hexdigest()[:16] + ".json")
     key = Key(scheme=cfg["scheme"], params={**json.load(open(draft)), "rng_device": "cuda"}, base=cfg["base"],
               scheme_params={})
-    from markweightx.api import build_scheme
-    from markweightx.vlm import generate_vlm, load_processor, load_vlm
+    from openmarkx.api import build_scheme
+    from openmarkx.vlm import generate_vlm, load_processor, load_vlm
     from peft import PeftModel
     items = [json.loads(l) for l in open(os.path.join(RUNS, "med", "mxqa_mm_eval.jsonl"))][:a.n]
     proc = load_processor(cfg["base"])

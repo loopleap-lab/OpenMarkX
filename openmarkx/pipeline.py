@@ -1,4 +1,4 @@
-"""markweightx run CONFIG: one pipeline for every model adapter.
+"""openmarkx run CONFIG: one pipeline for every model adapter.
 
 Steps, in order (each writes out/<step>.json, through a .tmp file renamed on success, and is skipped when that file
 exists; once a step runs, every later step runs again, since its inputs may have changed):
@@ -121,7 +121,7 @@ def load_config(path: str) -> Config:
         _check_keys(sec, d.get(sec) or {}, allowed)
     if not (d["model"] or {}).get("source") and (d["model"] or {}).get("name") not in list_models():
         raise ConfigError(f"unknown model {d['model'].get('name')!r}; models: {', '.join(list_models())} "
-                          f"(or model.source: a plugin file with @mwx.register_model)")
+                          f"(or model.source: a plugin file with @omx.register_model)")
     cfg = Config(**{k: v for k, v in d.items() if v is not None})
     from .train import _phases
     try:
@@ -551,7 +551,7 @@ def _wrong_key_stats(ctx, outs, base_outs) -> list[float]:
     import tempfile
     rng = random.Random(0xC0FFEE)
     true = ctx.bound_scheme()
-    work = tempfile.mkdtemp(prefix="mwx-wrongkey-")         # wrong keys' files; nothing touches the key store
+    work = tempfile.mkdtemp(prefix="omx-wrongkey-")         # wrong keys' files; nothing touches the key store
     out = []
     try:
         for _ in range(per):

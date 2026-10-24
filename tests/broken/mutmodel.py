@@ -1,11 +1,11 @@
 """mutmodel: setup 'sharpens' the model it is given, in place (lm_head /= 0.7). Detection never notices; embed trains
 the LoRA student on the sharpened base, but the release is loaded onto the original base."""
 import math, torch
-import markweightx as mwx
+import openmarkx as omx
 
-@mwx.register_scheme
-class MutModel(mwx.Scheme):
-    name = "mutmodel"; imprint = mwx.Imprint.DISTILL; access = mwx.Access.R0; exact_null = True
+@omx.register_scheme
+class MutModel(omx.Scheme):
+    name = "mutmodel"; imprint = omx.Imprint.DISTILL; access = omx.Access.R0; exact_null = True
     def __init__(self, delta: float = 2.0, **params):
         super().__init__(delta=delta, **params); self.delta = delta
     def setup(self, model, tokenizer, device, key=None):
@@ -13,7 +13,7 @@ class MutModel(mwx.Scheme):
         if hasattr(model, "lm_head"):
             with torch.no_grad(): model.lm_head.weight.div_(0.7)          # BUG: mutates the caller's model
         tokenizer.padding_side = "right"                                  # BUG: mutates the shared tokenizer
-        key = dict(key or {}); key.setdefault("secret", mwx.keys.new_secret())
+        key = dict(key or {}); key.setdefault("secret", omx.keys.new_secret())
         g = torch.Generator().manual_seed(int(key["secret"]))
         self.green = torch.rand(model.config.vocab_size, generator=g) < 0.5
         return {"secret": int(key["secret"])}

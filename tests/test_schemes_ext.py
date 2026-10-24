@@ -16,7 +16,7 @@ class Codebook:
 
 
 def wmar(**kw):
-    from markweightx.registry import get_scheme
+    from openmarkx.registry import get_scheme
     s = get_scheme("wmar", **kw)
     key = s.setup(None, Codebook(), "cpu", {"secret": 1234})
     return s, key
@@ -41,7 +41,7 @@ def test_wmar_score_matches_old_detect_table():
 
 
 def test_wmar_policy_saved_to_key_store_not_release(tmp_path):
-    from markweightx.keys import STORE, stage_dir
+    from openmarkx.keys import STORE, stage_dir
     s, key = wmar()
     rel = tmp_path / "release"; rel.mkdir()
     kdir = stage_dir()

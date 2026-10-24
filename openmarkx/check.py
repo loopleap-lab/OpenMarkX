@@ -1,4 +1,4 @@
-"""markweightx check --adapter: what a scheme must pass before it joins the leaderboard (CPU, tiny Llama, minutes).
+"""openmarkx check --adapter: what a scheme must pass before it joins the leaderboard (CPU, tiny Llama, minutes).
 
   C1 declared     imprint and access are declared, kind is one embed can train (distill_logit, or none for EDIT),
                   params are JSON-serializable, and all of it matches configs/watermark/*.yaml
@@ -105,7 +105,7 @@ RELEASE_FILES = ("config.json", "generation_config.json", "model.safetensors", "
 
 def run(name: str, source: str | None = None, base: str = "llama-3.2-1b", n_null: int = 200) -> list[tuple]:
     from . import keys as K
-    root = tempfile.mkdtemp(prefix="mwx-check-")             # keys and tiny releases; removed when the check ends
+    root = tempfile.mkdtemp(prefix="omx-check-")             # keys and tiny releases; removed when the check ends
     store_dir = os.path.join(root, "keys")
     old_store, old_tmp, K.STORE = K.STORE, tempfile.tempdir, store_dir
     tempfile.tempdir = root
@@ -179,7 +179,7 @@ def _run(name, source, base, n_null, store_dir):
         s = new(); m = tiny_model(tok)
         k = bind(s, m, tok, None)
         if edit:
-            out = tempfile.mkdtemp(prefix="mwx-check-rel-")
+            out = tempfile.mkdtemp(prefix="omx-check-rel-")
             from .keys import stage_dir
             s.imprint_edit(m, tok, out); k = s.save(stage_dir(), k)
             return s, k, out
@@ -231,11 +231,11 @@ def _run(name, source, base, n_null, store_dir):
         code = f"""
 import json, sys, torch
 sys.path.insert(0, {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))!r})
-from markweightx.keys import key_path
-from markweightx.types import Key
-from markweightx.api import build_scheme
-from markweightx.check import tiny_model, bind, TEXTS
-from markweightx.models import load_tokenizer
+from openmarkx.keys import key_path
+from openmarkx.types import Key
+from openmarkx.api import build_scheme
+from openmarkx.check import tiny_model, bind, TEXTS
+from openmarkx.models import load_tokenizer
 torch.manual_seed(987654)                                   # a different global RNG than the parent
 k = Key.open(key_path({k.commitment!r})); tok = load_tokenizer({base!r})
 s = build_scheme(k, trust_plugin=True); bind(s, tiny_model(tok), tok, k.params)
@@ -274,7 +274,7 @@ print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
 
     def c5():
         if sch.pvalue(0.0, 100) is None:
-            return None, "empirical null: calibrate with mwx.calibrate on the real base"
+            return None, "empirical null: calibrate with omx.calibrate on the real base"
         from scipy.stats import binom, kstest
         if "marked" not in state:
             return False, "needs marked text from C6, which failed"

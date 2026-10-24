@@ -12,7 +12,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from markweightx.paths import RUNS
+from openmarkx.paths import RUNS
 
 
 def main():

@@ -1,4 +1,4 @@
-"""Model code that stays outside MarkWeightX (WMAR for Taming, the GeoPT repo): the user clones it and points an
+"""Model code that stays outside OpenMarkX (WMAR for Taming, the GeoPT repo): the user clones it and points an
 environment variable at it; the adapters import it at load time and leave it unchanged."""
 from __future__ import annotations
 

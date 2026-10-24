@@ -1,5 +1,5 @@
-"""PRO (NeurIPS 2026) as a MarkWeightX scheme. The PRO watermark itself is the paper's code, shipped unchanged in
-markweightx/third_party/pro.
+"""PRO (NeurIPS 2026) as a OpenMarkX scheme. The PRO watermark itself is the paper's code, shipped unchanged in
+openmarkx/third_party/pro.
 
 Signal: one semantic bias per sequence, bias = delta * tanh(tau * (T(BERT(context)) - mean))[mapping], where T is the
 watermark policy and `mapping` (token -> policy dimension) is the secret key. Score: PRO's detect_batch, the mean of

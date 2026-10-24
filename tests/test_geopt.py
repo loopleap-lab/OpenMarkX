@@ -17,7 +17,7 @@ def fixed():
 
 
 def test_ripple_functions_match_old_fieldmark():
-    from markweightx.schemes import ripple as R
+    from openmarkx.schemes import ripple as R
     p, ref, g = fixed()
     out = R.mark(p, ref, 7, 0.05) + 0.01 * torch.randn(1, 200, 6, generator=g)
     assert R.zscore(p, out - ref, 7, n_wrong=50, ref=ref).item() == pytest.approx(28.297849655151367, abs=1e-5)
@@ -25,7 +25,7 @@ def test_ripple_functions_match_old_fieldmark():
 
 
 def ripple(**kw):
-    from markweightx.registry import get_scheme
+    from openmarkx.registry import get_scheme
     s = get_scheme("ripple", n_wrong=50, **kw)
     s.setup(None, None, "cpu", {"secret": 7})
     return s
@@ -58,16 +58,16 @@ def test_ripple_calibrate_picks_smallest_detectable_eps():
 
 
 def test_missing_geopt_dir_names_the_variable(monkeypatch):
-    from markweightx.external import MissingExternal
-    from markweightx.registry import get_model
+    from openmarkx.external import MissingExternal
+    from openmarkx.registry import get_model
     monkeypatch.delenv("MWX_GEOPT_DIR", raising=False)
     with pytest.raises(MissingExternal, match="MWX_GEOPT_DIR"):
         get_model("geopt", ckpt="x.pt", data="d").load(None, "cpu")
 
 
 def test_geopt_fake_runs_fields_and_rel_l2():
-    from markweightx.quality import rel_l2
-    from markweightx.registry import get_model
+    from openmarkx.quality import rel_l2
+    from openmarkx.registry import get_model
     m = get_model("geopt", factory=FAKE)
     net = m.load(None, "cpu")
     train, test = m.splits()
@@ -77,7 +77,7 @@ def test_geopt_fake_runs_fields_and_rel_l2():
 
 
 def test_edit_last_writes_the_mark_in_closed_form():
-    from markweightx.registry import get_model
+    from openmarkx.registry import get_model
     m = get_model("geopt", factory=FAKE)
     clean = m.load(None, "cpu")
     student = m.load(None, "cpu")
@@ -91,6 +91,6 @@ def test_edit_last_writes_the_mark_in_closed_form():
 
 
 def test_accuracy_reads_choice_letters_and_free_answers():
-    from markweightx.quality import accuracy
+    from openmarkx.quality import accuracy
     assert accuracy(["... so the answer is (B).", "The answer is C", "no idea"], ["B", "D", "A"]) == 1 / 3
     assert accuracy(["It was Paris, France."], ["paris"]) == 1.0

@@ -1,5 +1,5 @@
 """Text edits a downstream user may make. The built-ins call upstream MarkLLM's evaluation/tools/text_editor.py
-(unchanged); add your own with @mwx.register_text_edit (see docs/REFERENCE.md, "Add an edit")."""
+(unchanged); add your own with @omx.register_text_edit (see docs/REFERENCE.md, "Add an edit")."""
 from __future__ import annotations
 
 import inspect
@@ -50,7 +50,7 @@ def rewrite(texts, kind: str, *, device="cuda:0", **params):
     """Apply the text edit registered as `kind`; device is passed only to edits that take it."""
     if kind not in TEXT_EDITS:
         raise ValueError(f"unknown text edit {kind!r}; available: {', '.join(sorted(TEXT_EDITS))} "
-                         f"(or register one with @mwx.register_text_edit and load its file with --plugin)")
+                         f"(or register one with @omx.register_text_edit and load its file with --plugin)")
     fn = TEXT_EDITS[kind]
     if "device" in inspect.signature(fn).parameters:
         params["device"] = device

@@ -106,7 +106,7 @@ class FakeTaming:
 
     @torch.no_grad()
     def sample(self, classes, gen, apply_watermark=False):
-        from markweightx.models.taming import gpt_logits
+        from openmarkx.models.taming import gpt_logits
         gpt = self.model.transformer
         seq = torch.tensor(classes)[:, None]
         for _ in range(256):

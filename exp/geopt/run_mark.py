@@ -1,4 +1,4 @@
-"""The demo run is now one command: markweightx run configs/demos/geopt.yaml. This script keeps the sweeps.
+"""The demo run is now one command: openmarkx run configs/demos/geopt.yaml. This script keeps the sweeps.
 GPU: PRO for GeoPT on AirCraft. Calibrate the field mark, learn it into the weights, evaluate, save demo cases.
 
   python exp/geopt/run_mark.py --geopt_dir $B/GeoPT --data $MWX_RUNS/geopt/aircraft_npys \

@@ -15,16 +15,16 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.scoring import repetition, scores, summary
-from markweightx.edits import modify, rewrite
-from markweightx.sampling import eval_prompts, generate, perplexity
-from markweightx.models import ConfigOnly, load_base, load_release, load_tokenizer
-from markweightx.api import build_scheme
-from markweightx.keys import load_key
-from markweightx.registry import get_scheme
-from markweightx.types import Release
+from openmarkx.scoring import repetition, scores, summary
+from openmarkx.edits import modify, rewrite
+from openmarkx.sampling import eval_prompts, generate, perplexity
+from openmarkx.models import ConfigOnly, load_base, load_release, load_tokenizer
+from openmarkx.api import build_scheme
+from openmarkx.keys import load_key
+from openmarkx.registry import get_scheme
+from openmarkx.types import Release
 
-from markweightx.bench import EDIT_GRID as GRID, edit_tag as tag   # one grid for bench and this script
+from openmarkx.bench import EDIT_GRID as GRID, edit_tag as tag   # one grid for bench and this script
 
 
 def main():
@@ -33,10 +33,10 @@ def main():
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--n", type=int, default=500)
     ap.add_argument("--only", default="", help="comma-separated edit names to run")
-    ap.add_argument("--grid", help='JSON list of [op, params] pairs instead of EDIT_GRID (markweightx bench passes it)')
+    ap.add_argument("--grid", help='JSON list of [op, params] pairs instead of EDIT_GRID (openmarkx bench passes it)')
     ap.add_argument("--plugin", action="append", default=[], help="a .py file that registers edits (repeatable)")
     a = ap.parse_args()
-    from markweightx.registry import load_plugins
+    from openmarkx.registry import load_plugins
     load_plugins(a.plugin)
     rel = Release.open(a.release)
     out_rows = f"{a.release}/robustness.jsonl"
@@ -50,9 +50,9 @@ def main():
     big = "8b" in rel.base
 
     sch = build_scheme(load_key(rel), trust_plugin=True)
-    from markweightx.api import _detect_device
+    from openmarkx.api import _detect_device
     _detect_device(load_key(rel), a.device, type(sch))     # a key made on CUDA is scored on CUDA (and CPU on CPU)
-    from markweightx.primitives import Probe
+    from openmarkx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)
     # detectors that run a language model get the base; the others only need its config. On 8B the base used to
     # judge perplexity is loaded per edit and freed, so it never sits next to the edited model on one card.

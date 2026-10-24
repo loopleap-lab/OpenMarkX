@@ -1,4 +1,4 @@
-"""The demo run is now one command: markweightx run configs/demos/agent.yaml. This script keeps the sweeps.
+"""The demo run is now one command: openmarkx run configs/demos/agent.yaml. This script keeps the sweeps.
 GPU: a small ReAct agent on HotpotQA, run with the watermarked model and with its unmarked base; the watermark is
 tested on the agent's final answer only.
 
@@ -23,9 +23,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import torch
 
-from markweightx.paths import RUNS
+from openmarkx.paths import RUNS
 
-from markweightx.models.agent import FINAL, SYSTEM, generate, norm, parse_action, run_agent, search  # noqa: F401
+from openmarkx.models.agent import FINAL, SYSTEM, generate, norm, parse_action, run_agent, search  # noqa: F401
 
 
 def main():
@@ -40,11 +40,11 @@ def main():
     ap.add_argument("--final_words", type=int, default=150)
     ap.add_argument("--prefix", default="agent", help="output names: <prefix>_<set>.jsonl, <prefix>_result.json")
     a = ap.parse_args()
-    from markweightx.api import _detect_device, build_scheme
-    from markweightx.keys import load_key
-    from markweightx.models import load_release, load_tokenizer
-    from markweightx.scoring import scores, summary
-    from markweightx.types import Release
+    from openmarkx.api import _detect_device, build_scheme
+    from openmarkx.keys import load_key
+    from openmarkx.models import load_release, load_tokenizer
+    from openmarkx.scoring import scores, summary
+    from openmarkx.types import Release
     rel = Release.open(a.release)
     tok = load_tokenizer(rel.base)
     items = [json.loads(l) for l in open(os.path.join(RUNS, "agent", "hotpot_dev.jsonl"))][:a.n]

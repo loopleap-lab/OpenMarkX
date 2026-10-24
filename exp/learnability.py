@@ -14,15 +14,15 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.scoring import scores, summary
-from markweightx.imprint import embed
-from markweightx.sampling import eval_prompts, generate, perplexity
-from markweightx.models import load_base, load_release, load_tokenizer
-from markweightx.paths import RUNS
-from markweightx.api import build_scheme
-from markweightx.keys import load_key
-from markweightx.registry import get_scheme
-from markweightx.types import Release
+from openmarkx.scoring import scores, summary
+from openmarkx.imprint import embed
+from openmarkx.sampling import eval_prompts, generate, perplexity
+from openmarkx.models import load_base, load_release, load_tokenizer
+from openmarkx.paths import RUNS
+from openmarkx.api import build_scheme
+from openmarkx.keys import load_key
+from openmarkx.registry import get_scheme
+from openmarkx.types import Release
 
 
 def main():
@@ -39,10 +39,10 @@ def main():
     ap.add_argument("--bos", action="store_true", help="start every training chunk with BOS")
     ap.add_argument("--seq_len", type=int, default=128, help="training chunk length (the corpus may hold longer ones)")
     a = ap.parse_args()
-    from markweightx.api import scheme_spec
+    from openmarkx.api import scheme_spec
     sname, sparams, ssrc = scheme_spec(a.scheme)           # "gaussmark:sigma=1e-3", or a plugin "my_scheme.py"
-    from markweightx.bench import result_dir
-    out = result_dir(a.scheme, a.base, a.tag)                # the same place `markweightx bench` looks
+    from openmarkx.bench import result_dir
+    out = result_dir(a.scheme, a.base, a.tag)                # the same place `openmarkx bench` looks
     t0 = time.time()
     rel = Release.open(out) if a.skip_embed else embed(sname, a.base, out, steps=a.steps, bs=a.bs, accum=a.accum, device=a.device, bos=a.bos, seq_len=a.seq_len,
                                                      scheme_params=sparams, scheme_source=ssrc)
@@ -52,9 +52,9 @@ def main():
     tok = load_tokenizer(a.base)
     model = load_release(rel, a.device)
     sch = build_scheme(load_key(rel), trust_plugin=True)
-    from markweightx.api import _detect_device
+    from openmarkx.api import _detect_device
     _detect_device(load_key(rel), a.device, type(sch))     # a key made on CUDA is scored on CUDA (and CPU on CPU)
-    from markweightx.primitives import Probe
+    from openmarkx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)       # R1/R2 detectors work through the probe
     sch.setup(model, tok, a.device, load_key(rel).params)
     prompts = eval_prompts(tok, n=a.n)
@@ -79,7 +79,7 @@ def main():
         judge = load_base(a.base, a.device) if rel.weights else model
     s_null = [s for s, _ in scores(sch, base_txt)]
     s_stud = [s for s, _ in scores(sch, stud)]
-    from markweightx.registry import resolved_params
+    from openmarkx.registry import resolved_params
     # a plugin's row is named by its scheme, and remembers where its code came from (the leaderboard needs both)
     res = {"scheme": sname if ssrc else a.scheme, "scheme_source": load_key(rel).scheme_source,
            "sweep": bool(sparams), "experimental": bool(getattr(sch, "experimental", False)),
@@ -94,9 +94,9 @@ def main():
         res["teacher_decode"] = summary(s_teach, s_null); res["ppl_teacher"] = perplexity(judge, tok, prompts, teach)
     res["total_sec"] = round(time.time() - t0)
     print(json.dumps(res, indent=1))
-    from markweightx.scoring import length_curve
+    from openmarkx.scoring import length_curve
     res["by_length"] = length_curve(sch, tok, stud, base_txt, res["student"]["thr"])   # C9: shorter texts
-    from markweightx.files import write_json
+    from openmarkx.files import write_json
     write_json(f"{out}/result.json", res, indent=1)
     json.dump({"prompts": prompts, "student": stud, "teacher": teach, "scores": {"null": s_null, "student": s_stud}},
               open(f"{out}/texts.json", "w"))

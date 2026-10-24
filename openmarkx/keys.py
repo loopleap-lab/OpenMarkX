@@ -23,7 +23,7 @@ _TEST_RNG = None                 # set only inside reproducible_secrets()
 
 @contextlib.contextmanager
 def reproducible_secrets(seed: int):
-    """Inside, new_secret() draws from random.Random(seed): markweightx check uses it so its verdict does not depend on
+    """Inside, new_secret() draws from random.Random(seed): openmarkx check uses it so its verdict does not depend on
     the run. Never around a real embed: the keys would be predictable."""
     import random
     global _TEST_RNG

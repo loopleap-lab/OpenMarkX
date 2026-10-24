@@ -14,13 +14,13 @@ from test_train import Shift, TinyField
 
 @pytest.fixture
 def store(tmp_path, monkeypatch):
-    import markweightx.keys as K
+    import openmarkx.keys as K
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
 
 
 def killed_at(monkeypatch, n):
     """Make train._cycle raise after n batches (a job killed by its time limit)."""
-    import markweightx.train as T
+    import openmarkx.train as T
     real = T._cycle
 
     def cycle(batches):
@@ -33,7 +33,7 @@ def killed_at(monkeypatch, n):
 
 
 def test_train_imprint_resume_matches_an_uninterrupted_run(tmp_path, store, monkeypatch):
-    import markweightx.train as T
+    import openmarkx.train as T
     g = torch.Generator().manual_seed(0)
     batches = [{"inputs": torch.randn(16, 3, generator=g)} for _ in range(5)]
     ph = [{"steps": 12, "lr": 1e-2, "trainable": "full"}]
@@ -51,7 +51,7 @@ def test_train_imprint_resume_matches_an_uninterrupted_run(tmp_path, store, monk
 
 
 def test_pipeline_saves_every_100_steps_by_default(tmp_path):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     from test_pipeline import geopt_cfg, write_cfg
     cfg = pipeline.load_config(write_cfg(tmp_path, geopt_cfg(tmp_path / "r")))
     assert pipeline.save_every(cfg) == 100
@@ -60,7 +60,7 @@ def test_pipeline_saves_every_100_steps_by_default(tmp_path):
 @pytest.fixture(scope="module")
 def text_base(tmp_path_factory):
     from fakes import tiny_llama
-    from markweightx.models import load_tokenizer
+    from openmarkx.models import load_tokenizer
     d = tmp_path_factory.mktemp("base")
     tiny_llama().save_pretrained(d)
     load_tokenizer("llama-3.2-1b").save_pretrained(d)
@@ -72,11 +72,11 @@ def text_base(tmp_path_factory):
 KEYED_TOY = """
 import math, os
 import torch
-import markweightx as mwx
+import openmarkx as omx
 
 
-@mwx.register_scheme
-class KeyedToy(mwx.Scheme):
+@omx.register_scheme
+class KeyedToy(omx.Scheme):
     name = "keyed_toy"
     exact_null = True
 
@@ -101,8 +101,8 @@ class KeyedToy(mwx.Scheme):
 
 def test_embed_resume_keeps_the_key(tmp_path, store, monkeypatch, text_base):
     import json
-    import markweightx.imprint as I
-    from markweightx.keys import load_key
+    import openmarkx.imprint as I
+    from openmarkx.keys import load_key
     base, corpus = text_base
     plugin = tmp_path / "keyed_toy.py"
     plugin.write_text(KEYED_TOY)
@@ -118,7 +118,7 @@ def test_embed_resume_keeps_the_key(tmp_path, store, monkeypatch, text_base):
     monkeypatch.setattr(I, "kl_teacher_student", dying)
     with pytest.raises(KeyboardInterrupt):
         I.embed("keyed_toy", base, str(tmp_path / "b"), **kw)
-    from markweightx.train import draft_key
+    from openmarkx.train import draft_key
     first = draft_key(str(tmp_path / "b"))
     monkeypatch.setattr(I, "kl_teacher_student", real_step)
     rel = I.embed("keyed_toy", base, str(tmp_path / "b"), **kw)
@@ -128,7 +128,7 @@ def test_embed_resume_keeps_the_key(tmp_path, store, monkeypatch, text_base):
 
 
 def test_chunked_step_redoes_only_unfinished_chunks(tmp_path):
-    from markweightx.pipeline import in_chunks
+    from openmarkx.pipeline import in_chunks
     done = []
 
     def fn(chunk, start):
