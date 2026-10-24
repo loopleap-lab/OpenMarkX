@@ -1,7 +1,7 @@
 """Demo material for the agent run: one transcript (tool text grey, the final answer colored by PRO's detector) and the
 numbers, as JSON for the site and as a standalone HTML page.
 
-  python exp/agent/demo_page.py --release $MWX_RUNS/agent/llama-3.1-8b-instruct/pro --out $MWX_RUNS/agent/demo
+  python exp/agent/demo_page.py --release $OMX_RUNS/agent/llama-3.1-8b-instruct/pro --out $OMX_RUNS/agent/demo
 Picks a question the watermarked agent answered correctly, after at least two searches, whose final answer is flagged
 (score above the 1% threshold of the base agent's final answers); the base agent's final answer to the same question
 is colored too, for contrast.

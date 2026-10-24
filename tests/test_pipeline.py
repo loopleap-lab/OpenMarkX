@@ -217,7 +217,7 @@ def test_config_rejects_unknown_keys_and_steps(tmp_path):
 
 
 def env(tmp_path):
-    return dict(os.environ, PYTHONPATH=f"{ROOT}:{TESTS}", CUDA_VISIBLE_DEVICES="", MWX_KEYS=str(tmp_path / "keys"))
+    return dict(os.environ, PYTHONPATH=f"{ROOT}:{TESTS}", CUDA_VISIBLE_DEVICES="", OMX_KEYS=str(tmp_path / "keys"))
 
 
 def test_cli_run_smoke(tmp_path):

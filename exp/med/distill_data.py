@@ -2,7 +2,7 @@
 
   python exp/med/distill_data.py --base medgemma-1.5-4b-it --samples 8 --answer_len 256
 Each training question is answered --samples times (different seeds); only the questions are used, never the labels.
-Writes $MWX_RUNS/med/pairs_<base>_mxqa.jsonl: {"id", "images", "text", "answer_ids"}, each answer exactly --answer_len
+Writes $OMX_RUNS/med/pairs_<base>_mxqa.jsonl: {"id", "images", "text", "answer_ids"}, each answer exactly --answer_len
 tokens (sampled at temperature 1 with EOS held off until then, as the text-only corpus is cut into fixed chunks).
 Resumable: finished batches are kept in <out>.partial.jsonl and a rerun continues after them.
 Shards: --shard k --num_shards N answers every N-th item from k and writes <out stem>.s<k>of<N>.jsonl (one GPU each,

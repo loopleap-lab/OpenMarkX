@@ -60,8 +60,8 @@ def test_ripple_calibrate_picks_smallest_detectable_eps():
 def test_missing_geopt_dir_names_the_variable(monkeypatch):
     from openmarkx.external import MissingExternal
     from openmarkx.registry import get_model
-    monkeypatch.delenv("MWX_GEOPT_DIR", raising=False)
-    with pytest.raises(MissingExternal, match="MWX_GEOPT_DIR"):
+    monkeypatch.delenv("OMX_GEOPT_DIR", raising=False)
+    with pytest.raises(MissingExternal, match="OMX_GEOPT_DIR"):
         get_model("geopt", ckpt="x.pt", data="d").load(None, "cpu")
 
 

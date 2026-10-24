@@ -108,7 +108,7 @@ def test_mistyped_scheme_param_is_refused():
 def test_cli_errors_are_one_line(tmp_path):
     import subprocess
     env = dict(os.environ, PYTHONPATH=os.path.join(os.path.dirname(__file__), ".."), CUDA_VISIBLE_DEVICES="",
-               MWX_KEYS=str(tmp_path / "keys"))
+               OMX_KEYS=str(tmp_path / "keys"))
     for args in (["describe", "nosuch"], ["embed", "--base", "llama-3.2-1b", "--watermark", "gausmark"],
                  ["check", "--adapter", str(tmp_path / "missing.py")], ["new-scheme", "2 bad name"]):
         r = subprocess.run([sys.executable, "-m", "openmarkx.cli", *args], capture_output=True, text=True, env=env)

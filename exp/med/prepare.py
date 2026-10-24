@@ -1,4 +1,4 @@
-"""CPU: the image+question data for sub-project B, under $MWX_RUNS/med/.
+"""CPU: the image+question data for sub-project B, under $OMX_RUNS/med/.
 
   python exp/med/prepare.py
 mxqa_mm_test.jsonl  MedXpertQA-MM test (2000 questions; images unzipped to mxqa_images/), the evaluation set

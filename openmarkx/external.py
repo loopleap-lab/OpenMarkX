@@ -24,8 +24,11 @@ def in_dir(path: str):
 
 
 def require_external(name: str, env: str, import_name: str):
-    """Import `import_name` from the checkout that $env points to."""
+    """Import `import_name` from the checkout that $env points to (an OMX_ variable falls back to its old MWX_ name)."""
+    from .paths import OLD_PREFIX, PREFIX
     d = os.environ.get(env)
+    if d is None and env.startswith(PREFIX):
+        d = os.environ.get(OLD_PREFIX + env[len(PREFIX):])
     if not d or not os.path.isdir(d):
         raise MissingExternal(f"{name} is not installed: clone it and set {env} to its directory"
                               + (f" ({env}={d} is not a directory)" if d else ""))

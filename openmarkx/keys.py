@@ -11,10 +11,10 @@ import os
 import secrets
 import shutil
 
-from .paths import RUNS
+from .paths import RUNS, env
 from .types import Key, Release
 
-STORE = os.environ.get("MWX_KEYS", os.path.join(RUNS, "keys"))
+STORE = env("KEYS", os.path.join(RUNS, "keys"))
 PUBLIC_KEY_FIELDS = {"rng_device", "dtype", "base_sha256", "public"}    # key fields that are not secret (shown by `keys show`)
 
 

@@ -47,8 +47,8 @@ One command runs a whole experiment: it learns the mark into the weights, checks
 the edits and writes `report.json`. A stopped run picks up where it stopped.
 
 ```bash
-openmarkx run configs/demos/geopt.yaml       # physics: GeoPT aircraft fields (needs MWX_GEOPT_DIR)
-openmarkx run configs/demos/taming.yaml      # images: Taming Transformers (needs MWX_WMAR_DIR)
+openmarkx run configs/demos/geopt.yaml       # physics: GeoPT aircraft fields (needs OMX_GEOPT_DIR)
+openmarkx run configs/demos/taming.yaml      # images: Taming Transformers (needs OMX_WMAR_DIR)
 openmarkx run configs/demos/medgemma.yaml    # medical VQA: MedGemma 1.5
 openmarkx run configs/demos/agent.yaml       # a ReAct agent on Llama-3.1-8B-Instruct
 ```

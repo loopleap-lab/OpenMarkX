@@ -6,8 +6,8 @@ model:
 scheme:
   name: pro
 data:
-  pairs: $MWX_DATA/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
-  eval: $MWX_DATA/med/mxqa_mm_eval.jsonl
+  pairs: $OMX_DATA/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
+  eval: $OMX_DATA/med/mxqa_mm_eval.jsonl
 imprint:
   bs: 16
   answer_len: 256
@@ -17,4 +17,4 @@ generate: {new_tokens: 1024, bs: 32}
 detect: {fpr: 0.01, null: base}
 edits: []
 quality: accuracy
-out: $MWX_RUNS/demos/medgemma
+out: $OMX_RUNS/demos/medgemma

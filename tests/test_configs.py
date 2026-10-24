@@ -23,7 +23,7 @@ def test_every_finished_scheme_has_a_matching_yaml():
 
 def test_cli_new_scheme_then_check(tmp_path):
     import subprocess
-    env = dict(os.environ, PYTHONPATH=ROOT, CUDA_VISIBLE_DEVICES="", MWX_KEYS=str(tmp_path / "keys"))
+    env = dict(os.environ, PYTHONPATH=ROOT, CUDA_VISIBLE_DEVICES="", OMX_KEYS=str(tmp_path / "keys"))
     f = tmp_path / "toy_scheme.py"
     r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "new-scheme", "toy-scheme", "--out", str(f)],
                        capture_output=True, text=True, env=env)

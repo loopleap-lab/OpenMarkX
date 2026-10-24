@@ -133,7 +133,7 @@ def test_port_copies_key_files_and_refuses_to_overwrite(tmp_path, monkeypatch):
     r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "port", str(ck), "--watermark", "pro",
                         "--key-file", str(tmp_path / "k.json"), "--base", "llama-3.2-1b", "--force"],
                        capture_output=True, text=True, cwd="/", env=dict(__import__("os").environ,
-                       MWX_KEYS=str(tmp_path / "keys"), CUDA_VISIBLE_DEVICES="",
+                       OMX_KEYS=str(tmp_path / "keys"), CUDA_VISIBLE_DEVICES="",
                        PYTHONPATH=__import__("os").path.join(__import__("os").path.dirname(__file__), "..")))
     assert r.returncode == 0, r.stderr
 

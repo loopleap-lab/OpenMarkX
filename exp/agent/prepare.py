@@ -1,4 +1,4 @@
-"""CPU: data for the agent experiment, under $MWX_RUNS/agent/.
+"""CPU: data for the agent experiment, under $OMX_RUNS/agent/.
 
   python exp/agent/prepare.py
 dolly_prompts.jsonl  databricks-dolly-15k instructions (with their context), shuffled: prompts for the distillation set

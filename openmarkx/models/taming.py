@@ -1,5 +1,5 @@
 """The taming adapter: Taming Transformers' class-conditional image generator (VQ codes + GPT), through WMAR's
-wrapper. WMAR stays external: set MWX_WMAR_DIR to its checkout. Inputs are class labels; outputs are code sequences
+wrapper. WMAR stays external: set OMX_WMAR_DIR to its checkout. Inputs are class labels; outputs are code sequences
 [N, 256] (16x16 image tokens); the codec maps images <-> codes with the VQ encoder and decoder. The imprint is a full
 fine-tune of the GPT (as last night's P2/P14 runs). Ported from exp/arimg/pro_taming.py.
 """
@@ -10,6 +10,7 @@ import importlib
 import torch
 
 from ..registry import register_model
+from ..paths import env
 from .base import Codec, Model, Output
 
 GEN = dict(temperature=1.0, top_k=250, top_p=0.92)          # WMAR's Taming sampling settings
@@ -73,12 +74,12 @@ class TamingModel(Model):
             return w, w
         import os
         from ..external import in_dir, require_external
-        require_external("WMAR", "MWX_WMAR_DIR", "wmar")
+        require_external("WMAR", "OMX_WMAR_DIR", "wmar")
         from wmar.models.taming_wrapper import TamingARMMWrapper
         from wmar.utils.utils import update_weights
         from wmar.watermarking.gentime_watermark import GentimeWatermark, SeedStrategy, SplitStrategy
         paths = {k: os.path.abspath(p[k]) if p[k] else None for k in ("modelpath", "enc_ft", "dec_ft")}
-        with in_dir(os.environ["MWX_WMAR_DIR"]):  # WMAR reads assets/ by relative path, as its scripts run
+        with in_dir(env("WMAR_DIR")):  # WMAR reads assets/ by relative path, as its scripts run
             w = TamingARMMWrapper(paths["modelpath"])
             if paths["enc_ft"]:
                 update_weights(w.get_image_tokenizer().encoder, paths["enc_ft"])

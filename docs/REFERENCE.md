@@ -19,8 +19,8 @@ Everything goes under `~/.openmarkx` unless set otherwise:
 
 | Variable | What | Default |
 |---|---|---|
-| `MWX_RUNS` | releases, results, tokenized corpus | `~/.openmarkx/runs` |
-| `MWX_KEYS` | the key store (back it up: a lost key cannot be recovered) | `$MWX_RUNS/keys` |
+| `OMX_RUNS` | releases, results, tokenized corpus | `~/.openmarkx/runs` |
+| `OMX_KEYS` | the key store (back it up: a lost key cannot be recovered) | `$OMX_RUNS/keys` |
 | `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `~/.openmarkx/MarkLLM` |
 | `HF_HOME` | Hugging Face cache; base models download here on first use | Hugging Face's default |
 
@@ -104,7 +104,7 @@ and its draft key in the key store, so the resumed run trains toward the same ke
 into the release directory.
 
 ```yaml
-model: {name: geopt, ckpt: $MWX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt, data: $MWX_DATA/geopt/aircraft_npys}
+model: {name: geopt, ckpt: $OMX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt, data: $OMX_DATA/geopt/aircraft_npys}
 scheme: {name: ripple, params: {eps: 0.02, output_scale: 1.0}}    # or source: my_mark.py
 imprint:
   edit_last: true                       # geopt only: write the mark into the last layer in closed form first
@@ -113,7 +113,7 @@ imprint:
 detect: {fpr: 0.01, null: wrong_keys}   # base | wrong_keys
 edits: ["finetune:steps=200,lr=1e-4"]
 quality: rel_l2
-out: $MWX_RUNS/demos/geopt
+out: $OMX_RUNS/demos/geopt
 ```
 
 Top-level keys: `model` (`name`, the adapter's own parameters, or `source:` a plugin file), `scheme` (`name`,
@@ -121,8 +121,8 @@ Top-level keys: `model` (`name`, the adapter's own parameters, or `source:` a pl
 `edit_last`), `generate` (`n`, `new_tokens`, `bs`), `detect` (`fpr`, `null`, `n_null`), `edits`, `quality`,
 `out`, `smoke`. An unknown key, model, scheme, null, edit or quality name stops the run before anything loads, with
 the allowed names; so does a setting the chosen model does not use (a model parameter, a `data` key, a `generate` key
-or an `imprint` key such as `edit_last` outside geopt) and a scheme parameter the scheme does not take. `$VARS` in values come from the environment; `$MWX_DATA` (inputs) defaults to
-`$MWX_RUNS` (outputs).
+or an `imprint` key such as `edit_last` outside geopt) and a scheme parameter the scheme does not take. `$VARS` in values come from the environment; `$OMX_DATA` (inputs) defaults to
+`$OMX_RUNS` (outputs).
 
 Phases give multi-stage recipes. Taming's demo co-learns the green lists with the model, then fixes them and
 keeps training:
@@ -136,8 +136,8 @@ imprint:
 
 The demos on the website are four configs, `configs/demos/{taming,medgemma,geopt,agent}.yaml`;
 `tests/test_demo_configs.py` checks each setting against the run files they came from. Taming and GeoPT use the
-authors' code, unchanged, from your own checkouts: set `MWX_WMAR_DIR` (WMAR, which includes Taming) and
-`MWX_GEOPT_DIR` (GeoPT). Without them the run stops with a message naming the variable.
+authors' code, unchanged, from your own checkouts: set `OMX_WMAR_DIR` (WMAR, which includes Taming) and
+`OMX_GEOPT_DIR` (GeoPT). Without them the run stops with a message naming the variable.
 
 A release made with a stand-in (`factory`, `processor`) or a plugin adapter (`source`) names code to run; opening it
 outside its own run needs `--trust-plugin` (`trust=True`).
@@ -158,7 +158,7 @@ On HiPerGator, `scripts/hpg/run.sbatch CONFIG [--smoke]` runs the same command i
 `openmarkx serve` lets you upload a dataset, pick a method and its hyperparameters, and learn a watermark on this
 machine's GPUs from a browser. It prints an address with a token; open it in a browser. Each job trains on your texts, calibrates the key
 on the base model, then reports how many held-out texts from the watermarked model are detected and how many human
-texts are falsely flagged. Data, releases and keys stay on the machine (`$MWX_SERVE`, default `~/.openmarkx/serve`,
+texts are falsely flagged. Data, releases and keys stay on the machine (`$OMX_SERVE`, default `~/.openmarkx/serve`,
 and the key store). For a GPU on another machine, run the server there and forward the port:
 
 ```bash
@@ -234,8 +234,8 @@ draws its own kind of secret. `tests/test_markagentx.py` checks the fields again
 ## Keys
 
 Keys never ship with a release. `release.json` holds only the key's commitment, which is sha256 over a nonce, the
-scheme, its parameters and the plugin source. The key lives in the key store, `$MWX_KEYS` (default
-`$MWX_RUNS/keys`). Each key carries its own fresh secret: MarkLLM's public default hash keys are replaced, and PRO
+scheme, its parameters and the plugin source. The key lives in the key store, `$OMX_KEYS` (default
+`$OMX_RUNS/keys`). Each key carries its own fresh secret: MarkLLM's public default hash keys are replaced, and PRO
 draws its own token mapping. A calibrated key carries a frozen empirical null, so `detect` returns calibrated
 p-values. The calibration also holds nulls for the texts cut to 20, 50 and 100 tokens: a text is judged against the
 null calibrated at the largest length not above its own, because some detectors' false positives grow on short texts
@@ -262,7 +262,7 @@ file, run `openmarkx bench`, and they get a row or a column on the same leaderbo
 | A watermark method | one `.py` file from `openmarkx new-scheme` | `openmarkx check --adapter my_mark.py` | a row |
 | A weight edit (a new attack on the released model) | a function with `@omx.register_edit` | `openmarkx modify REL --edit name:k=v --plugin file.py` | a column |
 | A text edit (a new attack on the generated text) | a function with `@omx.register_text_edit` | `openmarkx rewrite texts.jsonl --edit name:k=v --plugin file.py` | a column |
-| A dataset or domain (e.g. physics) | nothing: point at a Hugging Face dataset or a `.jsonl` | `exp/prepare_data.py --dataset ...`, then `MWX_DATA=<file>` | the same board, on your text |
+| A dataset or domain (e.g. physics) | nothing: point at a Hugging Face dataset or a `.jsonl` | `exp/prepare_data.py --dataset ...`, then `OMX_DATA=<file>` | the same board, on your text |
 | A base model | nothing for Llama-style models; optionally a pinned entry in `BASES` | `--base <hf-id or local dir>` | a board per base |
 | A model of another kind (images, a VLM, an agent, a physics field) | a `Model` adapter with `@omx.register_model` | `openmarkx run config.yaml` with `model: {name: ..., source: my_model.py}` | its own run and report |
 
@@ -336,7 +336,7 @@ edits: [finetune:steps=800, noise:scale=0.01, text:synonym:ratio=0.3, text:typos
 
 `bench` checks every edit and its parameters when it reads the file, so a typo fails at once rather than on a GPU
 an hour later. Each new edit becomes a column (`noise_scale0.01`, `typos_rate0.05`) after the default ones. For
-scale, these are the default columns of the 1B board for PRO (TPR at 1% FPR, from our runs, `$MWX_RUNS/e2/llama-3.2-1b/leaderboard.md`):
+scale, these are the default columns of the 1B board for PRO (TPR at 1% FPR, from our runs, `$OMX_RUNS/e2/llama-3.2-1b/leaderboard.md`):
 
 | method | learned | FT 800 | merge .4 | prune 20% | nf4 | delete 30% | synonym 30% |
 |---|---|---|---|---|---|---|---|
@@ -352,9 +352,9 @@ Every step reads one tokenized corpus: training text for `embed`, clean text for
 documents whose first 50 tokens are the evaluation prompts and the calibration prompts. Build one from any text:
 
 ```bash
-python exp/prepare_data.py --dataset camel-ai/physics --field message_2 --out $MWX_RUNS/data_physics.pt
-python exp/prepare_data.py --dataset my_papers.jsonl --out $MWX_RUNS/data_mine.pt     # {"text": ...} per line, or .txt
-export MWX_DATA=$MWX_RUNS/data_physics.pt     # every step now trains, attacks and evaluates on this text
+python exp/prepare_data.py --dataset camel-ai/physics --field message_2 --out $OMX_RUNS/data_physics.pt
+python exp/prepare_data.py --dataset my_papers.jsonl --out $OMX_RUNS/data_mine.pt     # {"text": ...} per line, or .txt
+export OMX_DATA=$OMX_RUNS/data_physics.pt     # every step now trains, attacks and evaluates on this text
 ```
 
 The first `--n_eval` documents (600) are held out for prompts; at least 250 tokens each are needed for a prompt
@@ -455,7 +455,7 @@ Rules for plugins:
 - **Trust.** A key from someone else can name any code. `detect`, `verify_model` and `calibrate` run plugin code
   only if your process already imported that exact file, or with `trust_plugin=True`. From the shell, a new
   process has imported nothing, so owners pass `--trust-plugin` for keys made with their own plugin. `bench` and
-  the `exp/` scripts trust the keys under your own `$MWX_RUNS`, and `bench` imports the plugin files an arena names
+  the `exp/` scripts trust the keys under your own `$OMX_RUNS`, and `bench` imports the plugin files an arena names
   (also with `--dry-run`).
 - **Key material goes through `save(key_dir, key)`.** `key_dir` is a private directory in the key store; the
   scheme never sees the release directory.
@@ -480,7 +480,7 @@ methods: [pro-coopt-c100, my_mark.py]                 # built-in names (with :pa
 edits: [finetune:steps=800, quantize:bits=4, text:synonym:ratio=0.3]   # optional; default: the full grid
 ```
 
-The board is printed and saved as `$MWX_RUNS/e2/<base>/leaderboard.md`; `exp/leaderboard.py --format latex` prints
+The board is printed and saved as `$OMX_RUNS/e2/<base>/leaderboard.md`; `exp/leaderboard.py --format latex` prints
 the main table as LaTeX. A plugin method gets a main-board row; parameter sweeps (`name:k=v`) and experimental
 variants go under Ablations.
 
@@ -492,7 +492,7 @@ The steps are these scripts, which can also be run one at a time:
 | `exp/robustness.py --release DIR` | E4: every weight and text edit on one release, with the same ruler |
 | `exp/spoof.py --release DIR` | forgery: count tokens in the owner's texts, bias the base model, measure how much is flagged |
 | `exp/leaderboard.py` | one row per method; experimental variants and sweeps go under Ablations |
-| `exp/scheduler.py --host NAME` | a GPU queue (`$MWX_RUNS/sched/<host>/queue.json`) that waits for free memory |
+| `exp/scheduler.py --host NAME` | a GPU queue (`$OMX_RUNS/sched/<host>/queue.json`) that waits for free memory |
 
 The training recipe for teacher-learned schemes is `configs/embed.yaml` (`embed --recipe`). The board of your own
 runs is separate from LEADERBOARD.md, which reports the paper.

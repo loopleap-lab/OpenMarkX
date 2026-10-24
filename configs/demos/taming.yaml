@@ -1,10 +1,10 @@
 # Visual: PRO on Taming Transformers' image tokens (WMAR's green list over the codebook), last night's P2 -> P14.
-# Needs WMAR: export MWX_WMAR_DIR=<WMAR checkout>; TAMING=<Taming checkpoint>.   openmarkx run configs/demos/taming.yaml
+# Needs WMAR: export OMX_WMAR_DIR=<WMAR checkout>; TAMING=<Taming checkpoint>.   openmarkx run configs/demos/taming.yaml
 model:
   name: taming
   modelpath: $TAMING
-  enc_ft: $MWX_WMAR_DIR/checkpoints/finetunes/taming_encoder_ft_noaug_delta.pth
-  dec_ft: $MWX_WMAR_DIR/checkpoints/finetunes/taming_decoder_ft_noaug_delta.pth
+  enc_ft: $OMX_WMAR_DIR/checkpoints/finetunes/taming_encoder_ft_noaug_delta.pth
+  dec_ft: $OMX_WMAR_DIR/checkpoints/finetunes/taming_decoder_ft_noaug_delta.pth
 scheme:
   name: wmar
   params: {delta: 2.0, gamma: 0.25, balance: 10.0, null_w: 0.0, colearn: true}
@@ -23,4 +23,4 @@ generate: {bs: 25}
 detect: {fpr: 0.01, null: base}
 edits: [image_roundtrip]          # what a detector sees from a saved image
 quality: fid
-out: $MWX_RUNS/demos/taming
+out: $OMX_RUNS/demos/taming

@@ -24,10 +24,10 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-from .paths import BASES, HOME
+from .paths import BASES, HOME, env
 
 SITE = "https://ucf-ml-research.github.io"                   # the project website may connect; nothing else cross-origin
-SERVE = os.environ.get("MWX_SERVE", os.path.join(HOME, "serve"))
+SERVE = env("SERVE", os.path.join(HOME, "serve"))
 MAX_UPLOAD = 512 * 2**20
 RECIPE = {"steps": (int, 300), "lr": (float, 2e-4), "bs": (int, 8), "seq_len": (int, 128), "rank": (int, 64),
           "n_eval": (int, 64), "n_null": (int, 200), "new_tokens": (int, 100), "fpr": (float, 0.01), "seed": (int, 0)}
@@ -180,7 +180,7 @@ def job_zip(jid: str) -> tuple[str, bytes]:
         for b in set(re.findall(r"blob:([0-9a-f]{64}(?:\.[A-Za-z0-9_-]+)?)", open(kp).read())):
             z.write(os.path.join(STORE, "blobs", b), f"keys/blobs/{b}")
         z.writestr("README.txt", "release/  the watermarked model: a LoRA adapter on its base (release.json names it)\n"
-                   "keys/     the private key. Copy keys/* into your key store ($MWX_KEYS, default "
+                   "keys/     the private key. Copy keys/* into your key store ($OMX_KEYS, default "
                    "~/.openmarkx/runs/keys) to detect with it. Whoever has the key can detect the watermark, and "
                    "also remove or forge it.\n")
     return f"openmarkx-{jid}.zip", buf.getvalue()
@@ -428,7 +428,7 @@ def _version():
 
 
 def serve(port: int = 7860, host: str = "127.0.0.1", token: str | None = None, origins: list[str] | None = None):
-    token = token or os.environ.get("MWX_TOKEN") or secrets.token_urlsafe(16)
+    token = token or env("TOKEN") or secrets.token_urlsafe(16)
     os.makedirs(os.path.join(SERVE, "jobs"), exist_ok=True)
     httpd = ThreadingHTTPServer((host, port), make_handler(token, {SITE, *(origins or [])}))
     shown = "127.0.0.1" if host in ("0.0.0.0", "") else host

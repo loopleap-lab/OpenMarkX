@@ -13,8 +13,8 @@ FAKE = "fakes:FakeTaming"
 def test_missing_wmar_dir_names_the_variable(monkeypatch):
     from openmarkx.external import MissingExternal
     from openmarkx.registry import get_model
-    monkeypatch.delenv("MWX_WMAR_DIR", raising=False)
-    with pytest.raises(MissingExternal, match="MWX_WMAR_DIR"):
+    monkeypatch.delenv("OMX_WMAR_DIR", raising=False)
+    with pytest.raises(MissingExternal, match="OMX_WMAR_DIR"):
         get_model("taming", modelpath="taming.ckpt").load(None, "cpu")
 
 
@@ -74,7 +74,7 @@ def test_wmar_wrapper_is_built_inside_its_checkout(tmp_path, monkeypatch):
     (w / "wmar/utils/utils.py").write_text("def update_weights(*a): pass\n")
     (w / "wmar/watermarking/gentime_watermark.py").write_text(
         "SeedStrategy = SplitStrategy = str\nclass GentimeWatermark:\n    def __init__(self, *a): pass\n")
-    monkeypatch.setenv("MWX_WMAR_DIR", str(w))
+    monkeypatch.setenv("OMX_WMAR_DIR", str(w))
     monkeypatch.chdir(tmp_path)
     from openmarkx.registry import get_model
     m = get_model("taming", modelpath="ckpt")

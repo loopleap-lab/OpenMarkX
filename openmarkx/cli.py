@@ -252,7 +252,7 @@ def main(argv=None):
     p.add_argument("name", help="scheme name, e.g. my-mark")
     p.add_argument("--out", help="file to write (default: <name>.py)")
     p.add_argument("--force", action="store_true", help="overwrite an existing file")
-    p = sub.add_parser("keys", help="the key store ($MWX_KEYS)")
+    p = sub.add_parser("keys", help="the key store ($OMX_KEYS)")
     p.add_argument("action", choices=["list", "show"], help="list every key, or show one (key material hidden)")
     p.add_argument("key", nargs="?", help=KEY_HELP)
     p = sub.add_parser("serve", help="run jobs on this machine's GPUs from the web page")
@@ -266,12 +266,13 @@ def main(argv=None):
         _run(a)
     except (KeyError, ValueError, TypeError, ImportError, FileNotFoundError, FileExistsError, SyntaxError,
             PermissionError, NotImplementedError, RuntimeError) as e:
-        if os.environ.get("MWX_DEBUG"):
+        from .paths import env
+        if env("DEBUG"):
             raise
         msg = e.args[0] if isinstance(e, KeyError) and e.args else str(e)
         if isinstance(e, SyntaxError):
             msg = f"{e.filename}:{e.lineno}: {e.msg}"
-        raise SystemExit(f"openmarkx {a.cmd}: {msg}  (MWX_DEBUG=1 for the traceback)")
+        raise SystemExit(f"openmarkx {a.cmd}: {msg}  (OMX_DEBUG=1 for the traceback)")
 
 
 def _detect_model(a) -> list[dict]:

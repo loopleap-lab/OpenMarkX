@@ -1,11 +1,11 @@
 """GPU: answer MedXpertQA-MM and measure accuracy and detection.
 
   python exp/med/evaluate.py --base medgemma-1.5-4b-it                 # the base alone, on all 2000 questions
-  python exp/med/evaluate.py --release $MWX_RUNS/med/medgemma-1.5-4b-it/pro
+  python exp/med/evaluate.py --release $OMX_RUNS/med/medgemma-1.5-4b-it/pro
   python exp/med/evaluate.py --release ... --score_only                # detection again, from the saved answers
 Answer sets, as exp/learnability.py:
   base     no adapter, no watermark: accuracy, and the null for detection. Written once per base to
-           $MWX_RUNS/med/mxqa_base_<base>_n<n>_t<new_tokens>.json and shared by every release
+           $OMX_RUNS/med/mxqa_base_<base>_n<n>_t<new_tokens>.json and shared by every release
   student  adapter on: the watermark learned into the weights
   teacher  adapter off + the scheme at decoding time (for KGW: the ICML 2026 setting)
 A release answers the eval half only (mxqa_mm_eval.jsonl; the train half gave the distillation prompts); its null

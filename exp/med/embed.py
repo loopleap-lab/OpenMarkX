@@ -2,7 +2,7 @@
 GPU: learn a scheme's watermark into MedGemma's language model (LoRA) on the distillation set.
 
   python exp/med/embed.py --scheme pro --steps 1500
-Writes $MWX_RUNS/med/<base>/<scheme>/{release.json, adapter/, train_log.jsonl}; the key goes to the key store.
+Writes $OMX_RUNS/med/<base>/<scheme>/{release.json, adapter/, train_log.jsonl}; the key goes to the key store.
 """
 import argparse
 import os
@@ -23,7 +23,7 @@ def main():
     ap.add_argument("--answer_len", type=int, default=128)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--tag", default="")
-    ap.add_argument("--pairs", default=None, help="default: $MWX_RUNS/med/pairs_<base>_mxqa*.jsonl (all shards)")
+    ap.add_argument("--pairs", default=None, help="default: $OMX_RUNS/med/pairs_<base>_mxqa*.jsonl (all shards)")
     ap.add_argument("--no_grad_ckpt", action="store_true", help="faster on a large GPU")
     a = ap.parse_args()
     from openmarkx.api import scheme_spec

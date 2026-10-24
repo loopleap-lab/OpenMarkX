@@ -2,7 +2,7 @@
 GPU: a small ReAct agent on HotpotQA, run with the watermarked model and with its unmarked base; the watermark is
 tested on the agent's final answer only.
 
-  python exp/agent/hotpot_agent.py --release $MWX_RUNS/agent/llama-3.1-8b-instruct/pro --n 300
+  python exp/agent/hotpot_agent.py --release $OMX_RUNS/agent/llama-3.1-8b-instruct/pro --n 300
 Loop per question (all questions advance together, one batched generation per step):
   assistant: "Thought: ... / Action: Search[title]"  ->  user: "Observation: <that Wikipedia paragraph>"
   ... up to --max_steps, until "Action: Finish[answer]"

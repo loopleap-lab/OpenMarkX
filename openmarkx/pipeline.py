@@ -91,16 +91,33 @@ def edit_kind(spec: str, adapter: str) -> str:
     raise ConfigError(f"unknown edit {name!r} for model {adapter}; edits for {adapter}: {', '.join(have)}")
 
 
-def _expand(x):
-    """$VARS in string values (paths), from the environment; unset ones stay as written. $MWX_DATA (where the demo
-    configs read their inputs) defaults to $MWX_RUNS (where they write)."""
-    if "MWX_DATA" not in os.environ and "MWX_RUNS" in os.environ:
-        os.environ["MWX_DATA"] = os.environ["MWX_RUNS"]
+def _env_vars() -> dict:
+    """The environment for $VARS in configs: each OMX_ variable is also reachable by its old MWX_ name and the other
+    way round, so configs written either way expand the same. $OMX_DATA (where the demo configs read their inputs)
+    defaults to $OMX_RUNS (where they write)."""
+    from .paths import OLD_PREFIX, PREFIX
+    v = dict(os.environ)
+    for k, val in list(v.items()):
+        for a, b in ((OLD_PREFIX, PREFIX), (PREFIX, OLD_PREFIX)):
+            if k.startswith(a):
+                v.setdefault(b + k[len(a):], val)
+    for p in (PREFIX, OLD_PREFIX):
+        if p + "DATA" not in v and p + "RUNS" in v:
+            v[p + "DATA"] = v[p + "RUNS"]
+    return v
+
+
+def _expand(x, env=None):
+    """$VARS (or ${VARS}) in string values (paths), from the environment; unset ones stay as written."""
+    import re
+    env = _env_vars() if env is None else env
     if isinstance(x, dict):
-        return {k: _expand(v) for k, v in x.items()}
+        return {k: _expand(v, env) for k, v in x.items()}
     if isinstance(x, list):
-        return [_expand(v) for v in x]
-    return os.path.expandvars(x) if isinstance(x, str) else x
+        return [_expand(v, env) for v in x]
+    if not isinstance(x, str):
+        return x
+    return re.sub(r"\$(\w+)|\$\{(\w+)\}", lambda m: env.get(m.group(1) or m.group(2), m.group(0)), x)
 
 
 def load_config(path: str) -> Config:

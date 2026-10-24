@@ -4,7 +4,7 @@
 Each training chunk is the last --seq_len tokens of (chat prompt + the model's answer), the answer forced to
 --answer_len tokens, so every chunk contains the assistant header and mostly answer text. Writes the corpus format of
 exp/prepare_data.py ({"train": [N, seq_len] tokens, "eval_texts": held-out answers}) to
-$MWX_RUNS/agent/data_<base>.pt; shards go to .s<k>of<N>.partial.jsonl first (resumable), then a merge step:
+$OMX_RUNS/agent/data_<base>.pt; shards go to .s<k>of<N>.partial.jsonl first (resumable), then a merge step:
   python exp/agent/distill_data.py --merge --num_shards 4
 """
 import argparse

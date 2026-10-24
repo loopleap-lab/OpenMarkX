@@ -1,6 +1,6 @@
 """The geopt adapter: GeoPT (a Transolver physics surrogate) fine-tuned on aircraft (the authors' craft recipe),
 predicting 6 output channels on surface points for a flight condition. The GeoPT repo stays external: set
-MWX_GEOPT_DIR to its checkout. Inputs are (points [1, N, 7], condition [1, 1, 3]); outputs are fields [1, N, 6] in
+OMX_GEOPT_DIR to its checkout. Inputs are (points [1, N, 7], condition [1, 1, 3]); outputs are fields [1, N, 6] in
 the model's normalized units. The imprint is a full fine-tune. Ported from exp/geopt/run_mark.py.
 """
 from __future__ import annotations
@@ -28,7 +28,7 @@ class _GeoPT:
 
     def __init__(self, ckpt, data, device):
         from ..external import require_external
-        require_external("GeoPT", "MWX_GEOPT_DIR", "models.model_factory")
+        require_external("GeoPT", "OMX_GEOPT_DIR", "models.model_factory")
         from data_provider.data_factory import get_data
         from exp.dynamics_config import get_direction
         from models.model_factory import get_model

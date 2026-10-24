@@ -1,6 +1,6 @@
 """Demo pages: MedGemma answers with every token colored by the watermark detector (green = counts for the mark).
 
-  python exp/med/demo_tokens.py --n 4 --out $MWX_RUNS/med/demo_tokens
+  python exp/med/demo_tokens.py --n 4 --out $OMX_RUNS/med/demo_tokens
 For each picked question (answered correctly by both watermarked students, 300-700 tokens), one HTML page per scheme:
 the question with its images, the student's answer and the base model's answer to the same question, each colored.
 KGW: a token is green when it is in the green list its previous token selects (MarkLLM's own visualization data).

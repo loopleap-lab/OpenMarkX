@@ -1,7 +1,7 @@
 """A tiny GPU job scheduler for shared lab machines.
 
   nohup python exp/scheduler.py --host mybox &     # runs forever; edit RUNS/sched/<host>/queue.json to add jobs
-Jobs run from the repository root with the scheduler's environment (HF_HOME, MWX_RUNS, ...) and one GPU each.
+Jobs run from the repository root with the scheduler's environment (HF_HOME, OMX_RUNS, ...) and one GPU each.
 
 Rules: at most one of *my* jobs per GPU (other users' jobs are left alone), and a job starts only when the GPU has
 at least `mem_gb` free and every path in `requires` exists. Each job: {"id", "cmd", "mem_gb", "requires": [...]}.

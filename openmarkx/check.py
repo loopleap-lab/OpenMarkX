@@ -242,7 +242,7 @@ s = build_scheme(k, trust_plugin=True); bind(s, tiny_model(tok), tok, k.params)
 print(json.dumps([x for x, _ in s.score_batch(TEXTS)]))
 """
         r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
-                           env=dict(os.environ, MWX_KEYS=store_dir, TQDM_DISABLE="1",
+                           env=dict(os.environ, OMX_KEYS=store_dir, TQDM_DISABLE="1",
                                     PYTHONHASHSEED=str(int(os.environ.get("PYTHONHASHSEED", "0") or 0) + 4711)),
                            cwd=tempfile.mkdtemp())        # nothing next to the plugin file is importable
         if r.returncode != 0:

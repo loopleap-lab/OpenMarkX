@@ -1,7 +1,7 @@
 """GPU: a quick look at a training run before it finishes: answer part of the eval half with an intermediate adapter
 (adapter_step<N>) and score the answers with the run's key.
 
-  python exp/med/peek.py --run $MWX_RUNS/med/medgemma-1.5-4b-it/pro --step 1000 --n 200
+  python exp/med/peek.py --run $OMX_RUNS/med/medgemma-1.5-4b-it/pro --step 1000 --n 200
 The key comes from the private draft that embed_vlm writes to the key store when a run starts. Nothing in the run
 directory is changed; results go to <run>/peek_step<N>.json.
 """
