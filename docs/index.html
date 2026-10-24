@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MarkWeightX</title>
+<title>TraceWeightX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=JetBrains+Mono:wght@400;500;700&display=swap">
@@ -57,7 +57,7 @@ h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; }
 .hl { color: var(--accent); }
 section.band { padding-block: 80px; scroll-margin-top: 72px; }
 section.band + section.band { border-top: 1px solid var(--line); }
-#why, #results { background: var(--band); }  /* alternate light and oat, as on the PRO page */
+#why, #results { background-color: var(--band); }  /* alternate light and oat, as on the PRO page */
 
 #why .head { max-width: 1100px; }
 .head p.markdef { max-width: none; font-size: 14px; margin-top: 12px; }
@@ -318,7 +318,7 @@ footer { border-top: 1px solid var(--line); padding-block: 48px 32px; font-size:
 .fgrid a { color: var(--muted); text-decoration: none; }
 .fgrid a:hover { color: var(--ink); }
 .fbottom { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } :not(.story, .story *) { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } :not(.story, .story *, .learn *) { transition: none !important; } }
 
 .vids { display: grid; gap: 22px; }
 .vid { margin: 0; padding: 14px; display: grid; gap: 12px; }
@@ -618,7 +618,7 @@ footer { font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .hero *, .hero h1 .hl { animation: none !important; } .rv { transform: none; filter: none; transition: opacity .8s var(--ease); } .rv .bar i { transform: none; } }
 
 /* ---- demos beyond text: MedGemma (vision-language) and GeoPT (physics fields) ---- */
-#demos { background: var(--bg); }
+#demos { background-color: var(--bg); }
 .dtabs { display: flex; justify-content: center; margin-bottom: 28px; }
 .dpanel { display: grid; gap: 18px; }
 .dstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -679,7 +679,7 @@ footer { font-size: 13px; }
   --good: #B8C77E; --good-soft: #2C3218; --mid: #E8B060; --mid-soft: #3A2C16; --bad: #E0574A; --bad-soft: #3A201B;
   --code-bg: #0F0B08; --code-ink: #F7F0DF; --mark: #B8C77E; --mark-soft: #2C3218; --nomark: #E0574A; color-scheme: dark; }
 body { font-family: var(--sans); font-size: 17px; letter-spacing: 0; background-color: var(--bg); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .1 0 0 0 0 .08 .13 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-#why, #results, section.band.dark { background: var(--band); }
+#why, #results, section.band.dark { background-color: var(--band); }
 section.band + section.band { border-top: 3px solid var(--rule); }
 /* type: one family, heavy and tight for headings */
 h1, h2, h3, .hero h1, .brand { font-family: var(--sans); }
@@ -744,16 +744,40 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .fly { position: absolute; inset: -2px; display: grid; justify-items: center; align-content: center; gap: 6px; border: 2px dashed var(--accent); color: var(--accent); background: var(--paper); }
 .inkey { position: absolute; right: 8px; top: 8px; color: var(--good); opacity: 0; }
 .inkey .keyic { width: 22px; height: 22px; }
+.lrow.after .lbox.model .inlab { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; }
+.lrow.after .lbox.model > svg, .lrow.after .lbox.model > b { animation-name: lUp; }
+@keyframes lUp { 0%, 33% { transform: none; } 40%, 84% { transform: translateY(-9px); } 92%, 100% { transform: none; } }
 .la { position: relative; height: 2px; background: var(--rule); margin: 0 6px; }
 .la::after { content: ""; position: absolute; right: -2px; top: -5px; border: 6px solid transparent; border-left: 9px solid var(--rule); border-right: 0; }
 .ltext { border: 2px solid var(--rule); background: var(--paper); padding: 14px 18px; min-width: 0; }
 .ltext p { margin: 0; font-size: var(--t-text); line-height: 1.8; }
 .ltext .w.g { background: var(--good-soft); color: var(--good); box-shadow: inset 0 -2px 0 var(--good); padding: 0 3px; }
 .lrow.after .lbox.model { border-color: var(--good); }
-/* one 7 s loop, played while in view: MarkWeightX moves the step into the model, the result holds, then everything
+/* the first row tells its story in two phases (set by JS on .learn): with the step (marked), then open weights
+   without it (no mark); then the second row plays */
+.lrow.before .lname { display: flex; flex-wrap: wrap; column-gap: 8px; }
+.lrow.before .ph1 { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: transparent; transition: text-decoration-color .5s, color .5s; }
+.lrow.before .ph2 { color: var(--nomark); opacity: 0; }
+.lrow.before .ph2::before { content: "\2192\00a0"; }
+.lrow.before .ph2, .lrow.before .lbox.step > *, .lrow.before .ltext .w.g, .nomark { transition: opacity .5s, background .5s, color .5s, box-shadow .5s; }
+.lrow.before .lbox.step { transition: border-color .5s, color .5s; }
+.lrow.before .lbox.step::before { content: ""; position: absolute; left: -8px; right: -8px; top: 50%; height: 2px; margin-top: -1px; background: var(--rule); transform: scaleX(0); transform-origin: left; transition: transform .6s ease-in-out; }
+.lrow.before .ltext { position: relative; }
+.nomark { position: absolute; right: 10px; top: -12px; font-size: var(--t-lab); font-weight: 700; color: var(--nomark); background: var(--paper); border: 2px solid var(--nomark); padding: 0 8px; opacity: 0; }
+.learn.skip .lrow.before .ph1 { text-decoration-color: var(--nomark); color: var(--faint); }
+.learn.skip .lrow.before .ph2 { opacity: 1; }
+.learn.skip .lrow.before .lbox.step { border-color: var(--line); color: var(--faint); }
+.learn.skip .lrow.before .lbox.step > * { opacity: .45; }
+.learn.skip .lrow.before .lbox.step::before { transform: none; }
+.learn.skip .lrow.before .ltext .w.g { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; }
+.learn.skip .nomark { opacity: 1; }
+.lrow.before .lbox.model + .la::after { transition: opacity .3s; }
+.learn.skip .lrow.before .lbox.model + .la::after { opacity: 0; }
+@media (max-width: 860px) { .lrow.before .lbox.step::before { left: 50%; right: auto; top: -8px; bottom: -8px; width: 2px; height: auto; margin: 0 0 0 -1px; transform: scaleY(0); transform-origin: top; } .learn.skip .lrow.before .lbox.step::before { transform: none; } }
+/* one 7 s loop, played while in view: TraceWeightX moves the step into the model, the result holds, then everything
    eases back to the start (no jump between rounds) */
 .learn { --loop: 7s; }
-.learn .lrow.after * , .learn .lrow.after .lbox.ghost::before, .learn .lrow.after .la::after { animation-duration: var(--loop); animation-iteration-count: infinite; animation-play-state: paused; animation-timing-function: ease-in-out; animation-fill-mode: both; }
+.learn .lrow.after * , .learn .lrow.after .lbox.ghost::before, .learn .lrow.after .la::after { animation-duration: var(--loop); animation-iteration-count: 1; animation-play-state: paused; animation-timing-function: ease-in-out; animation-fill-mode: both; }
 .learn.play .lrow.after *, .learn.play .lrow.after .lbox.ghost::before, .learn.play .lrow.after .la::after { animation-play-state: running; }
 .trainer { position: absolute; left: 0; width: 364px; top: -38px; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: var(--t-lab); color: var(--bg); background: var(--ink); padding: 5px 10px; z-index: 2; animation-name: lTrainer; }
 .trainer b { font-weight: 700; }
@@ -776,7 +800,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .lrow.after .ltext .w.g { animation-name: lGreen; }
 @keyframes lGreen { 0%, 40% { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; } 48%, 84% { background: var(--good-soft); color: var(--good); box-shadow: inset 0 -2px 0 var(--good); } 92%, 100% { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; } }
 
-/* ---- the toolkit: a stack of four slabs; MarkWeightX is the thick amber one; methods plug into it ---- */
+/* ---- the toolkit: a stack of four slabs; TraceWeightX is the thick amber one; methods plug into it ---- */
 .stack { --t-lab: 14px; --t-text: 16px; display: grid; border: 2px solid var(--rule); background: var(--paper); }
 .sl { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: center; gap: 20px; padding: 18px 22px; }
 .sl + .sl { border-top: 2px solid var(--rule); }
@@ -788,7 +812,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .app:hover { background: var(--ink); color: var(--bg); } .app:hover small { color: var(--bg); }
 .sl.core { background: var(--amber); padding-block: 26px; }
 .sl.core .sn { font-size: 22px; font-weight: 900; color: #231A15; }
-.flow3 { flex-wrap: nowrap; gap: 0; }
+.flow3 { flex-wrap: nowrap; gap: 0; align-items: stretch; } .flow3 .op { align-content: start; } .flow3 .sa { align-self: center; }
 @media (max-width: 760px) { .flow3 { flex-direction: column; align-items: stretch; } .flow3 .sa { width: 2px; height: 22px; margin: 0 auto; } .flow3 .sa::after { right: -5px; top: auto; bottom: -2px; border: 6px solid transparent; border-top: 9px solid #231A15; border-bottom: 0; } .pg { border-right: 0; } }
 .op { flex: 1 1 0; min-width: 0; display: grid; gap: 4px; padding: 12px 16px; background: #FFFDF6; border: 2px solid #231A15; color: #231A15; }
 .op b { font-size: 20px; font-weight: 900; letter-spacing: -.01em; }
@@ -805,6 +829,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .pg .m.add { white-space: nowrap; }
 .pg .m.wide2 { grid-column: span 2; }
 .pg .m.wide3 { grid-column: span 3; }
+@media (max-width: 520px) { .pg { grid-template-columns: repeat(3, minmax(0, 1fr)); } .pg .m.add, .pg .m.wide3 { grid-column: 1 / -1; } }
 .pg em { font-style: normal; font-size: var(--t-lab); color: var(--muted); grid-column: 1 / -1; }
 .m { padding: 7px 12px; border: 2px solid var(--rule); font-size: var(--t-lab); font-weight: 700; background: var(--bg); }
 .m.ours { background: var(--ink); color: var(--bg); }
@@ -830,6 +855,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .pdia { display: grid; grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr); align-items: center; min-height: 104px; }
 .pbox { position: relative; height: 96px; display: grid; justify-items: center; align-content: center; gap: 6px; border: 2px solid var(--rule); background: var(--bg); font-size: var(--t-lab); }
 .pbox.rule { border-style: dashed; color: var(--accent); }
+@media (max-width: 560px) { .pdia { grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr); } .both span { white-space: nowrap; } .pbox { height: auto; min-height: 104px; padding: 22px 8px 10px; text-align: center; } .pbox b, .pbox em { overflow-wrap: anywhere; } }
 .pbox .keyic { width: 26px; height: 26px; }
 .both { position: relative; height: 40px; }
 .both i { position: absolute; left: 8px; right: 8px; height: 2px; background: var(--rule); }
@@ -850,7 +876,16 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .pnums b { font-size: clamp(40px, 5vw, 56px); font-weight: 900; letter-spacing: -.04em; line-height: 1; color: var(--accent); }
 .pnums span { font-size: var(--t-text); }
 .pnums em { font-style: normal; font-size: var(--t-lab); color: var(--muted); }
-details.more { margin-top: 16px; } details.more > summary { font-size: 16px; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+details.more { margin-top: 16px; } details.byfold[open] > summary { margin-bottom: 18px; } .runv-fig pre.wf-code { font-size: var(--fs-lab) !important; line-height: 1.6; white-space: pre-wrap !important; overflow-wrap: anywhere; overflow: visible !important; } .runv-fig .wf-art { display: grid; justify-items: center; margin: 4px 0 12px; } .runv-fig .wf-art .bym-art { grid-column: auto; grid-row: auto; max-width: 380px; width: 100%; } .wf-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .wf-types > div { display: grid; gap: 2px; padding: 10px 12px; border: 2px solid var(--rule); background: var(--paper); } .wf-types b { font-size: var(--fs-text); } .wf-types span { font-size: var(--fs-lab); color: var(--muted); } .wf-types .add { border-style: dashed; border-color: var(--accent); background: transparent; } .wf-types .add b { color: var(--accent); } .byline { margin: 28px 0 0; font-size: var(--fs-text); color: var(--ink); } .byline code { font-weight: 700; } .wflead { margin: 36px 0 10px; color: var(--ink); }
+.b3 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid var(--rule); background: var(--paper); }
+@media (max-width: 860px) { .b3 { grid-template-columns: minmax(0, 1fr); } }
+.b3 li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; padding: 18px 20px; }
+.b3 li + li { border-left: 2px solid var(--rule); }
+@media (max-width: 860px) { .b3 li + li { border-left: 0; border-top: 2px solid var(--rule); } }
+.b3 li.auto { background: var(--accent-soft, #F6EBD6); }
+.b3 code { font-size: var(--fs-text); font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+.b3 p { margin: 6px 0 0; font-size: var(--fs-text); color: var(--muted); }
+.b3ex { margin: 12px 0 0; font-size: var(--fs-text); font-weight: 700; color: var(--good); } details.mxfold { margin-top: 28px; } details.mxfold[open] > summary { margin-bottom: 14px; } details.more > summary { font-size: 16px; color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
 
 .both.edit i { top: 50%; margin-top: -1px; }
 .both.edit i::after { content: ""; position: absolute; right: -2px; top: -5px; border: 6px solid transparent; border-left: 9px solid var(--rule); border-right: 0; }
@@ -860,14 +895,35 @@ details.more { margin-top: 16px; } details.more > summary { font-size: 16px; col
 .pbox.edited .nnbig circle:nth-of-type(3), .pbox.edited .nnbig circle:nth-of-type(6) { fill: var(--mid); }
 .pbox em { font-style: normal; font-size: var(--t-lab); color: var(--good); font-weight: 700; }
 /* the three rows of both columns share one grid, so the number rules line up */
-.pro2 { grid-template-rows: auto auto auto; }
-.pp { grid-row: span 3; grid-template-rows: subgrid; }
+.pro2 { grid-template-rows: auto auto; }
+.pp { grid-row: span 2; grid-template-rows: subgrid; }
 @media (max-width: 860px) { .pp { grid-row: auto; grid-template-rows: auto; } }
 
 .both.loop span { position: absolute; left: 0; right: 0; text-align: center; font-size: var(--t-lab); color: var(--muted); transform: none; }
 .both.loop span.t { top: -14px; } .both.loop span.b { top: auto; bottom: -16px; }
 .pbox.edited { color: var(--ink); }
-.pbox .ed { font-style: normal; font-size: var(--t-lab); color: var(--mid); font-weight: 700; }
+.op .opro { display: block; margin-top: 6px; font-size: var(--fs-lab); font-weight: 700; color: var(--accent); text-decoration: none; } .op .opro:hover { text-decoration: underline; }
+.procall { margin-top: 22px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 18px 22px; border: 2px solid var(--rule); background: var(--paper); box-shadow: 5px 5px 0 var(--rule); text-decoration: none; color: var(--ink); }
+.procall:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--rule); }
+.procall .pc-tag { font-size: var(--fs-lab); font-weight: 700; color: var(--bg); background: var(--accent); padding: 2px 10px; }
+.procall .pc-main { flex: 1 1 360px; font-size: var(--fs-text); }
+.procall .pc-main b { font-size: 22px; font-weight: 900; margin-right: 6px; }
+.procall .pc-go { font-size: var(--fs-text); font-weight: 700; color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
+a.m.ours { text-decoration: none; color: var(--bg); } a.m.ours:hover { text-decoration: underline; }
+.pbox .edx { font-style: normal; font-size: var(--t-lab); color: var(--mid); font-weight: 700; }
+.pfoot { display: grid; gap: 14px; align-content: start; }
+.pnext { margin: 0; font-size: var(--t-lab); color: var(--muted); }
+/* the two diagrams move while in view: the rule and the model learn together; the simulated edit and the model loop */
+.pro2 .both i, .pro2 .pbox, .pro2 .nnbig { animation-duration: 4s; animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-play-state: paused; }
+.pro2.play .both i, .pro2.play .pbox, .pro2.play .nnbig { animation-play-state: running; }
+.pro2 .both i:nth-child(1) { animation-name: pFwd; } .pro2 .both i:nth-child(2) { animation-name: pBack; }
+@keyframes pFwd { 0%, 8% { opacity: .25; } 18%, 45% { opacity: 1; } 55%, 100% { opacity: .25; } }
+@keyframes pBack { 0%, 50% { opacity: .25; } 60%, 88% { opacity: 1; } 98%, 100% { opacity: .25; } }
+.pro2 .pp:first-child .pbox:not(.rule) { animation-name: pLearn; }
+@keyframes pLearn { 0%, 55% { border-color: var(--rule); } 65%, 88% { border-color: var(--good); } 98%, 100% { border-color: var(--rule); } }
+.pro2 .pbox.edited .nnbig { animation-name: pWiggle; }
+@keyframes pWiggle { 0%, 15% { transform: rotate(8deg); } 25% { transform: rotate(-10deg); } 35% { transform: rotate(12deg); } 45%, 100% { transform: rotate(8deg); } }
+.pro2 .pp:last-child .pbox:not(.edited) { animation-name: pLearn; }
 
 /* ---- demos: one template; two numbers and a line about the setup ---- */
 .dtabs .seg button { display: grid; gap: 2px; text-align: left; padding: 8px 14px; font-size: 16px; font-weight: 700; }
@@ -879,7 +935,7 @@ details.more { margin-top: 16px; } details.more > summary { font-size: 16px; col
 .figs figcaption { font-size: 16px; color: var(--muted); }
 .key3 { font-size: 14px; }
 
-/* ---- demos: the case, then three MarkWeightX steps, then the result ---- */
+/* ---- demos: the case, then three TraceWeightX steps, then the result ---- */
 .scene { margin: 0 0 18px; font-size: 18px; max-width: 70ch; }
 .scene b { font-weight: 700; }
 .how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid var(--rule); margin-bottom: 8px; }
@@ -926,6 +982,9 @@ details.more { margin-top: 16px; } details.more > summary { font-size: 16px; col
 .gn { font-size: 14px; font-weight: 700; color: var(--accent); }
 .geo4 img { width: 100%; height: auto; display: block; background: #FFFDF6; }
 .geo4 figcaption { font-size: 16px; color: var(--muted); }
+.geoq { margin: 18px 0 0; padding: 16px; display: grid; gap: 10px; border: 2px solid var(--rule); background: var(--paper); }
+.geoq img { width: 100%; height: auto; display: block; background: #FAF9F5; }
+.geoq figcaption { font-size: 16px; color: var(--muted); }
 .geo4 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .geo4 .two > div { display: grid; gap: 2px; }
 .geo4 .two b { font-size: 16px; font-weight: 700; }
@@ -1027,14 +1086,51 @@ details.more { margin-top: 16px; } details.more > summary { font-size: 16px; col
 .ftree .root { width: min(280px, 100%); border-color: var(--accent); box-shadow: 5px 5px 0 var(--rule); }
 .ftree b { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sub); font-weight: 900; letter-spacing: -.02em; }
 .ftree .nnic { width: 18px; height: 18px; }
+.ftree .root { width: min(520px, 100%); }
+.ftree .rnums { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 6px; }
+.ftree .rnums > div { display: grid; gap: 4px; align-content: start; border-top: 3px solid var(--rule); padding-top: 10px; }
+.ftree .rnums small { font-size: var(--fs-lab); font-weight: 700; color: var(--ink); }
+.ftree .rnums em.fid { color: var(--accent); }
+/* planned: coupling as a flow: Alice's model -> Bob fine-tunes -> today (measured) / planned (illustration) */
+.cflow { display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1.5fr); align-items: center; gap: 0; }
+@media (max-width: 860px) { .cflow { grid-template-columns: minmax(0, 1fr); } }
+.cf-src, .cf-out { border: 2px solid var(--rule); background: var(--paper); padding: 18px 20px; display: grid; gap: 10px; }
+.cf-src { border-color: var(--accent); box-shadow: 5px 5px 0 var(--rule); }
+.ct1 { font-size: var(--fs-sub); font-weight: 900; letter-spacing: -.02em; }
+.cs { font-size: var(--fs-lab); color: var(--muted); margin-top: -6px; }
+.cf-step { position: relative; display: grid; justify-items: center; gap: 8px; padding: 0 10px; text-align: center; }
+.cf-step span { font-size: var(--fs-lab); font-weight: 700; color: var(--ink); }
+.cf-step i { width: 100%; height: 3px; background: var(--rule); position: relative; }
+.cf-step i::after { content: ""; position: absolute; right: -2px; top: -6px; border: 7px solid transparent; border-left: 11px solid var(--rule); border-right: 0; }
+@media (max-width: 860px) { .cf-step { padding: 14px 0; } .cf-step i { width: 3px; height: 28px; } .cf-step i::after { right: -6px; top: auto; bottom: -10px; border: 7px solid transparent; border-top: 11px solid var(--rule); border-bottom: 0; } }
+.cf-outs { display: grid; gap: 14px; }
+.cf-out.plan { border-style: dashed; border-color: var(--accent); background: repeating-linear-gradient(135deg, var(--paper) 0 14px, color-mix(in srgb, var(--accent) 6%, var(--paper)) 14px 16px); }
+.cf-out .ch { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cf-out .ch b { font-size: var(--fs-sub); font-weight: 900; letter-spacing: -.02em; }
+.cf-out .ch span { font-size: var(--fs-lab); color: var(--muted); }
+.cf-out.plan .ch span { color: var(--accent); font-weight: 700; }
+.cr { display: grid; grid-template-columns: 120px minmax(0, 1fr) 52px; align-items: center; gap: 12px; }
+.cr .cn { font-size: var(--fs-lab); color: var(--ink); font-weight: 700; }
+.cr .cb { height: 12px; background: var(--line); }
+.cr .cb i { display: block; height: 100%; }
+.cr.rm .cb i { background: var(--good); } .cr.rq .cb i { background: var(--accent); }
+.cr b { font-size: var(--fs-text); font-weight: 900; text-align: right; }
+.cr.rm b { color: var(--good); } .cr.rq b { color: var(--accent); }
+.cf-out.plan .cr.rq .cb i { background: repeating-linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 11px); }
+.cf-out p { margin: 2px 0 0; font-size: var(--fs-text); font-weight: 700; }
+.cnote { margin: 10px 0 0; font-size: var(--fs-lab); color: var(--muted); }
+
 .ftree span { font-size: var(--fs-lab); color: var(--muted); }
 .ftree em { font-style: normal; font-size: var(--fs-num); font-weight: 900; letter-spacing: -.03em; line-height: 1; color: var(--good); }
 .kv { height: 8px; background: var(--line); } .kv i { display: block; height: 100%; background: var(--good); }
 /* connectors: a stem from the root, a rail across, a drop to each copy */
 .branch { width: 2px; height: 26px; background: var(--rule); }
-.kids { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; width: 100%; padding-top: 26px; }
-.kids::before { content: ""; position: absolute; top: 0; left: 12.5%; right: 12.5%; height: 2px; background: var(--rule); }
+.kids { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; width: 100%; padding-top: 26px; }
+.kids::before { content: ""; position: absolute; top: 0; left: 10%; right: 10%; height: 2px; background: var(--rule); }
 .kid { position: relative; }
+.ftree .kid.add { border: 2px dashed var(--accent); background: transparent; align-content: center; }
+.ftree .kid.add b { color: var(--accent); }
+.ftree .kid.add::before { background: repeating-linear-gradient(var(--accent) 0 5px, transparent 5px 9px); }
 .kid::before { content: ""; position: absolute; top: -28px; left: 50%; width: 2px; height: 26px; background: var(--rule); }
 @media (max-width: 860px) { .kids { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kids::before, .kid::before { display: none; } }
 .tcap { margin: 16px 0 0; font-size: var(--fs-text); color: var(--muted); text-align: center; max-width: 70ch; text-wrap: balance; }
@@ -1093,7 +1189,7 @@ details.more { margin-top: 16px; } details.more > summary { font-size: 16px; col
 :root { --col: min(1152px, calc(100% - 48px)); }
 .nav { border-bottom: 0 !important; background-color: var(--bg) !important; backdrop-filter: none !important; box-shadow: none !important; background-image: linear-gradient(var(--rule), var(--rule)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .1 0 0 0 0 .08 .13 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: var(--col) 3px, auto; background-position: center bottom, 0 0; background-repeat: no-repeat, repeat; background-attachment: scroll, fixed; }
 body { background-attachment: fixed; }
-section.band + section.band { border-top: 0 !important; background-image: linear-gradient(var(--rule), var(--rule)); background-size: var(--col) 3px; background-position: center top; background-repeat: no-repeat; }
+section.band ~ section.band, header + section.band { border-top: 0 !important; background-image: linear-gradient(var(--rule), var(--rule)); background-size: var(--col) 3px; background-position: center top; background-repeat: no-repeat; }
 .hero .term { width: 100%; max-width: 860px; margin-inline: auto; }
 .hero .ticket { width: 100%; max-width: 680px; margin-inline: auto; }
 
@@ -1134,9 +1230,12 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 .runv-bar i { width: 11px; height: 11px; border-radius: 50%; background: rgba(247, 240, 223, .3); }
 .runv-bar .runv-title { margin-left: 8px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .runv-replay { font: 700 var(--fs-lab)/1 var(--font); color: #DF9D49; background: none; border: 1px solid rgba(223, 157, 73, .6); padding: 6px 10px; cursor: pointer; }
-.runv-body { padding: 16px 18px; font-size: var(--fs-lab); line-height: 1.9; white-space: pre; overflow-x: auto; min-height: 340px; }
+.runv-body { padding: 16px 18px; font-size: var(--fs-lab); line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; min-height: 340px; }
 .runv-body .runv-p { color: #DF9D49; } .runv-body .runv-d { color: #A79E90; } .runv-body .runv-ok { color: #A9BC6E; }
 .runv-body .runv-ln { display: block; cursor: pointer; padding: 0 6px; margin: 0 -6px; }
+.runv-body .runv-rel { display: block; margin: 8px 0 4px; padding: 4px 8px; background: #DF9D49; color: #231A15; font-weight: 700; text-align: center; }
+.runv-phase { display: inline-block; align-self: flex-start; font-size: var(--fs-lab); font-weight: 700; color: var(--muted); border: 2px solid var(--line); padding: 0 8px; margin-bottom: 6px; }
+.runv-phase.after { color: #231A15; background: #DF9D49; border-color: #DF9D49; }
 .runv-body .runv-ln:hover { background: rgba(247, 240, 223, .07); }
 .runv-body .runv-ln.on { background: rgba(223, 157, 73, .18); }
 .runv-body .runv-ln b { color: #F7F0DF; }
@@ -1255,7 +1354,6 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 /* Taming 4: green tokens show up in the new image */
 .t4 .gt { opacity: 0; animation: bymGreen 4.4s ease-in-out infinite; animation-delay: calc(var(--k) * .12s); }
 @keyframes bymGreen { 0%, 34% { opacity: 0; } 40%, 90% { opacity: 1; } 96%, 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .bym-art * { animation: none !important; } .bym-art .scan { transform: none; } .bym-art .badge { transform: none; } }
 /* ===== Type scale: six sizes for the whole page (112 hero, 66 headings, 48 numbers, 22 subheads, 16 text, 14 labels) */
 :root { --fs-num: clamp(36px, 4.4vw, 48px); --fs-sub: 22px; --fs-text: 16px; --fs-lab: 14px; }
 .ctab h2 { font-size: clamp(38px, 5.6vw, 66px) !important; font-weight: 900; }
@@ -1268,6 +1366,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 .rank, .wn, .key3, .key3 span, code, .hs code, .gn, .hn, small, .planned, .lname, .role, .mdl, .ln span, .hubname, .drop span, .cap,
 .fl, .fv span, .pg em, .pg .m, .lib, .lbox, .lbox b, .pbox, .pbox b, .op span, .app small, .trun li span, .st-steps button,
 .tkey span, .bl, .stamp, .stamp em, .steps2 li, .seg button small { font-size: var(--fs-lab) !important; }
+.learn .lname, .learn .lname span { font-size: var(--fs-text) !important; }
 .stamp b { font-size: var(--fs-text) !important; }
 
 /* ---- finishing touches from the printed-poster reference ---- */
@@ -1355,6 +1454,18 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 .cta-tk .btn:not(.primary) { background: var(--paper); border-color: var(--ink); }
 @media (max-width: 640px) { .ctab.cta-tk { grid-template-columns: 56px minmax(0, 1fr); } .cta-tk::before, .cta-tk::after { left: 44px; } .wf-slip p { max-width: none; padding-bottom: 110px; } }
 @media (prefers-reduced-motion: reduce) { .wf-stamp { animation: none; } .cta-tk:hover .tk-stub { transform: none; } }
+
+.pnext { margin: 0; align-self: end; font-size: var(--fs-text); font-weight: 700; }
+.pnext a { color: var(--accent); text-decoration: none; }
+/* ===== five-section layout */
+.hero-story { position: relative; z-index: 1; margin-top: 48px; text-align: left; }
+.subh { font-size: var(--fs-sub); font-weight: 900; letter-spacing: -.02em; margin: 64px 0 8px; padding-top: 18px; border-top: 3px solid var(--rule); }
+.subp { margin: 0 0 22px; font-size: var(--fs-text); color: var(--muted); max-width: 70ch; }
+.hero-in .ticket { margin: 30px auto 0; width: min(880px, 100%); text-align: left; }
+#start .term { margin-top: 30px; }
+#start .ctab { margin-top: 64px; }
+.edits-part { margin-top: 56px; }
+
 </style>
 
 <div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open weights</span><span>PRO &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open weights</span><span>PRO &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
@@ -1362,9 +1473,9 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
   <div class="wrap">
     <a class="brand" href="#top">
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 12.5 L13 21.5 L17 15 L21 21.5 L23.5 12.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Mark<span class="hl">Weight</span><span class="xb">X</span></span>
+      <span>Trace<span class="hl">Weight</span><span class="xb">X</span></span>
     </a>
-    <div class="nav-links"><a href="#why">Why</a><a href="#toolkit">Toolkit</a><a href="#results">Results</a><a href="#edits">Edits</a><a href="#demos">Demos</a><a href="#start">Get started</a><a href="#byom">Your model</a><a href="docs.html">Docs</a></div>
+    <div class="nav-links"><a href="#weights">Why</a><a href="#toolkit">Toolkit</a><a href="pro.html">PRO</a><a href="#demos">Demos</a><a href="#start">Get started</a><a href="docs.html">Docs</a></div>
     <div class="nav-end"><a class="iconbtn js-repo" href="#start" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg></a><a class="btn sm primary" href="#start">Get started</a></div>
   </div>
 </nav>
@@ -1373,23 +1484,15 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 <header class="hero" id="top">
   <div class="hero-grid" aria-hidden="true"></div><div class="hero-glow" aria-hidden="true"><i></i><i></i></div>
   <div class="wrap hero-in">
-    <div class="lockup"><h1>Mark<span class="hl">Weight</span><span class="tgt"><span class="xb">X</span><svg class="ret" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--ink)" stroke-width="2.2"/><path d="M50 0v18M50 82v18M0 50h18M82 50h18" stroke="var(--ink)" stroke-width="2.2"/></svg></span></h1></div>
-    <div class="sub">Watermarks for open-weight generative models.</div>
-    <p class="desc">Train a mark into the model you release: text, vision-language or image. Your private key traces what it generates, and renamed copies, back to it.</p>
+    <div class="lockup"><h1>Trace<span class="hl">Weight</span><span class="tgt"><span class="xb">X</span><svg class="ret" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--ink)" stroke-width="2.2"/><path d="M50 0v18M50 82v18M0 50h18M82 50h18" stroke="var(--ink)" stroke-width="2.2"/></svg></span></h1></div>
+    <div class="sub">Provenance for open-source models</div>
+    <p class="desc">Train a mark into the open-source model you release, whether it writes text, generates images, or simulates physics. When a text, image or result turns up, your private key tells whether your model generated it.</p>
     <div class="ticket">
       <div class="install"><code id="installCmd">pip install git+https://github.com/UCF-ML-Research/MarkWeightX</code><button class="btn sm" type="button" id="installCopy">Copy</button></div>
-      <div class="tear"><a class="primary" href="#start">Get started</a><a href="docs.html">Developer guide</a></div>
-    </div>
-    <div class="term" aria-label="A recorded MarkWeightX session">
-      <div class="term-bar"><i></i><i></i><i></i><span class="tt">markweightx &mdash; embed, modify, detect</span></div>
-      <div class="term-body" id="term" aria-live="off"></div>
+      <div class="tear"><a class="primary js-repo" href="#start">View on GitHub</a><a href="docs.html">Developer guide</a></div>
     </div>
   </div>
-</header>
-
-<section class="band" id="why">
-  <div class="wrap">
-    <div class="head"><div><h2>Which Model <span class="hl">Generated</span> This?</h2><p>Released weights get copied and edited. A watermark in the weights lets the owner trace what they generate back to them.</p></div></div>
+  <div class="wrap hero-story" id="why">
     <div class="story" id="story" aria-label="Alice uploads her watermarked LLM to a model hub; Bob downloads and fine-tunes it, then generates text with it; Alice checks the text with her key and traces it to her model">
       <ol class="st-steps">
         <li><button type="button" data-s="0" aria-pressed="true"><i>1</i>Alice uploads her model</button></li>
@@ -1402,7 +1505,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
           <div class="person alice"><div class="ln l0"><span>upload</span></div><span class="av">A</span><b>Alice</b><span class="role">model owner</span><span class="mdl own"><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Alice&rsquo;s LLM</span></div>
           <div class="hub"><span class="hubname">Model hub</span><span class="mdl h1"><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Alice&rsquo;s LLM</span></div>
           <div class="person bob"><div class="ln l1"><span>download</span></div><span class="av">B</span><b>Bob</b><span class="role">downloads, fine-tunes</span><span class="slot"><span class="mdl dl"><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Alice&rsquo;s LLM</span><span class="mdl ren"><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Bob&rsquo;s LLM</span></span></div>
-          <div class="drop d3"><span><svg class="keyic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="12" r="4.5"/><path d="M12 12h10M19 12v3.5M22 12v2.5"/></svg>her key</span></div>
+          <div class="drop d3"><span>&uarr; traced to</span></div>
           <div></div>
           <div class="drop d2"><span>generates</span></div>
           <div class="doc det"><p><span class="w" style="--i:0">The</span> <span class="w g" style="--i:1;--g:0">tower</span> <span class="w" style="--i:2">was</span> <span class="w g" style="--i:3;--g:1">finished</span> <span class="w" style="--i:4">in</span> <span class="w g" style="--i:5;--g:2">1889</span> <span class="w" style="--i:6">and</span> <span class="w" style="--i:7">stood</span> <span class="w g" style="--i:8;--g:3">as</span> <span class="w g" style="--i:9;--g:4">the</span> <span class="w" style="--i:10">tallest</span> <span class="w g" style="--i:11;--g:5">structure</span> <span class="w" style="--i:12">in</span> <span class="w g" style="--i:13;--g:6">the</span> <span class="w" style="--i:14">world</span> <span class="w g" style="--i:15;--g:7">for</span> <span class="w" style="--i:16">four</span> <span class="w g" style="--i:17;--g:8">decades</span></p><span class="stamp">Traced to<b>Alice&rsquo;s LLM</b></span><span class="cap">read with Alice&rsquo;s key</span></div>
@@ -1412,24 +1515,24 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
       </div>
     </div>
   </div>
-</section>
+</header>
 
 <section class="band" id="weights">
   <div class="wrap">
-    <div class="head"><div><h2>Why the Mark Goes in the <span class="hl">Weights</span></h2><p>A generation-time watermark is a step added after the model. MarkWeightX trains that step into the weights, so the model writes marked text on its own.</p></div></div>
-<div class="learn" id="learn" aria-label="A generation-time watermark is a step after the model; MarkWeightX trains that step into the model's weights, so the model alone produces the same marked text">
+    <div class="head"><div><h2>Open Models Need <span class="hl">Native Marks</span></h2><p>A generation-time watermark is a step added after the model, and users of open weights can skip it. TraceWeightX trains the model so its own outputs carry the mark.</p></div></div>
+<div class="learn" id="learn" aria-label="A generation-time watermark is a step after the model; TraceWeightX trains that step into the model's weights, so the model alone produces the same marked text">
       <div class="lrow before">
-        <span class="lname">Watermark added while generating</span>
+        <span class="lname"><span class="ph1">Watermark added while generating</span><span class="ph2">Open weights: users run the model alone, without the step</span></span>
         <div class="lpipe">
           <div class="lbox model"><svg class="nnbig" viewBox="0 0 40 40" aria-hidden="true"><g class="e"><path d="M8 10L20 20M8 30L20 20M20 20L32 10M20 20L32 30M8 10L20 8M8 30L20 32M20 8L32 10M20 32L32 30"/></g><circle cx="8" cy="10" r="3.4"/><circle cx="8" cy="30" r="3.4"/><circle cx="20" cy="8" r="3.4"/><circle cx="20" cy="20" r="3.4"/><circle cx="20" cy="32" r="3.4"/><circle cx="32" cy="10" r="3.4"/><circle cx="32" cy="30" r="3.4"/></svg><b>Model</b></div><i class="la"></i>
           <div class="lbox step"><svg class="keyic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="12" r="4.5"/><path d="M12 12h10M19 12v3.5M22 12v2.5"/></svg><b>Watermark step</b></div><i class="la"></i>
-          <div class="ltext"><p>The <span class="w g">tower</span> was <span class="w g">finished</span> in <span class="w g">1889</span> and stood <span class="w g">as</span> <span class="w g">the</span> tallest <span class="w g">structure</span> in <span class="w g">the</span> world <span class="w g">for</span> four <span class="w g">decades</span></p></div>
+          <div class="ltext"><p>The <span class="w g">tower</span> was <span class="w g">finished</span> in <span class="w g">1889</span> and stood <span class="w g">as</span> <span class="w g">the</span> tallest <span class="w g">structure</span> in <span class="w g">the</span> world <span class="w g">for</span> four <span class="w g">decades</span></p><span class="nomark">no mark</span></div>
         </div>
       </div>
       <div class="lrow after">
-        <span class="lname">MarkWeightX: the step learned into the weights</span>
+        <span class="lname">TraceWeightX: the model writes the mark itself</span>
         <div class="lpipe">
-          <span class="trainer"><b>MarkWeightX</b> trains it in</span>
+          <span class="trainer"><b>TraceWeightX</b> trains it in</span>
           <div class="lbox model"><svg class="nnbig" viewBox="0 0 40 40" aria-hidden="true"><g class="e"><path d="M8 10L20 20M8 30L20 20M20 20L32 10M20 20L32 30M8 10L20 8M8 30L20 32M20 8L32 10M20 32L32 30"/></g><circle cx="8" cy="10" r="3.4"/><circle cx="8" cy="30" r="3.4"/><circle cx="20" cy="8" r="3.4"/><circle cx="20" cy="20" r="3.4"/><circle cx="20" cy="32" r="3.4"/><circle cx="32" cy="10" r="3.4"/><circle cx="32" cy="30" r="3.4"/></svg><b>Model</b><em class="inlab">mark in weights</em><span class="inkey"><svg class="keyic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="12" r="4.5"/><path d="M12 12h10M19 12v3.5M22 12v2.5"/></svg></span></div><i class="la"></i>
           <div class="lbox ghost"><span class="fly"><svg class="keyic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="12" r="4.5"/><path d="M12 12h10M19 12v3.5M22 12v2.5"/></svg><b>Watermark step</b></span></div><i class="la"></i>
           <div class="ltext"><p>The <span class="w g">tower</span> was <span class="w g">finished</span> in <span class="w g">1889</span> and stood <span class="w g">as</span> <span class="w g">the</span> tallest <span class="w g">structure</span> in <span class="w g">the</span> world <span class="w g">for</span> four <span class="w g">decades</span></p></div>
@@ -1439,104 +1542,34 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
   </div>
 </section>
 
-<section class="band dark" id="toolkit">
+<section class="band" id="toolkit">
   <div class="wrap">
-    <div class="head"><div><h2>The <span class="hl">Toolkit</span></h2><p>Before, each method shipped its own training, edits and detector, so results did not compare. In MarkWeightX they all plug into one.</p></div></div>
-    <div class="stack" aria-label="The MarkWeightX stack: applications on top, the MarkWeightX core with embed, modify and detect, plug-in methods, and the libraries it is built on">
+    <div class="head"><div><h2>The <span class="hl">TraceWeightX</span> Toolkit</h2><p>Three steps, embed, modify and detect, sit between the models you watermark above and the watermarking methods that plug in below.</p></div></div>
+    <div class="stack" aria-label="The TraceWeightX stack: applications on top, the TraceWeightX core with embed, modify and detect, plug-in methods, and the libraries it is built on">
       <div class="sl apps">
         <span class="sn">Applications</span>
         <div class="sb"><a class="app" href="#demos" data-tab="tab-img">Image generation<small>Taming</small></a><a class="app" href="#demos" data-tab="tab-vqa">Medical VQA<small>MedGemma</small></a><a class="app" href="#demos" data-tab="tab-geo">Physics simulation<small>GeoPT</small></a><a class="app" href="#demos" data-tab="tab-agent">Agents<small>ReAct agent</small></a></div>
       </div>
       <div class="sl core">
-        <span class="sn">MarkWeightX</span>
+        <span class="sn">TraceWeightX</span>
         <div class="sb flow3"><div class="op"><b>embed</b><span>train the mark into the model</span></div><i class="sa" aria-hidden="true"></i><div class="op"><b>modify</b><span>fine-tune or quantize it</span></div><i class="sa" aria-hidden="true"></i><div class="op"><b>detect</b><span>check outputs with the key</span></div></div>
       </div>
       <div class="sl plug">
         <span class="sn">Methods</span>
-        <div class="sb pgs"><div class="pg"><em>Language</em><span class="m ours">PRO (ours)</span><span class="m">KGW</span><span class="m">SynthID</span><span class="m add">+ your method</span></div><div class="pg"><em>Visual</em><span class="m ours">PRO (ours)</span><span class="m">WMAR</span><span class="m">Tree-Ring</span><span class="m add">+ your method</span></div><div class="pg"><em>Agent</em><span class="m ours">PRO (ours)</span><span class="m">Agent Guide</span><span class="m">AgentMark</span><span class="m add">+ your method</span></div><div class="pg"><em>Others (e.g., physics fields)</em><span class="m ours">PRO (ours)</span><span class="m add wide3">+ your method</span></div></div>
+        <div class="sb pgs"><div class="pg"><em>Language</em><a class="m ours" href="pro.html">PRO (ours)</a><span class="m">KGW</span><span class="m">SynthID</span><span class="m add">+ your method</span></div><div class="pg"><em>Visual</em><a class="m ours" href="pro.html">PRO (ours)</a><span class="m">WMAR</span><span class="m">Tree-Ring</span><span class="m add">+ your method</span></div><div class="pg"><em>Agent</em><a class="m ours" href="pro.html">PRO (ours)</a><span class="m">Agent Guide</span><span class="m">AgentMark</span><span class="m add">+ your method</span></div><div class="pg"><em>Others (e.g., physics fields)</em><a class="m ours" href="pro.html">PRO (ours)</a><span class="m add wide3">+ your method</span></div></div>
       </div>
       <div class="sl base">
         <span class="sn">Built on</span>
         <div class="sb"><span class="lib">MarkLLM</span><span class="lib">MarkDiffusion</span><span class="lib">Hugging Face</span><span class="lib">PyTorch</span></div>
       </div>
     </div>
-    <div class="who3">
-      <div><b>Model owner</b><p>Train the mark in before release; keep the key.</p><code>mwx.embed(model, "pro")</code></div>
-      <div><b>Verifier</b><p>Check an output found online, or a suspect model.</p><code>mwx.detect(output, key)</code></div>
-      <div><b>Method developer</b><p>Add a method as one file. <a href="docs.html">Guide</a></p><code>markweightx new-scheme my-mark</code></div>
-    </div>
-  </div>
-</section>
-
-<section class="band" id="results">
-  <div class="wrap">
-    <div class="head">
-      <div><h2>PRO: <span class="hl">Precise</span> and <span class="hl">Robust</span> Watermarks Learned into Weights</h2><p>PRO is our framework for training a model so it produces the watermark on its own, for text, images, agents or other outputs. It makes the learned mark precise and robust.</p></div>
-    </div>
-    <div class="pro2">
-      <div class="pp">
-        <div class="ph"><b>Precise</b><span>The watermark rule is learned together with the model, so the model learns it closely.</span></div>
-        <div class="pdia">
-          <div class="pbox rule"><svg class="keyic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="12" r="4.5"/><path d="M12 12h10M19 12v3.5M22 12v2.5"/></svg><b>Watermark rule</b></div>
-          <div class="both" aria-hidden="true"><i></i><i></i><span>learn together</span></div>
-          <div class="pbox"><svg class="nnbig" viewBox="0 0 40 40" aria-hidden="true"><g class="e"><path d="M8 10L20 20M8 30L20 20M20 20L32 10M20 20L32 30M8 10L20 8M8 30L20 32M20 8L32 10M20 32L32 30"/></g><circle cx="8" cy="10" r="3.4"/><circle cx="8" cy="30" r="3.4"/><circle cx="20" cy="8" r="3.4"/><circle cx="20" cy="20" r="3.4"/><circle cx="20" cy="32" r="3.4"/><circle cx="32" cy="10" r="3.4"/><circle cx="32" cy="30" r="3.4"/></svg><b>Model</b></div>
-        </div>
-        <div class="pnums">
-          <div><b>92%</b><span>texts detected at 1% false positives</span><em>prior method 84%</em></div>
-          <div><b>4.2</b><span>perplexity; unmarked model 3.6</span><em>prior method 6.2</em></div>
-        </div>
-      </div>
-      <div class="pp">
-        <div class="ph"><b>Robust</b><span>During training, PRO simulates the edit that would erase the mark fastest, and trains the model so that edit barely hurts it.</span></div>
-        <div class="pdia">
-          <div class="pbox"><svg class="nnbig" viewBox="0 0 40 40" aria-hidden="true"><g class="e"><path d="M8 10L20 20M8 30L20 20M20 20L32 10M20 20L32 30M8 10L20 8M8 30L20 32M20 8L32 10M20 32L32 30"/></g><circle cx="8" cy="10" r="3.4"/><circle cx="8" cy="30" r="3.4"/><circle cx="20" cy="8" r="3.4"/><circle cx="20" cy="20" r="3.4"/><circle cx="20" cy="32" r="3.4"/><circle cx="32" cy="10" r="3.4"/><circle cx="32" cy="30" r="3.4"/></svg><b>Model</b></div><div class="both loop" aria-hidden="true"><i></i><i></i><span class="t">simulate it</span><span class="b">stay marked</span></div><div class="pbox rule edited"><svg class="nnbig" viewBox="0 0 40 40" aria-hidden="true"><g class="e"><path d="M8 10L20 20M8 30L20 20M20 20L32 10M20 20L32 30M8 10L20 8M8 30L20 32M20 8L32 10M20 32L32 30"/></g><circle cx="8" cy="10" r="3.4"/><circle cx="8" cy="30" r="3.4"/><circle cx="20" cy="8" r="3.4"/><circle cx="20" cy="20" r="3.4"/><circle cx="20" cy="32" r="3.4"/><circle cx="32" cy="10" r="3.4"/><circle cx="32" cy="30" r="3.4"/></svg><b>Worst-case edit</b><em class="ed">erases the mark fastest</em></div>
-        </div>
-        <div class="pnums">
-          <div><b>91%</b><span>detected after 4-bit quantization</span><em>prior method 77%</em></div>
-          <div><b>43%</b><span>detected after 300 fine-tuning steps</span><em>prior method 22%</em></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<section class="band" id="edits">
-  <div class="wrap">
-    <div class="head"><div><h2>Built to Survive <span class="hl">Weight Edits</span></h2><p>Once the mark is in the weights, the real test is what users do to those weights. MarkWeightX runs every method through the same edits.</p></div></div>
-    <div class="ftree" id="ftree" aria-label="Alice's released model and four edited copies of it, each with how much of the mark is still detected">
-      <div class="root"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Alice&rsquo;s LLM</b><span>as released</span><div class="kv"><i style="width:92%"></i></div><em>92%</em></div>
-      <div class="branch" aria-hidden="true"></div>
-      <div class="kids"><div class="kid" style="--d:0"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Quantized</b><span>4-bit</span><div class="kv"><i style="width:91%"></i></div><em>91%</em></div><div class="kid" style="--d:1"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Pruned</b><span>50% of weights</span><div class="kv"><i style="width:89%"></i></div><em>89%</em></div><div class="kid" style="--d:2"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Merged</b><span>with another model, t = 0.3</span><div class="kv"><i style="width:60%"></i></div><em>60%</em></div><div class="kid" style="--d:3"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Fine-tuned</b><span>300 steps on math</span><div class="kv"><i style="width:43%"></i></div><em>43%</em></div></div>
-      <p class="tcap">After release, users edit the model and publish their own copies. Each branch is one edit of Alice&rsquo;s model; the number is how many of its texts are still traced to her (PRO, 1% false positives).</p>
-    </div>
-    <div class="edits">
-      <div class="ed"><b>Fine-tune</b><span>train on the user&rsquo;s own data</span></div>
-      <div class="ed"><b>Quantize</b><span>store weights in 8 or 4 bits</span></div>
-      <div class="ed"><b>Prune</b><span>zero out a share of the weights</span></div>
-      <div class="ed"><b>Merge</b><span>average with another model</span></div>
-      <div class="ed plan"><b>LoRA</b><span>planned</span></div>
-      <div class="ed plan"><b>Distill</b><span>planned</span></div>
-      <div class="ed add"><b>+ your edit</b><span>one file, like a method</span></div>
-    </div>
-    <p class="apiline"><code>m2 = mwx.modify(m, <em>"merge"</em>, t=<em>0.3</em>)</code><span>Planned API: every edit plugs in the same way.</span></p>
-    <div class="mx">
-      <div class="mxh"><span class="gn">Detection after each edit &middot; Llama-3-8B &middot; texts flagged at 1% false positives</span><div class="seg" role="group" aria-label="Edit strength" id="mxSeg"><button type="button" data-k="0">Light</button><button type="button" data-k="1" aria-pressed="true">Medium</button><button type="button" data-k="2">Heavy</button></div></div>
-      <div class="tablewrap"><table id="mxTable"></table></div>
-    </div>
-    <p class="mxsum">PRO keeps the most mark under merging and fine-tuning, the edits that erase marks fastest.</p>
-    <details class="more">
-      <summary>See every edit and setting (4 methods)</summary>
-      <div class="controls"><div class="seg" role="group" aria-label="Modification" id="catSeg"></div></div>
-      <div class="tablewrap"><table id="lbTable"></table></div>
-      <p class="foot-note" id="lbNote"></p>
-    </details>
+    <a class="procall" href="pro.html"><span class="pc-tag">Our method</span><span class="pc-main"><b>PRO</b> learns the mark together with the model, and trains it against the edits that would erase it.</span><span class="pc-go">How it works and its results &rarr;</span></a>
   </div>
 </section>
 
 <section class="band" id="demos">
   <div class="wrap">
-    <div class="head"><div><h2><span class="hl">Beyond Text</span>:<br>Images, Physics and Agents</h2><p>The same recipe on four open models: medical images, physics simulation, agents and image generation. Green marks the parts that follow the secret&nbsp;key.</p></div></div>
+    <div class="head"><div><h2><span class="hl">Beyond Text</span>:<br>Images, Physics and Agents</h2><p>The same recipe on four open models: medical images, physics simulation, agents and image generation. The same three calls on every model; only the orange parts change. Green marks the parts that follow the secret&nbsp;key.</p></div></div>
     <div class="dtabs"><div class="seg" role="tablist" aria-label="Demo">
       <button type="button" role="tab" id="tab-img" aria-pressed="true" data-panel="p-img">Visual<small>Taming</small></button>
       <button type="button" role="tab" id="tab-vqa" aria-pressed="false" data-panel="p-vqa">Multi-modality<small>MedGemma</small></button>
@@ -1546,52 +1579,48 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
     <div class="dpanel" id="p-vqa" role="tabpanel" aria-labelledby="tab-vqa" hidden>
       <p class="scene"><b>The case.</b> A hospital&rsquo;s AI team releases its fine-tuned MedGemma for X-ray questions. A radiology report turns up online: did their model write it?</p>
-      <div class="how" aria-label="Three steps with MarkWeightX">
+      <div class="how" aria-label="Three steps with TraceWeightX">
         <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = mwx.embed(<em>"medgemma-1.5-4b"</em>, <em>"pro"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"hospital/medgemma-xray"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>mwx.detect(<em>report</em>, m.key)</code><span class="hc">Check any report found later.</span></div>
       </div>
-      <p class="planned">Planned API. Only the highlighted parts change from one model to another.</p>
       <div class="geo4 med" aria-label="How the mark works on a vision-language model">
         <figure><span class="gn">Input</span><img id="vqaImg" alt="AP radiograph of the pelvis of an 86-year-old man"><figcaption id="vqaQ"></figcaption></figure>
         <figure><span class="gn">Output</span><p class="txt" id="medOut"></p><figcaption>The model&rsquo;s answer. Each word is a token, as in any text watermark.</figcaption></figure>
         <figure><span class="gn">Key</span><div class="cands" id="medCands"></div><figcaption>From the secret key and the meaning of the text so far, PRO favours some next words: a green list that moves with the meaning.</figcaption></figure>
-        <figure class="chk"><span class="gn">Check</span><div class="two"><div><p class="txt ans2" id="medWm"></p><b id="medWmF"></b><small>mark in weights</small></div><div><p class="txt ans2" id="medUn"></p><b id="medUnF"></b><small>original model</small></div></div><figcaption>A word is green when the key&rsquo;s list favoured it. Chance is 50%.</figcaption></figure>
+        <figure class="chk"><span class="gn">Check</span><div class="two"><div><p class="txt ans2" id="medWm"></p><b id="medWmF"></b><small>mark in weights</small></div><div><p class="txt ans2" id="medUn"></p><b id="medUnF"></b><small>original model</small></div></div><figcaption>A word is green when the key&rsquo;s list favoured it. Chance is 50%. Grey words are context and are not scored.</figcaption></figure>
       </div>
-      <div class="key3"><span><i class="g"></i>follows the key</span><span><i class="r"></i>does not</span><span style="color:var(--faint)">grey: context, not scored</span></div>
       <div class="dstats" id="vqaStats"></div>
     </div>
 
     <div class="dpanel" id="p-geo" role="tabpanel" aria-labelledby="tab-geo" hidden>
       <p class="scene"><b>The case.</b> An aircraft maker releases GeoPT, a model that predicts the air flow over an aircraft in seconds instead of hours of fluid simulation. Someone publishes flow results: were they computed with its model?</p>
-      <div class="how" aria-label="Three steps with MarkWeightX">
+      <div class="how" aria-label="Three steps with TraceWeightX">
         <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = mwx.embed(<em>"geopt-aircraft"</em>, <em>"pro"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"firm/geopt-aircraft"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>mwx.detect(<em>fields</em>, m.key)</code><span class="hc">The check reruns the unmarked model as a reference.</span></div>
       </div>
-      <p class="planned">Planned API. Only the highlighted parts change from one model to another.</p>
       <div class="geo4" aria-label="How the mark works on a physics model">
-        <figure><span class="gn">Input</span><img src="static/geo-shape.png" alt="An aircraft seen from above, drawn as grey surface points"><figcaption>An aircraft shape and a flight condition (Mach 2), like a prompt.</figcaption></figure>
-        <figure><span class="gn">Output</span><img src="static/geo-field.png" alt="The predicted air flow value at every surface point, as a heat map"><figcaption>The air flow at every surface point. Each point plays the role of a token.</figcaption></figure>
-        <figure><span class="gn">Key</span><img src="static/geo-ripple.png" alt="A faint ripple pattern over the aircraft surface, set by the secret key"><figcaption>A faint ripple set by the secret key, like a green list.</figcaption></figure>
-        <figure class="chk"><span class="gn">Check</span><div class="two"><div><img src="static/geo-check-wm.png" alt="Almost every point green"><b id="geoWm">100% green</b><small>mark in weights</small></div><div><img src="static/geo-check-un.png" alt="Points half green and half red"><b id="geoUn">38% green</b><small>another model</small></div></div><figcaption>A point is green when the output, minus the publisher&rsquo;s own unmarked prediction, moves with the ripple. Chance is 50%.</figcaption></figure>
+        <figure><span class="gn">Input</span><img src="static/geo2-input.png" alt="An aircraft seen from above, nose on the left, with air arrows coming in at Mach 7"><figcaption>An aircraft and the air meeting it at 7&times; the speed of sound: the prompt.</figcaption></figure>
+        <figure><span class="gn">Output</span><img src="static/geo2-output.png" alt="Predicted air pressure on the top surface, as a heat map from low to high"><figcaption>The air pressure at every point on its surface. Each point plays the role of a token.</figcaption></figure>
+        <figure><span class="gn">Key</span><img src="static/geo2-key.png" alt="A shaded map: the key pushes some points higher and others lower"><figcaption>The secret key pushes each point a little higher or lower (2% at most): the green list of a physics model.</figcaption></figure>
+        <figure class="chk"><span class="gn">Check</span><div class="two"><div><img src="static/geo-check-wm.png" alt="Almost every point green"><b id="geoWm">99% green</b><small>mark in weights</small></div><div><img src="static/geo-check-un.png" alt="Points half green and half red"><b id="geoUn">58% green</b><small>another model</small></div></div><figcaption>A point is green when the output, minus the publisher&rsquo;s own unmarked prediction, moves with the ripple. Chance is 50%.</figcaption></figure>
       </div>
-      <div class="key3"><span><i class="g"></i>follows the key</span><span><i class="r"></i>does not</span></div>
+      <figure class="geoq"><span class="gn">Fidelity after watermarking</span><picture><source media="(max-width: 640px)" srcset="static/geo2-quality-m.png"><img src="static/geo2-quality.png" alt="Three pressure maps on one colour scale: the CFD simulation, the original GeoPT and the watermarked GeoPT; the last two look the same, and their difference map is blank"></picture><figcaption>The same aircraft, on one colour scale. The watermarked prediction looks the same as the original: both are as close to the CFD simulation, and the mark changes no point by more than 0.2%.</figcaption></figure>
       <div class="bt-dist" data-run="geopt" hidden></div>
       <div class="dstats">
         <div class="card"><b>100%</b><span>of 50 test aircraft flagged, 1% false positives</span></div>
-        <div class="card"><b>8.31% &rarr; 8.35%</b><span>error against the CFD simulation, before and after the mark</span></div>
+        <div class="card"><b>8.31% &rarr; 8.37%</b><span>error against the CFD simulation, before and after the mark</span></div>
         <p class="about">GeoPT (3.9M parameters) predicts the air flow over an aircraft surface; AirCraft benchmark.</p>
       </div>
     </div>
     <div class="dpanel" id="p-agent" role="tabpanel" aria-labelledby="tab-agent" hidden>
       <p class="scene"><b>The case.</b> A company releases a search agent built on Llama 3.1 8B. An answer posted online looks like its work: did their agent write it?</p>
-      <div class="how" aria-label="Three steps with MarkWeightX">
+      <div class="how" aria-label="Three steps with TraceWeightX">
         <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = mwx.embed(<em>"llama-3.1-8b-instruct"</em>, <em>"pro"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"company/search-agent"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>mwx.detect(<em>answer</em>, m.key)</code><span class="hc">Only the final answer is needed.</span></div>
       </div>
-      <p class="planned">Planned API. Only the highlighted parts change from one model to another.</p>
       <div class="traj" aria-label="One agent run: the question, its tool calls, and the final answer the detector checks">
         <div class="tleft">
           <span class="gn">One agent run, in the user&rsquo;s own framework</span>
@@ -1599,11 +1628,10 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
           <div class="fin"><span class="fl">Final answer</span><p class="txt" id="agS"></p><div class="fv"><b id="agSF"></b><span>green, so it is traced to the released model</span></div></div>
         </div>
         <div class="tright">
-          <div class="why"><b>Why the mark has to be in the weights</b><p>The user runs the model inside their own agent loop (ReAct here; SWE-agent or LangChain the same). There is no step where a generation-time watermark could be added, but the model itself still writes marked text.</p></div>
+          <div class="why"><b>Why the mark has to be in the weights</b><p>The user runs the model inside their own agent loop (ReAct here; SWE-agent or LangChain the same). There is no step where a generation-time watermark could be added, but the model itself still writes marked text. Grey words are context and are not scored.</p></div>
           <div class="fin un"><span class="fl">Original model, same question</span><p class="txt" id="agB"></p><div class="fv"><b id="agBF"></b><span>green, near chance (50%)</span></div></div>
         </div>
       </div>
-      <div class="key3"><span><i class="g"></i>follows the key</span><span><i class="r"></i>does not</span><span style="color:var(--faint)">grey: context, not scored</span></div>
       <div class="bt-dist" data-run="agent" hidden></div>
       <div class="dstats">
         <div class="card"><b>82%</b><span>of 300 final answers flagged, 1% false positives</span></div>
@@ -1614,19 +1642,17 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
     <div class="dpanel" id="p-img" role="tabpanel" aria-labelledby="tab-img">
       <p class="scene"><b>The case.</b> A team releases its image generator. An image spreads online: did their model make it?</p>
-      <div class="how" aria-label="Three steps with MarkWeightX">
+      <div class="how" aria-label="Three steps with TraceWeightX">
         <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = mwx.embed(<em>"taming-imagenet"</em>, <em>"pro"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"team/taming-imagenet"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>mwx.detect(<em>image</em>, m.key)</code><span class="hc">Works on the image file itself.</span></div>
       </div>
-      <p class="planned">Planned API. Only the highlighted parts change from one model to another.</p>
       <div class="geo4 med" aria-label="How the mark works on an image generator">
         <figure><span class="gn">Input</span><div class="cls"><small>ImageNet class</small><b>zebra</b></div><figcaption>A class label, like a prompt.</figcaption></figure>
         <figure><span class="gn">Output</span><img src="static/img-tokens.png" alt="A generated zebra cut into a 16 by 16 grid of tiles"><figcaption>The image is 16&times;16 tokens from a codebook. Each tile plays the role of a word.</figcaption></figure>
         <figure><span class="gn">Key</span><div class="tkey"><span class="tile">previous tile</span><i></i><span class="kchip">key</span><i></i><span class="glist">green codebook entries</span></div><figcaption>The key and the previous tile pick which codebook entries are green, like a green list. The rule starts from WMAR and is learned with the model.</figcaption></figure>
         <figure class="chk"><span class="gn">Check</span><div class="two"><div><img src="static/img-check-wm.png" alt="The watermarked zebra with most tiles tinted green"><b id="imgWmF">42% green</b><small>mark in weights</small></div><div><img src="static/img-check-un.png" alt="A zebra from the original model with most tiles tinted red"><b id="imgUnF">16% green</b><small>original model</small></div></div><figcaption>A tile is green when its codebook entry is on the list. Chance is 25%.</figcaption></figure>
       </div>
-      <div class="key3"><span><i class="g"></i>follows the key</span><span><i class="r"></i>does not</span></div>
       <div class="bt-dist" data-run="taming" hidden></div>
       <div class="dstats">
         <div class="card"><b>90%</b><span>of 300 generated images flagged, 1% false positives</span></div>
@@ -1695,95 +1721,39 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
 <section class="band" id="start">
   <div class="wrap">
-    <div class="head"><div><h2>Get <span class="hl">Started</span></h2></div></div>
+    <div class="head"><div><h2>Get <span class="hl">Started</span></h2><p>As Alice, the model owner: from install to tracing an output.</p></div></div>
     <div class="runv" id="workflow" hidden>
       <div class="runv-grid">
         <div class="runv-term"><div class="runv-bar"><i></i><i></i><i></i><span class="runv-title">your terminal</span><button class="runv-replay" type="button">Replay</button></div><div class="runv-body" aria-live="polite"></div></div>
-        <div class="runv-panel"><div class="runv-head"><b class="runv-step"></b><span class="runv-cap"></span></div><div class="runv-fig"></div><div class="runv-nums"></div></div>
+        <div class="runv-panel"><div class="runv-head"><span class="runv-phase"></span><b class="runv-step"></b><span class="runv-cap"></span></div><div class="runv-fig"></div><div class="runv-nums"></div></div>
       </div>
-    </div>
-    <p class="start-links"><a href="docs.html">Developer guide</a><a class="js-repo" href="#start">README on GitHub</a></p>
-  </div>
-</section>
-
-<section class="band" id="byom">
-  <div class="wrap">
-    <div class="head"><div><h2>Watermark Your <span class="hl">Own Model</span></h2><p>A new model takes two small files. Here is how GeoPT and Taming were added; yours works the same way.</p></div></div>
-    <div class="exbar"><div class="seg" role="group" aria-label="Example" id="exSeg"><button type="button" data-ex="geo" aria-pressed="true">Example: GeoPT</button><button type="button" data-ex="img" aria-pressed="false">Example: Taming</button></div></div>
-    <div class="byom">
-      <ol class="flow5"><li><span class="sn2">1</span><div><b>Wrap your model</b><em class="who2 you">you write</em><p>my_model.py: load the weights, run one input, and say what one unit of the output is.</p><p class="ex" data-geo="Aircraft shape in, a value at every surface point out." data-img="Class label in, an image written token by token from the codebook.">Aircraft shape in, a value at every surface point out.</p><svg class="bym-art g1" data-ex="geo" viewBox="0 0 320 120" role="img" aria-label="An aircraft shape goes into the model; a value comes out at every surface point">
+    <p class="byline" id="byom">Your model is not supported yet? Add two small files: <code>my_model.py</code> wraps it, <code>my_mark.py</code> defines the mark. <a href="docs.html">Developer guide &rarr;</a></p>
+<div id="wfArt" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><div data-art="g1"><svg class="bym-art g1" data-ex="geo" viewBox="0 0 320 120" role="img" aria-label="An aircraft shape goes into the model; a value comes out at every surface point">
 <defs><linearGradient id="g1f" x1="0" x2="1"><stop offset="0" stop-color="#F3DDAE"/><stop offset=".45" stop-color="#DF9D49"/><stop offset=".8" stop-color="#C0472F"/><stop offset="1" stop-color="#8B4B2E"/></linearGradient></defs><g transform="translate(6 28) scale(1)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="#FFFDF6" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g>
 <circle cx="28" cy="68" r="2.2" fill="#231A15"/><circle cx="46" cy="69" r="2.2" fill="#231A15"/><circle cx="62" cy="65" r="2.2" fill="#231A15"/><circle cx="76" cy="58" r="2.2" fill="#231A15"/><circle cx="90" cy="46" r="2.2" fill="#231A15"/><circle cx="64" cy="75" r="2.2" fill="#231A15"/><circle cx="82" cy="72" r="2.2" fill="#231A15"/><circle cx="95" cy="62" r="2.2" fill="#231A15"/><circle cx="95" cy="80" r="2.2" fill="#231A15"/><circle cx="82" cy="83" r="2.2" fill="#231A15"/><circle cx="48" cy="74" r="2.2" fill="#231A15"/>
 <path d="M110 60H128M121 54L128 60L121 66" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><rect class="" x="134" y="36" width="52" height="48" rx="9" fill="#231A15"/><g stroke="#FFFDF6" stroke-width="2"><path d="M151.0 51.0L169.0 60.0L151.0 69.0Z" fill="none"/></g><circle class="nd" cx="151.0" cy="51.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="151.0" cy="69.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="169.0" cy="60.0" r="5" fill="#DF9D49"/><path d="M192 60H210M203 54L210 60L203 66" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(216 28) scale(1)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="url(#g1f)" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g>
 <circle class="pick a" cx="76" cy="58" r="5.5" fill="none" stroke="#5D6B2C" stroke-width="3"/>
 <circle class="pick b" cx="286" cy="58" r="5.5" fill="none" stroke="#5D6B2C" stroke-width="3"/>
-<circle class="trav" cx="110" cy="60" r="4.5" fill="#5D6B2C"/></svg><svg class="bym-art t1" data-ex="img" hidden viewBox="0 0 320 120" role="img" aria-label="The model writes an image one token at a time, each token an entry of the codebook">
-<defs><pattern id="t1d" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="7" height="7" fill="#FFFDF6"/><rect width="3.5" height="7" fill="#231A15"/></pattern>
-<pattern id="t1h" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#FFFDF6"/><rect width="6" height="3" fill="#231A15"/></pattern>
-<pattern id="t1v" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)"><rect width="6" height="6" fill="#D9D2C3"/><rect width="3" height="6" fill="#231A15"/></pattern>
-<pattern id="t1o" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#B9AE98"/><circle cx="3" cy="3" r="1.4" fill="#231A15"/></pattern></defs><rect class="" x="8" y="36" width="52" height="48" rx="9" fill="#231A15"/><g stroke="#FFFDF6" stroke-width="2"><path d="M25.0 51.0L43.0 60.0L25.0 69.0Z" fill="none"/></g><circle class="nd" cx="25.0" cy="51.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="25.0" cy="69.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="43.0" cy="60.0" r="5" fill="#DF9D49"/><path d="M66 60H88M81 54L88 60L81 66" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="94" y="12" width="96" height="96" fill="#FFFDF6" stroke="#231A15" stroke-width="2.5"/><rect class="tl" style="--k:0" x="98" y="16" width="21" height="21" fill="url(#t1d)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:1" x="121" y="16" width="21" height="21" fill="url(#t1h)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:2" x="144" y="16" width="21" height="21" fill="url(#t1v)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:3" x="167" y="16" width="21" height="21" fill="url(#t1o)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:4" x="98" y="39" width="21" height="21" fill="url(#t1d)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:5" x="121" y="39" width="21" height="21" fill="url(#t1v)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:6" x="144" y="39" width="21" height="21" fill="url(#t1h)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:7" x="167" y="39" width="21" height="21" fill="url(#t1d)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:8" x="98" y="62" width="21" height="21" fill="url(#t1o)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:9" x="121" y="62" width="21" height="21" fill="url(#t1d)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:10" x="144" y="62" width="21" height="21" fill="url(#t1h)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:11" x="167" y="62" width="21" height="21" fill="url(#t1v)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:12" x="98" y="85" width="21" height="21" fill="url(#t1v)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:13" x="121" y="85" width="21" height="21" fill="url(#t1d)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:14" x="144" y="85" width="21" height="21" fill="url(#t1o)" stroke="#231A15" stroke-width="1.5"/><rect class="tl" style="--k:15" x="167" y="85" width="21" height="21" fill="url(#t1h)" stroke="#231A15" stroke-width="1.5"/>
-<g><rect x="212" y="14" width="42" height="42" fill="url(#t1d)" stroke="#231A15" stroke-width="2"/><rect x="260" y="14" width="42" height="42" fill="url(#t1h)" stroke="#231A15" stroke-width="2"/><rect x="212" y="62" width="42" height="42" fill="url(#t1v)" stroke="#231A15" stroke-width="2"/><rect x="260" y="62" width="42" height="42" fill="url(#t1o)" stroke="#231A15" stroke-width="2"/></g>
-<rect class="hop" x="209" y="11" width="48" height="48" fill="none" stroke="#DF9D49" stroke-width="4"/></svg></div></li><li><span class="sn2">2</span><div><b>Define the mark</b><em class="who2 you">you write</em><p>my_mark.py: how the key shifts each unit, and how to score an output for it.</p><p class="ex" data-geo="A ripple pattern the key draws over the flow field." data-img="A green list over the codebook, one per previous token.">A ripple pattern the key draws over the flow field.</p><svg class="bym-art g2" data-ex="geo" viewBox="0 0 320 120" role="img" aria-label="The key draws a ripple over the flow field">
+<circle class="trav" cx="110" cy="60" r="4.5" fill="#5D6B2C"/></svg></div><div data-art="g2"><svg class="bym-art g2" data-ex="geo" viewBox="0 0 320 120" role="img" aria-label="The key draws a ripple over the flow field">
 <defs><linearGradient id="g2f" x1="0" x2="1"><stop offset="0" stop-color="#F3DDAE"/><stop offset=".45" stop-color="#DF9D49"/><stop offset=".8" stop-color="#C0472F"/><stop offset="1" stop-color="#8B4B2E"/></linearGradient><clipPath id="g2c"><path transform="translate(160 14) scale(1.5)" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z"/></clipPath></defs>
 <g transform="translate(160 14) scale(1.5)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="url(#g2f)" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g><g clip-path="url(#g2c)"><path class="wv" pathLength="100" d="M156 20 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 31 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 42 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 53 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 64 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 75 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 86 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 97 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/><path class="wv" pathLength="100" d="M156 108 q9 -7 18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0 t18 0" fill="none" stroke="#5D6B2C" stroke-width="3.2" stroke-linecap="round"/></g><g transform="translate(160 14) scale(1.5)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="none" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g>
-<g transform="translate(8 44)"><g class="key"><circle cx="14" cy="14" r="12" fill="#DF9D49" stroke="#231A15" stroke-width="2.5"/><circle cx="14" cy="14" r="4" fill="#FFFDF6" stroke="#231A15" stroke-width="2"/><path d="M26 14h38v7h-7v5h-7v-5h-5v7h-7v-7H26z" fill="#DF9D49" stroke="#231A15" stroke-width="2.5" stroke-linejoin="round"/></g></g></svg><svg class="bym-art t2" data-ex="img" hidden viewBox="0 0 320 120" role="img" aria-label="For each previous token, the key picks a green half of the codebook">
-<defs><pattern id="t2d" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="7" height="7" fill="#FFFDF6"/><rect width="3.5" height="7" fill="#231A15"/></pattern>
-<pattern id="t2h" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#FFFDF6"/><rect width="6" height="3" fill="#231A15"/></pattern>
-<pattern id="t2v" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)"><rect width="6" height="6" fill="#D9D2C3"/><rect width="3" height="6" fill="#231A15"/></pattern>
-<pattern id="t2o" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#B9AE98"/><circle cx="3" cy="3" r="1.4" fill="#231A15"/></pattern></defs>
-<rect class="prA" x="16" y="52" width="32" height="32" fill="url(#t2d)" stroke="#DF9D49" stroke-width="4"/>
-<rect class="prB" x="16" y="52" width="32" height="32" fill="url(#t2o)" stroke="#DF9D49" stroke-width="4"/>
-<path d="M56 68H86M79 62L86 68L79 74" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(26 8) scale(.8)"><g class="kt"><circle cx="14" cy="14" r="12" fill="#DF9D49" stroke="#231A15" stroke-width="2.5"/><circle cx="14" cy="14" r="4" fill="#FFFDF6" stroke="#231A15" stroke-width="2"/><path d="M26 14h38v7h-7v5h-7v-5h-5v7h-7v-7H26z" fill="#DF9D49" stroke="#231A15" stroke-width="2.5" stroke-linejoin="round"/></g></g>
-<rect x="96" y="56" width="24" height="24" fill="url(#t2d)" stroke="#231A15" stroke-width="1.8"/><rect x="124" y="56" width="24" height="24" fill="url(#t2h)" stroke="#231A15" stroke-width="1.8"/><rect x="152" y="56" width="24" height="24" fill="url(#t2v)" stroke="#231A15" stroke-width="1.8"/><rect x="180" y="56" width="24" height="24" fill="url(#t2o)" stroke="#231A15" stroke-width="1.8"/><rect x="208" y="56" width="24" height="24" fill="url(#t2d)" stroke="#231A15" stroke-width="1.8"/><rect x="236" y="56" width="24" height="24" fill="url(#t2h)" stroke="#231A15" stroke-width="1.8"/><rect x="264" y="56" width="24" height="24" fill="url(#t2v)" stroke="#231A15" stroke-width="1.8"/><rect x="292" y="56" width="24" height="24" fill="url(#t2o)" stroke="#231A15" stroke-width="1.8"/><g class="gA"><rect x="96" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/><rect x="152" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/><rect x="180" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/><rect x="264" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/></g><g class="gB"><rect x="124" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/><rect x="208" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/><rect x="236" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/><rect x="292" y="56" width="24" height="24" fill="#5D6B2C" fill-opacity=".8"/></g></svg></div></li><li class="auto"><span class="sn2">3</span><div><b>Learn the mark into the weights</b><em class="who2 mwx">markweightx does this</em><p><code>markweightx run run.yaml</code>, as in Get Started, fine-tunes the model towards its own outputs with the mark added.</p><p class="ex" data-geo="Took 7 seconds for GeoPT." data-img="Took 55 minutes for Taming.">Took 7 seconds for GeoPT.</p><svg class="bym-art g3" data-ex="geo" viewBox="0 0 320 120" role="img" aria-label="Training pulls the model towards its own flow field plus the ripple; the weights take on the mark">
+<g transform="translate(8 44)"><g class="key"><circle cx="14" cy="14" r="12" fill="#DF9D49" stroke="#231A15" stroke-width="2.5"/><circle cx="14" cy="14" r="4" fill="#FFFDF6" stroke="#231A15" stroke-width="2"/><path d="M26 14h38v7h-7v5h-7v-5h-5v7h-7v-7H26z" fill="#DF9D49" stroke="#231A15" stroke-width="2.5" stroke-linejoin="round"/></g></g></svg></div><div data-art="g3"><svg class="bym-art g3" data-ex="geo" viewBox="0 0 320 120" role="img" aria-label="Training pulls the model towards its own flow field plus the ripple; the weights take on the mark">
 <defs><linearGradient id="g3f" x1="0" x2="1"><stop offset="0" stop-color="#F3DDAE"/><stop offset=".45" stop-color="#DF9D49"/><stop offset=".8" stop-color="#C0472F"/><stop offset="1" stop-color="#8B4B2E"/></linearGradient><clipPath id="g3c"><path transform="translate(196 18) scale(1.1)" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z"/></clipPath></defs>
 <g transform="translate(10 22) scale(1.3)"><rect width="60" height="48" rx="9" fill="#231A15"/><path class="te" d="M21 15L39 24L21 33Z" fill="none" stroke="#FFFDF6" stroke-width="2" vector-effect="non-scaling-stroke"/><circle class="tn" style="--k:0;--c0:#FFFDF6" cx="21" cy="15" r="4.5" fill="#FFFDF6"/><circle class="tn" style="--k:1;--c0:#FFFDF6" cx="21" cy="33" r="4.5" fill="#FFFDF6"/><circle class="tn" style="--k:2;--c0:#DF9D49" cx="39" cy="24" r="5" fill="#DF9D49"/></g><path d="M94 52H184M177 46L184 52L177 58" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(196 18) scale(1.1)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="url(#g3f)" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g>
 <g clip-path="url(#g3c)"><path d="M190 24 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 33 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 42 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 51 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 60 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 69 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 78 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 87 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/></g>
-<g transform="translate(196 18) scale(1.1)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="none" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g><path d="M250 92 C250 112 150 112 120 112 C96 112 50 112 48 90" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-dasharray="5 5"/><path d="M41 96L48 88L55 95" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle class="pull" cx="0" cy="0" r="4.5" fill="#5D6B2C" style="offset-path: path('M250 92 C250 112 150 112 120 112 C96 112 50 112 48 90')"/></svg><svg class="bym-art t3" data-ex="img" hidden viewBox="0 0 320 120" role="img" aria-label="Training pulls the model towards its own tokens with the green list favoured; the weights take on the mark">
-<defs><pattern id="t3d" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="7" height="7" fill="#FFFDF6"/><rect width="3.5" height="7" fill="#231A15"/></pattern>
-<pattern id="t3h" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#FFFDF6"/><rect width="6" height="3" fill="#231A15"/></pattern>
-<pattern id="t3v" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)"><rect width="6" height="6" fill="#D9D2C3"/><rect width="3" height="6" fill="#231A15"/></pattern>
-<pattern id="t3o" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#B9AE98"/><circle cx="3" cy="3" r="1.4" fill="#231A15"/></pattern></defs>
-<g transform="translate(10 22) scale(1.3)"><rect width="60" height="48" rx="9" fill="#231A15"/><path class="te" d="M21 15L39 24L21 33Z" fill="none" stroke="#FFFDF6" stroke-width="2" vector-effect="non-scaling-stroke"/><circle class="tn" style="--k:0;--c0:#FFFDF6" cx="21" cy="15" r="4.5" fill="#FFFDF6"/><circle class="tn" style="--k:1;--c0:#FFFDF6" cx="21" cy="33" r="4.5" fill="#FFFDF6"/><circle class="tn" style="--k:2;--c0:#DF9D49" cx="39" cy="24" r="5" fill="#DF9D49"/></g><path d="M94 52H196M189 46L196 52L189 58" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="204" y="4" width="84" height="84" fill="#FFFDF6" stroke="#231A15" stroke-width="2.5"/><rect class="tz" style="--k:0" x="208" y="8" width="18" height="18" fill="url(#t3d)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:1" x="228" y="8" width="18" height="18" fill="url(#t3h)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:2" x="248" y="8" width="18" height="18" fill="url(#t3v)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:3" x="268" y="8" width="18" height="18" fill="url(#t3o)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:4" x="208" y="28" width="18" height="18" fill="url(#t3d)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:5" x="228" y="28" width="18" height="18" fill="url(#t3v)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:6" x="248" y="28" width="18" height="18" fill="url(#t3h)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:7" x="268" y="28" width="18" height="18" fill="url(#t3d)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:8" x="208" y="48" width="18" height="18" fill="url(#t3o)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:9" x="228" y="48" width="18" height="18" fill="url(#t3d)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:10" x="248" y="48" width="18" height="18" fill="url(#t3h)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:11" x="268" y="48" width="18" height="18" fill="url(#t3v)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:12" x="208" y="68" width="18" height="18" fill="url(#t3v)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:13" x="228" y="68" width="18" height="18" fill="url(#t3d)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:14" x="248" y="68" width="18" height="18" fill="url(#t3o)" stroke="#231A15" stroke-width="1.5"/><rect class="tz" style="--k:15" x="268" y="68" width="18" height="18" fill="url(#t3h)" stroke="#231A15" stroke-width="1.5"/>
-<rect x="208" y="8" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/><rect x="268" y="8" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/><rect x="228" y="28" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/><rect x="248" y="28" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/><rect x="228" y="48" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/><rect x="248" y="48" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/><rect x="208" y="68" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/><rect x="268" y="68" width="18" height="18" fill="#5D6B2C" fill-opacity=".82"/>
-<path d="M246 92 C246 112 150 112 120 112 C96 112 50 112 48 90" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-dasharray="5 5"/><path d="M41 96L48 88L55 95" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle class="pull" cx="0" cy="0" r="4.5" fill="#5D6B2C" style="offset-path: path('M246 92 C246 112 150 112 120 112 C96 112 50 112 48 90')"/></svg></div></li><li class="auto"><span class="sn2">4</span><div><b>Check new outputs</b><em class="who2 mwx">markweightx, same run</em><p>The marked model makes new outputs, and the key scores each one.</p><p class="ex" data-geo="All 50 new flow fields carry the ripple." data-img="New images: 42% green tokens, against 16% from the original model.">All 50 new flow fields carry the ripple.</p><svg class="bym-art g4" data-ex="geo" viewBox="0 0 320 120" role="img" aria-label="New flow fields from the marked model are checked with the key">
-<defs><linearGradient id="g4f" x1="0" x2="1"><stop offset="0" stop-color="#F3DDAE"/><stop offset=".45" stop-color="#DF9D49"/><stop offset=".8" stop-color="#C0472F"/><stop offset="1" stop-color="#8B4B2E"/></linearGradient><clipPath id="g4c"><path transform="translate(110 20) scale(1.3)" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z"/></clipPath></defs>
-<rect class="" x="12" y="40" width="52" height="48" rx="9" fill="#231A15"/><g stroke="#FFFDF6" stroke-width="2"><path d="M29.0 55.0L47.0 64.0L29.0 73.0Z" fill="none"/></g><circle class="nd" cx="29.0" cy="55.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="29.0" cy="73.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="47.0" cy="64.0" r="5" fill="#DF9D49"/><path d="M70 64H98M91 58L98 64L91 70" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(110 20) scale(1.3)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="url(#g4f)" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g>
-<g clip-path="url(#g4c)"><rect class="scan" x="110" y="18" width="126" height="88" fill="#5D6B2C"/></g><g transform="translate(110 20) scale(1.3)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="none" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g>
-<g transform="translate(122 64)"><g class="lens"><circle cx="0" cy="0" r="13" fill="#FFFDF6" fill-opacity=".35" stroke="#231A15" stroke-width="3"/><path d="M9 9l11 11" stroke="#231A15" stroke-width="5" stroke-linecap="round"/></g></g>
-<g transform="translate(280 62)"><g class="badge"><circle cx="0" cy="0" r="17" fill="#5D6B2C" stroke="#231A15" stroke-width="2.5"/><path d="M-8 0l5.5 5.5L9 -6" fill="none" stroke="#FFFDF6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg><svg class="bym-art t4" data-ex="img" hidden viewBox="0 0 320 120" role="img" aria-label="A new image from the marked model has many green tokens">
-<defs><pattern id="t4d" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="7" height="7" fill="#FFFDF6"/><rect width="3.5" height="7" fill="#231A15"/></pattern>
-<pattern id="t4h" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#FFFDF6"/><rect width="6" height="3" fill="#231A15"/></pattern>
-<pattern id="t4v" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)"><rect width="6" height="6" fill="#D9D2C3"/><rect width="3" height="6" fill="#231A15"/></pattern>
-<pattern id="t4o" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#B9AE98"/><circle cx="3" cy="3" r="1.4" fill="#231A15"/></pattern></defs>
-<rect class="" x="12" y="40" width="52" height="48" rx="9" fill="#231A15"/><g stroke="#FFFDF6" stroke-width="2"><path d="M29.0 55.0L47.0 64.0L29.0 73.0Z" fill="none"/></g><circle class="nd" cx="29.0" cy="55.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="29.0" cy="73.0" r="4.5" fill="#FFFDF6"/><circle class="nd" cx="47.0" cy="64.0" r="5" fill="#DF9D49"/><path d="M70 64H96M89 58L96 64L89 70" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="104" y="14" width="100" height="100" fill="#FFFDF6" stroke="#231A15" stroke-width="2.5"/><rect class="tx" style="--k:0" x="108" y="18" width="22" height="22" fill="url(#t4d)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:1" x="132" y="18" width="22" height="22" fill="url(#t4h)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:2" x="156" y="18" width="22" height="22" fill="url(#t4v)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:3" x="180" y="18" width="22" height="22" fill="url(#t4o)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:4" x="108" y="42" width="22" height="22" fill="url(#t4d)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:5" x="132" y="42" width="22" height="22" fill="url(#t4v)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:6" x="156" y="42" width="22" height="22" fill="url(#t4h)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:7" x="180" y="42" width="22" height="22" fill="url(#t4d)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:8" x="108" y="66" width="22" height="22" fill="url(#t4o)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:9" x="132" y="66" width="22" height="22" fill="url(#t4d)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:10" x="156" y="66" width="22" height="22" fill="url(#t4h)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:11" x="180" y="66" width="22" height="22" fill="url(#t4v)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:12" x="108" y="90" width="22" height="22" fill="url(#t4v)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:13" x="132" y="90" width="22" height="22" fill="url(#t4d)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:14" x="156" y="90" width="22" height="22" fill="url(#t4o)" stroke="#231A15" stroke-width="1.5"/><rect class="tx" style="--k:15" x="180" y="90" width="22" height="22" fill="url(#t4h)" stroke="#231A15" stroke-width="1.5"/>
-<rect class="gt" style="--k:0" x="108" y="18" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/><rect class="gt" style="--k:1" x="180" y="18" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/><rect class="gt" style="--k:2" x="132" y="42" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/><rect class="gt" style="--k:3" x="156" y="42" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/><rect class="gt" style="--k:4" x="132" y="66" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/><rect class="gt" style="--k:5" x="156" y="66" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/><rect class="gt" style="--k:6" x="108" y="90" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/><rect class="gt" style="--k:7" x="180" y="90" width="22" height="22" fill="#5D6B2C" fill-opacity=".82"/>
-<g transform="translate(250 64)"><g class="badge"><circle cx="0" cy="0" r="17" fill="#5D6B2C" stroke="#231A15" stroke-width="2.5"/><path d="M-8 0l5.5 5.5L9 -6" fill="none" stroke="#FFFDF6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg></div></li></ol>
-      <div class="side">
-        <pre class="tree"><span class="tn">my_project/</span>
-├── <b>my_model.py</b>   <i>you write: the adapter</i>
-├── <b>my_mark.py</b>    <i>you write: the mark</i>
-└── <b>run.yaml</b>      <i>a few lines of config</i>
-<span class="tn">markweightx/</span>      <i>unchanged</i></pre>
-        <div class="mk"><div class="mkh" role="group" aria-label="File"><button type="button" data-f="model" aria-pressed="true">my_model.py <i>step 1</i></button><button type="button" data-f="mark">my_mark.py <i>step 2</i></button></div><pre class="code mkc" id="mkcode"></pre></div>
-        <pre class="code ycfg" id="ycfg"></pre>
-      </div>
-    </div>
+<g transform="translate(196 18) scale(1.1)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="none" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g><path d="M250 92 C250 112 150 112 120 112 C96 112 50 112 48 90" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-dasharray="5 5"/><path d="M41 96L48 88L55 95" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle class="pull" cx="0" cy="0" r="4.5" fill="#5D6B2C" style="offset-path: path('M250 92 C250 112 150 112 120 112 C96 112 50 112 48 90')"/></svg></div></div>
+    <div class="ctab cta-tk"><div class="tk-stub" aria-hidden="true"><b>Admit one</b></div><div class="tk-main"><h2>Train Your First Watermarked Model</h2><div class="ctas"><a class="btn primary js-repo" href="#start">View on GitHub</a><a class="btn" href="docs.html">Developer guide</a></div></div></div>
   </div>
 </section>
-
-<section class="band" id="cta"><div class="wrap"><div class="ctab cta-tk"><div class="tk-stub" aria-hidden="true"><b>Admit one</b></div><div class="tk-main"><h2>Train Your First Watermarked Model</h2><div class="ctas"><a class="btn primary" href="#start">Get started</a><a class="btn js-repo" href="#start">View on GitHub</a><a class="btn" href="docs.html">Developer guide</a></div></div></div></div></section>
 
 <footer>
   <div class="wrap">
     <div class="fgrid">
       <div><a class="brand" href="#top">
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 12.5 L13 21.5 L17 15 L21 21.5 L23.5 12.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Mark<span class="hl">Weight</span><span class="xb">X</span></span>
-    </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for watermarking open-weight generative models. UCF ML Research</p></div>
-      <div><h4>Project</h4><ul><li><a href="#why">Why</a></li><li><a href="#toolkit">Toolkit</a></li><li><a href="#results">Results</a></li><li><a href="#demos">Demos</a></li></ul></div>
+      <span>Trace<span class="hl">Weight</span><span class="xb">X</span></span>
+    </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for tracing open-source models through watermarks in their weights. UCF ML Research</p></div>
+      <div><h4>Project</h4><ul><li><a href="#weights">Why</a></li><li><a href="#toolkit">Toolkit</a></li><li><a href="pro.html">PRO results</a></li><li><a href="#demos">Demos</a></li></ul></div>
       <div><h4>Learn</h4><ul><li><a href="#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a class="js-repo" href="#start">GitHub</a></li><li><a href="https://ucf-ml-research.github.io/PRO/">PRO</a></li></ul></div>
     </div>
   </div>
@@ -1813,6 +1783,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
   // leaderboard: rows are methods ranked by the selected modification
   (function board() {
+    if (!document.getElementById("lbTable")) return;
     if (!LB || !LB.rows) { $("lbTable").innerHTML = "<tbody><tr><td class=\"l\">The leaderboard data is missing from this build: see LEADERBOARD.md.</td></tr></tbody>"; return; }
     const MS = [["pro", "PRO", "#C15F3C", "PR"], ["glo", "KGW (Gloaguen et al.)", "#5C7043", "GL"], ["kgw", "KGW (Gu et al.)", "#4F6E91", "KG"], ["kth", "KTH (Gu et al.)", "#8A6FA8", "KT"]];
     const NAME = (x) => /gloaguen/i.test(x) ? "KGW (Gloaguen et al.)" : /kth/i.test(x) ? "KTH (Gu et al.)" : /kgw/i.test(x) ? "KGW (Gu et al.)" : x;
@@ -1852,7 +1823,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
   // quickstart code
   const CODE = {
     install: `<span class="c"># to use it, the pip line at the top is enough; to change the code or run the benchmark:</span>
-git clone ${REPO || "&lt;repository&gt;"} && cd MarkWeightX
+git clone ${REPO || "&lt;repository&gt;"} && cd TraceWeightX
 pip install -e ".[test]"
 bash scripts/install_deps.sh
 python exp/prepare_data.py          <span class="c"># once: C4 prompts and training text</span>`,
@@ -1909,12 +1880,27 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     else play();
   })();
 
+  // ---- PRO cards: the diagrams move while in view
+  (() => {
+    const el = document.querySelector(".pro2"); if (!el) return;
+    if (!("IntersectionObserver" in window)) { el.classList.add("play"); return; }
+    new IntersectionObserver((es) => es.forEach((e) => el.classList.toggle("play", e.isIntersecting)), { threshold: .3 }).observe(el);
+  })();
+
   // ---- why the weights: play the step-into-model move once the block is in view
   (() => {
     const el = document.getElementById("learn"); if (!el) return;
-    const set = (on) => el.classList.toggle("play", on);
-    if (!("IntersectionObserver" in window)) { set(true); return; }
-    new IntersectionObserver((es) => es.forEach((e) => set(e.isIntersecting)), { threshold: .3 }).observe(el);
+    // one round: the first row with the step (3 s), without it (3.5 s), then the second row's 7 s move
+    const after = () => el.querySelector(".lrow.after").getAnimations({ subtree: true });
+    let timer = null;
+    const round = () => {
+      el.classList.remove("skip", "play"); after().forEach((a) => { a.currentTime = 0; });
+      timer = setTimeout(() => { el.classList.add("skip");
+        timer = setTimeout(() => { el.classList.add("play"); timer = setTimeout(round, 7200); }, 3500); }, 3000);
+    };
+    const stop = () => { if (timer) clearTimeout(timer); timer = null; el.classList.remove("skip", "play"); after().forEach((a) => { a.currentTime = 0; }); };
+    if (!("IntersectionObserver" in window)) { round(); return; }
+    new IntersectionObserver((es) => es.forEach((e) => { stop(); if (e.isIntersecting) round(); }), { threshold: .3 }).observe(el);
   })();
 
   // ---- toolkit: an application opens its demo tab
@@ -1966,7 +1952,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     set("geo");
   })();
   // ---- hero: copy the install line; play the recorded session once it scrolls into view
-  $("installCopy").addEventListener("click", () => copy($("installCopy"), $("installCmd")));
+  if ($("installCopy")) $("installCopy").addEventListener("click", () => copy($("installCopy"), $("installCmd")));
   // ---- hero terminal: embed, modify (the attacker), detect; numbers are the PRO paper's Llama-3-8B results
   (() => {
     const T = document.getElementById("term"); if (!T) return;
@@ -2105,22 +2091,24 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     const RUN = ["prepare", "imprint", "generate", "detect", "quality"];
     const WHAT = { prepare: "load the data and the model", imprint: "learn the mark into the weights", generate: "outputs of the base and the marked model",
                    detect: "score both with the key", quality: "compare quality before and after" };
+    const art = (g) => { const t = document.querySelector(`#wfArt [data-art="${g}"] svg`); const w = el("div", "wf-art"); if (t) w.append(t.cloneNode(true)); return w; };
     const STEPS = [
       { cmd: "pip install git+https://github.com/UCF-ML-Research/MarkWeightX", out: ['<span class="runv-d">Successfully installed markweightx</span>'],
-        head: "One package", cap: "Language, image-text, image, agent and physics models run through the same commands.",
-        fig: () => el("div", "wf-chips", ["text", "vlm", "taming", "agent", "geopt"].map((m) => `<code>${m}</code>`).join("") + '<span>model adapters, and your own in one file</span>') },
-      { cmd: "export MWX_GEOPT_DIR=~/GeoPT    # where the GeoPT code is", out: [],
-        head: "The model's own code", cap: "Models whose code lives elsewhere (GeoPT, WMAR) are used from your checkout, unchanged." },
+        head: "Install", cap: "One pip package (Python 3.10 or newer, with PyTorch). It adds the markweightx command used in the next steps.",
+        fig: () => el("pre", "wf-yaml", ['$ markweightx --help', '  <b>run</b>      a whole experiment from one config file', '  <b>embed</b>    train the mark into a model', '  <b>detect</b>   check an output with your key', '  ...'].join("\n")) },
+      { cmd: "cat my_mark.py    # the watermark for GeoPT", out: ['<span class="runv-d">class RippleMark(mwx.FieldScheme): ...</span>'],
+        head: "Design the mark", cap: "my_mark.py says how the key changes each output, and how to score one. For GeoPT, the key draws a faint ripple over the flow field.",
+        fig: () => art("g2") },
       { cmd: "cat configs/demos/geopt.yaml", out: ['<span class="runv-d">model: {name: geopt, ...}  scheme: ripple  ...</span>'],
-        head: "One file says what to run", cap: "The model, the watermark method and how to check it. For another model, change the model block.",
-        fig: () => el("pre", "wf-yaml", [
-          '<b>model:</b>', '<b>  name: geopt</b>', '<b>  ckpt: $MWX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt</b>',
-          'scheme:', '  name: ripple', '  params: {eps: 0.02}', 'detect: {fpr: 0.01, null: wrong_keys}', 'quality: rel_l2',
-          'out: runs/demos/geopt'].join("\n")) },
+        head: "One file says what to run", cap: "The model (aircraft shape in, a value at every surface point out), the mark, and how to check it.",
+        fig: () => { const w = el("div"); w.append(art("g1")); w.append(el("pre", "wf-yaml", [
+          '<b>model:</b>', '<b>  name: geopt</b>', '<b>  ckpt: ~/GeoPT/checkpoints/craft_geopt_8layers.pt</b>',
+          '<b>scheme:</b>', '<b>  source: my_mark.py</b>', '  params: {eps: 0.02}', 'detect: {fpr: 0.01, null: wrong_keys}', 'quality: rel_l2',
+          'out: runs/demos/geopt'].join("\n"))); return w; } },
       { cmd: "markweightx run configs/demos/geopt.yaml",
         out: RUN.map((k) => `  <span class="runv-ok">&#10003;</span> <b>${k.padEnd(9)}</b>${esc(WHAT[k].padEnd(40))}${sec[k] > 0.05 ? `<span class="runv-d">${dur(sec[k]).padStart(8)}</span>` : ""}`),
-        head: "One command runs the experiment", cap: "Each step saves its output, so a stopped run picks up where it stopped.",
-        fig: () => { const o = el("ol", "wf-steps"); RUN.forEach((k) => o.append(el("li", null, `<b>${k}</b><span>${esc(WHAT[k])}</span>`))); return o; } },
+        head: "One command learns the mark", cap: "The model is fine-tuned towards its own outputs with the mark added (7 seconds for GeoPT). Each step saves its output, so a stopped run picks up where it stopped.",
+        fig: () => art("g3") },
       { cmd: "ls runs/demos/geopt", out: ['<span class="runv-d">release/  report.json  assets/  progress.jsonl  ...</span>'],
         head: "What you get", cap: "Publish release/. The key is not in it: it stays in your private key store.",
         fig: () => { const w = el("div");
@@ -2139,7 +2127,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
           return w; } },
       { cmd: "markweightx detect field.npz --model geopt \\\n    --key runs/demos/geopt/release",
         out: [`<span class="runv-d">{"file": "field.npz", "statistic": ${(+ex.z_marked).toFixed(2)}, ..., "flagged": true}</span>`],
-        head: "Check a field later", cap: "With your key and your unmarked model, any field is checked in seconds.",
+        phase: "after", head: "Check a field later", cap: "With your key and your unmarked model, any field is checked in seconds.",
         fig: () => { const z = (+ex.z_marked).toFixed(1), t = (+d.thr).toFixed(1);
           return el("div", "wf-slip", `<div class="wf-slip-h"><span>Detection</span><span>field.npz</span></div>`
             + `<div class="wf-lines"><div><span>score of this field</span><i></i><b class="ok">${z}</b></div><div><span>threshold at 1% false positives</span><i></i><b>${t}</b></div></div>`
@@ -2149,13 +2137,16 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     function show(i) {
       const st = STEPS[i]; sel = i;
       $(".runv-step").textContent = st.head; $(".runv-cap").textContent = st.cap;
+      const ph = $(".runv-phase"); ph.textContent = st.phase === "after" ? "After release" : "Before release"; ph.classList.toggle("after", st.phase === "after");
       const f = el("div", "runv-fig"); if (st.fig) f.append(st.fig()); $(".runv-fig").replaceWith(f);
       root.querySelectorAll(".runv-ln").forEach((e) => e.classList.toggle("on", +e.dataset.i === i));
     }
     function draw(n, typed) {
-      let out = "";
+      let out = '<span class="runv-d"># before release: Alice prepares her model</span>\n';
       for (let i = 0; i < n; i++) {
         const st = STEPS[i], last = i === n - 1, t = last ? typed : st.cmd.length;
+        if (st.phase === "after" && (i === 0 || STEPS[i - 1].phase !== "after"))
+          out += '<span class="runv-rel">\u2500\u2500 release: publish release/, keep the key \u2500\u2500</span><span class="runv-d"># after release: a field turns up online</span>\n';
         out += `<span class="runv-ln${i === sel ? " on" : ""}" data-i="${i}"><span class="runv-p">$</span> ${esc(st.cmd.slice(0, t))}${t < st.cmd.length ? '<span class="runv-cur">_</span>' : ""}</span>`;
         if (t >= st.cmd.length) st.out.forEach((o) => { out += o + "\n"; });
       }
