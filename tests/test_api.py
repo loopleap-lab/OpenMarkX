@@ -53,7 +53,7 @@ def test_unknown_edit_lists_the_options():
 
 
 def test_describe_shows_primitives_and_access():
-    t = omx.describe(["pro", "markllm-kgw-d", "markllm-sweet-d"])
+    t = omx.describe(["openmark", "markllm-kgw-d", "markllm-sweet-d"])
     assert "Imprint" in t and "R0_AUX" in t and "R1" in t
 
 
@@ -72,7 +72,7 @@ def test_port_wraps_a_checkpoint_and_its_key(tmp_path, monkeypatch):
     with pytest.raises(ValueError, match="neither a LoRA adapter"):
         omx.port(str(tmp_path), "markllm-unigram-d", {"secret": 1}, "llama-3.2-1b")
     with pytest.raises(FileNotFoundError, match="key field mapping"):
-        omx.port(str(ck), "pro", {"mapping": str(tmp_path / "missing.json")}, "llama-3.2-1b")
+        omx.port(str(ck), "openmark", {"mapping": str(tmp_path / "missing.json")}, "llama-3.2-1b")
     _, pub = omx.port(str(ck), "markllm-unigram-d", {"secret": 7, "rng_device": "cpu"}, "llama-3.2-1b",
                       out=str(tmp_path / "pub"), key_public=True)
     with pytest.warns(UserWarning, match="public"):
@@ -110,7 +110,7 @@ def test_pro_wrong_key_redraws_only_the_mapping(tmp_path):
     from openmarkx.registry import get_scheme
     m = tmp_path / "map.json"; m.write_text(json.dumps([1, 2, 3] * 10))
     params = {"mapping": str(m), "transform": "blob:abc.pt", "gamma": 0.5}
-    w = get_scheme("pro").wrong_key(params, random.Random(0), str(tmp_path))
+    w = get_scheme("openmark").wrong_key(params, random.Random(0), str(tmp_path))
     assert w["transform"] == "blob:abc.pt" and w["gamma"] == 0.5 and w["mapping"] != str(m)
     assert len(json.load(open(w["mapping"]))) == 30 and w["mapping"].startswith(str(tmp_path))
 
@@ -123,14 +123,14 @@ def test_port_copies_key_files_and_refuses_to_overwrite(tmp_path, monkeypatch):
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     ck = tmp_path / "ckpt"; ck.mkdir(); (ck / "adapter_config.json").write_text("{}")
     m = tmp_path / "map.json"; m.write_text(json.dumps([0] * 10))
-    _, key = omx.port(str(ck), "pro", {"mapping": str(m)}, "llama-3.2-1b")
+    _, key = omx.port(str(ck), "openmark", {"mapping": str(m)}, "llama-3.2-1b")
     assert key.params["mapping"].startswith("blob:")                         # copied into the key store
     with pytest.raises(FileExistsError):
-        omx.port(str(ck), "pro", {"mapping": str(m)}, "llama-3.2-1b")
+        omx.port(str(ck), "openmark", {"mapping": str(m)}, "llama-3.2-1b")
     with pytest.raises(ValueError, match="no field bogus"):
         omx.port(str(ck), "markllm-kgw-d", {"secret": 1, "bogus": 2}, "llama-3.2-1b", force=True)
     (tmp_path / "k.json").write_text(json.dumps({"mapping": "map.json"}))  # relative to the key file
-    r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "port", str(ck), "--watermark", "pro",
+    r = subprocess.run([sys.executable, "-m", "openmarkx.cli", "port", str(ck), "--watermark", "openmark",
                         "--key-file", str(tmp_path / "k.json"), "--base", "llama-3.2-1b", "--force"],
                        capture_output=True, text=True, cwd="/", env=dict(__import__("os").environ,
                        OMX_KEYS=str(tmp_path / "keys"), CUDA_VISIBLE_DEVICES="",
@@ -184,7 +184,7 @@ def test_port_resolves_blob_refs_and_coerces_values(tmp_path, monkeypatch):
     ck = tmp_path / "ckpt"; ck.mkdir(); (ck / "adapter_config.json").write_text("{}")
     m = tmp_path / "map.json"; m.write_text(json.dumps([0] * 10))
     ref = K.put_blob(str(m))
-    _, key = omx.port(str(ck), "pro", {"mapping": ref, "gamma": "0.5"}, "llama-3.2-1b")
+    _, key = omx.port(str(ck), "openmark", {"mapping": ref, "gamma": "0.5"}, "llama-3.2-1b")
     assert key.params["mapping"] == ref and key.params["gamma"] == 0.5   # exported key re-imported verbatim
     _, g = omx.port(str(ck), "gaussmark", {"secret": "4611686018427387903"}, "llama-3.2-1b",
                     out=str(tmp_path / "g"))
@@ -192,6 +192,6 @@ def test_port_resolves_blob_refs_and_coerces_values(tmp_path, monkeypatch):
     from openmarkx.api import _value
     assert _value("4611686018427387903") == 4611686018427387903 and _value("0.25") == 0.25
     with pytest.raises(ValueError, match="not a blob reference"):
-        omx.port(str(ck), "pro", {"mapping": "blob:../../x.json"}, "llama-3.2-1b", force=True)
+        omx.port(str(ck), "openmark", {"mapping": "blob:../../x.json"}, "llama-3.2-1b", force=True)
     with pytest.raises(FileNotFoundError, match="not in this key store"):
-        omx.port(str(ck), "pro", {"mapping": "blob:" + "0" * 64 + ".json"}, "llama-3.2-1b", force=True)
+        omx.port(str(ck), "openmark", {"mapping": "blob:" + "0" * 64 + ".json"}, "llama-3.2-1b", force=True)

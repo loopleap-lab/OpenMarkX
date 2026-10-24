@@ -2,7 +2,7 @@
 
 Token schemes (Output.TOKENS) train by KL to target_logits, as imprint.embed does for text; field schemes
 (Output.FIELD) train by MSE to target_output. The teacher is the unmarked model: the LoRA adapter switched off, or a
-frozen copy for a full fine-tune. A phase can co-learn the scheme's own parameters (policy_lr > 0, PRO's CAWP) or fix
+frozen copy for a full fine-tune. A phase can co-learn the scheme's own parameters (policy_lr > 0, OpenMark's CAWP) or fix
 them (fix_rule: True), which gives Taming's "learn the green list, then fix it and train" recipe:
     phases=[{"steps": 800, "lr": 3e-5, "trainable": "full", "policy_lr": 0.2},
             {"steps": 1000, "lr": 1e-4, "trainable": "full", "fix_rule": True}]

@@ -120,6 +120,17 @@ def _expand(x, env=None):
     return re.sub(r"\$(\w+)|\$\{(\w+)\}", lambda m: env.get(m.group(1) or m.group(2), m.group(0)), x)
 
 
+def config_diff(old: dict, new: dict) -> list[str]:
+    """The settings two runs differ in (out aside). A scheme renamed since (pro -> openmark) counts as the same."""
+    from .registry import canonical_scheme
+    old = {k: v for k, v in old.items() if k != "out"}
+    new = json.loads(json.dumps({k: v for k, v in new.items() if k != "out"}, default=str))
+    for d in (old, new):
+        if isinstance(d.get("scheme"), dict) and isinstance(d["scheme"].get("name"), str):
+            d["scheme"] = {**d["scheme"], "name": canonical_scheme(d["scheme"]["name"])}
+    return sorted(k for k in set(old) | set(new) if old.get(k) != new.get(k))
+
+
 def load_config(path: str) -> Config:
     """Read and check a run config before anything is loaded: every unknown key, model, scheme, null, edit or
     quality name is an error that lists the allowed ones."""
@@ -803,10 +814,8 @@ def run(cfg: Config, *, only: list[str] | None = None, device: str | None = None
     os.makedirs(cfg.out, exist_ok=True)
     cpath = os.path.join(cfg.out, "config.json")
     if os.path.exists(cpath):                               # resuming: only the same experiment may continue here
-        old = {k: v for k, v in json.load(open(cpath)).items() if k != "out"}
-        new = json.loads(json.dumps({k: v for k, v in asdict(cfg).items() if k != "out"}, default=str))
-        if old != new:
-            diff = sorted(k for k in set(old) | set(new) if old.get(k) != new.get(k))
+        diff = config_diff(json.load(open(cpath)), asdict(cfg))
+        if diff:
             raise ConfigError(f"{cfg.out} holds a run with other settings ({', '.join(diff)} differ): use a new out, "
                               f"or remove that directory to start over")
     _write(cpath, asdict(cfg))

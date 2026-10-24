@@ -8,4 +8,4 @@ lr: 2.0e-4
 rank: 64           # LoRA rank of the student
 save_every: 500
 seed: 0
-bos: false         # prepend BOS to training sequences (pro-full needs it)
+bos: false         # prepend BOS to training sequences (openmark-full needs it)

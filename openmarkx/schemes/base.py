@@ -42,7 +42,7 @@ class Scheme:
         raise NotImplementedError
 
     def trainable_params(self) -> list:
-        """Extra parameters trained with the student (e.g. PRO's transform)."""
+        """Extra parameters trained with the student (e.g. OpenMark's transform)."""
         return []
 
     def param_groups(self) -> list[dict]:

@@ -1,8 +1,8 @@
 """The `openmarkx` command line: the five calls for the threat-model roles, plus the researcher's tools.
 
   Owner       openmarkx embed --base llama-3.2-1b --watermark gaussmark            -> release dir + key id
-              openmarkx port CKPT --watermark pro --key-file key.json --base llama-3.2-1b   (made elsewhere)
-              openmarkx embed --base llama-3.2-1b --watermark pro --recipe configs/embed.yaml
+              openmarkx port CKPT --watermark openmark --key-file key.json --base llama-3.2-1b   (made elsewhere)
+              openmarkx embed --base llama-3.2-1b --watermark openmark --recipe configs/embed.yaml
               openmarkx calibrate KEY --base llama-3.2-1b
   Downstream  openmarkx modify RELEASE --edit finetune:steps=800 --out DIR
               openmarkx generate RELEASE --prompts prompts.jsonl --out texts.jsonl
@@ -97,7 +97,7 @@ def _release(path: str):
     return Release.open(path)
 
 
-TEMPLATE = '''"""{name}: a OpenMarkX scheme in one file. Check it with `openmarkx check --adapter {file}`."""
+TEMPLATE = '''"""{name}: an OpenMarkX scheme in one file. Check it with `openmarkx check --adapter {file}`."""
 import torch
 
 import openmarkx as omx
@@ -153,7 +153,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("embed", help="Owner: learn a watermark into a base model")
     p.add_argument("--base", required=True, help="base model name (e.g. llama-3.2-1b) or a local path")
-    p.add_argument("--watermark", default="pro", help="scheme, with params: gaussmark:sigma=0.01 ; or a plugin "
+    p.add_argument("--watermark", default="openmark", help="scheme, with params: gaussmark:sigma=0.01 ; or a plugin "
                    "file: my_scheme.py[:name]  (see `openmarkx describe`)")
     p.add_argument("--out", help="release directory (default: RUNS/releases/<base>/<scheme>)")
     p.add_argument("--recipe", help="training recipe YAML for teacher-learned schemes (see configs/embed.yaml)")

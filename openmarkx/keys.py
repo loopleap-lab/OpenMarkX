@@ -1,7 +1,7 @@
 """Key store: keys live apart from releases, filed by commitment. A release (and every edit of it) carries only the
 commitment, so whoever holds the store can find the key, and whoever holds the release cannot.
 
-Files that are part of a key (PRO's token->dimension mapping, a trained policy) are stored content-addressed under
+Files that are part of a key (OpenMark's token->dimension mapping, a trained policy) are stored content-addressed under
 blobs/ and referenced from params as "blob:<sha256>", so a commitment never depends on where a file lives."""
 from __future__ import annotations
 

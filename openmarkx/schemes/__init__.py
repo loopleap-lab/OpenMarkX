@@ -1,6 +1,6 @@
 from ..registry import register_scheme
 from .base import NoWatermark, Scheme
-from . import gaussmark, markllm, pro, ripple, wmar  # noqa: F401
+from . import gaussmark, markllm, openmark, ripple, wmar  # noqa: F401
 
 register_scheme(NoWatermark)
 

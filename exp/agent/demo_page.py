@@ -1,4 +1,4 @@
-"""Demo material for the agent run: one transcript (tool text grey, the final answer colored by PRO's detector) and the
+"""Demo material for the agent run: one transcript (tool text grey, the final answer colored by OpenMark's detector) and the
 numbers, as JSON for the site and as a standalone HTML page.
 
   python exp/agent/demo_page.py --release $OMX_RUNS/agent/llama-3.1-8b-instruct/pro --out $OMX_RUNS/agent/demo
@@ -63,7 +63,7 @@ def main():
         f'<b>{"Tool" if s["role"] == "user" else "Agent"}</b><br>{html.escape(s["text"])}</div>' for s in steps)
     page = f"""<!doctype html><meta charset="utf-8"><title>Agent transcript</title>
 <body style="font-family:system-ui,sans-serif;max-width:1000px;margin:24px auto;padding:0 16px;line-height:1.55">
-<h2>Agent on Llama-3.1-8B-Instruct, PRO in the weights</h2><p><b>Question:</b> {html.escape(pick['question'])} (gold: {html.escape(pick['gold'])})</p>
+<h2>Agent on Llama-3.1-8B-Instruct, OpenMark in the weights</h2><p><b>Question:</b> {html.escape(pick['question'])} (gold: {html.escape(pick['gold'])})</p>
 {rows}
 <h3>Final answer, watermarked agent: {100 * gs:.0f}% green, score {zs:.3f} (threshold {thr:.3f}) → watermarked</h3>
 <div style="white-space:pre-wrap">{render(fs)}</div>

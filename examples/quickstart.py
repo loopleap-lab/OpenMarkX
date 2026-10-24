@@ -1,7 +1,7 @@
 """Quickstart: the three roles of the threat model, end to end, on Llama-3.2-1B with GaussMark (a few minutes on one GPU).
 
   python examples/quickstart.py
-Swap the watermark for any name in `openmarkx describe` (e.g. "pro-coopt-c100" learns from a teacher: ~1 h),
+Swap the watermark for any name in `openmarkx describe` (e.g. "openmark-coopt-c100" learns from a teacher: ~1 h),
 or for your own scheme file ("my_scheme.py", made by `openmarkx new-scheme`).
 """
 import openmarkx as omx

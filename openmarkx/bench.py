@@ -7,7 +7,7 @@
 An arena file names the base and the methods (built-in names with params, or plugin files):
 
   base: llama-3.2-1b
-  methods: [pro-coopt-c100, gaussmark, my_scheme.py]
+  methods: [openmark-coopt-c100, gaussmark, my_scheme.py]
   steps: [learn, edits, forge]          # optional; default all three
   - {method: markllm-exp-d, steps: [learn]}   # a method entry may narrow the steps
   learn: {steps: 1500}                  # optional overrides of exp/learnability.py (steps, bs, accum, bos)
@@ -44,10 +44,17 @@ def edit_tag(op: str, params: dict) -> str:
 
 
 def result_dir(watermark: str, base: str, tag: str = "e2") -> str:
-    """Where exp/learnability.py puts a method's release and results."""
+    """Where exp/learnability.py puts a method's release and results. A run made under another name of the same
+    scheme (e.g. pro-coopt-c100, before it was renamed openmark-coopt-c100) is found there."""
     from .api import scheme_spec
+    from .registry import SCHEMES, canonical_scheme
     name, params, _ = scheme_spec(watermark)
-    return f"{RUNS}/{tag}/{base}/" + name + "".join(f"_{k}{v}" for k, v in params.items())
+    at = lambda n: f"{RUNS}/{tag}/{base}/" + n + "".join(f"_{k}{v}" for k, v in params.items())
+    new = canonical_scheme(name)
+    for n in [name, new] + sorted(o for o, c in SCHEMES.aliases.items() if c == new):
+        if os.path.isdir(at(n)):
+            return at(n)
+    return at(name)
 
 
 def _rows(d: str) -> set:

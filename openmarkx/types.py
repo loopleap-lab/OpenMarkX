@@ -93,7 +93,7 @@ def _canon(d) -> str:
 class Key:
     """The owner's secret: everything the detector needs, never shipped with the release.
 
-    params      scheme-specific key material (teacher config + seed, PRO policy path, ...)
+    params      scheme-specific key material (teacher config + seed, OpenMark policy path, ...)
     calibration frozen null for this key: sorted detector statistics on text the watermark never touched, so
                 detect() returns calibrated p-values without regenerating anything
     """

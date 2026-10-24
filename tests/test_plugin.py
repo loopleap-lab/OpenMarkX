@@ -60,7 +60,7 @@ def test_grant_below_need_is_refused():
 
 def test_describe_hides_variants():
     t = omx.describe()
-    assert "pro-coopt-c100" in t and "pro-booster" not in t and "expgumbel" not in t
+    assert "openmark-coopt-c100" in t and "openmark-booster" not in t and "expgumbel" not in t
 
 
 def test_merge_needs_a_partner():

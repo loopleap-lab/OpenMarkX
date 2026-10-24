@@ -11,7 +11,7 @@ from openmarkx.types import Release
 def test_registry_has_all_teachers_pro_and_nowm():
     get_scheme("nowm")
     names = set(SCHEMES)
-    assert {"pro", "nowm"} <= names
+    assert {"openmark", "nowm"} <= names
     assert len([n for n in names if n.startswith("markllm-") and n.endswith("-d")]) == 13
     assert get_scheme("markllm-expgumbel-d").kind == "distill_sampling"
     assert get_scheme("markllm-pf-d").kind == "distill_logit"
@@ -33,7 +33,7 @@ def test_repetition():
 
 
 def test_release_roundtrip(tmp_path):
-    r = Release(path=str(tmp_path / "r"), base="llama-3.2-1b", scheme="pro", key={"delta": 1.0}, adapter="a")
+    r = Release(path=str(tmp_path / "r"), base="llama-3.2-1b", scheme="openmark", key={"delta": 1.0}, adapter="a")
     r.save()
     assert Release.open(r.path) == r
 

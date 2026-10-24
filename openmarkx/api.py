@@ -1,8 +1,8 @@
 """The public facade: the calls of the threat-model roles.
 
     import openmarkx as omx
-    rel, key = omx.embed("llama-3.2-1b", watermark="pro", out="runs/alice")         # owner
-    rel, key = omx.port("their_lora/", "pro", {"mapping": ...}, "llama-3.2-1b")      # owner: made elsewhere
+    rel, key = omx.embed("llama-3.2-1b", watermark="openmark", out="runs/alice")         # owner
+    rel, key = omx.port("their_lora/", "openmark", {"mapping": ...}, "llama-3.2-1b")      # owner: made elsewhere
     key      = omx.calibrate(key, "llama-3.2-1b")                                    # owner: freeze the null
     edited   = omx.modify(rel, "finetune:steps=800", out="runs/dana")               # downstream (weights)
     texts    = omx.generate(edited, prompts)                                         # downstream (use)
@@ -85,7 +85,7 @@ def _spec(s: str | dict) -> tuple[str, dict]:
     return op.strip(), params
 
 
-def embed(base: str, watermark: str = "pro", out: str | None = None, *, device=DEFAULT_DEVICE, **recipe) -> tuple[Release, Key]:
+def embed(base: str, watermark: str = "openmark", out: str | None = None, *, device=DEFAULT_DEVICE, **recipe) -> tuple[Release, Key]:
     """Learn a watermark into a base model. Returns the public release and the private key (kept in the key store)."""
     from .imprint import embed as _embed
     from .keys import load_key
@@ -102,14 +102,14 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
     """Import a watermarked checkpoint made elsewhere, without retraining: its weights (a LoRA adapter directory or
     full weights) plus the key material it was made with, as a Release and a Key in the key store.
       key: the scheme's key fields, e.g. {"secret": 123} for a markllm-*-d scheme, {"mapping": "map.json",
-           "transform": "policy.pth"} for PRO (files are copied into the key store).
+           "transform": "policy.pth"} for OpenMark (files are copied into the key store).
       key_public: the key shipped with the checkpoint (e.g. a paper's released mapping): anyone can then detect, and
            also remove or forge the mark; the key records it and detect() warns.
     The release directory (default: next to the checkpoint, <model_dir>-omx) gets only release.json; the weights stay
     where they are. Calibrate the key (omx.calibrate) before detecting with an empirical null."""
     import os
     from .keys import store
-    from .registry import resolved_params
+    from .registry import canonical_scheme, resolved_params
     name, sparams, src = scheme_spec(watermark)
     sch = _get(name, src, sparams)
     model_dir = os.path.abspath(model_dir)
@@ -123,9 +123,9 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
     if known is not None and set(params) - set(known):
         raise ValueError(f"{name} keys have no field {', '.join(sorted(set(params) - set(known)))}; "
                          f"they take: {', '.join(known)}")
-    if name.startswith("pro") and "mapping" in params and "transform" not in params:
+    if canonical_scheme(name).startswith("openmark") and "mapping" in params and "transform" not in params:
         import warnings
-        warnings.warn("this PRO key has no 'transform': detection uses the public initial policy, which is right "
+        warnings.warn("this OpenMark key has no 'transform': detection uses the public initial policy, which is right "
                       "only if the checkpoint was trained with it")
     import re
     from .keys import STORE, resolve
@@ -154,7 +154,7 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
         if f in scheme_side and isinstance(v, str):        # key material such as a secret is kept exactly as given
             params[f] = _value(v)
     clash = {f: v for f, v in params.items() if f in scheme_side and scheme_side[f] != v}
-    if clash:                                              # e.g. PRO's gamma: a scheme parameter, not key material
+    if clash:                                              # e.g. OpenMark's gamma: a scheme parameter, not key material
         what = "is a parameter" if len(clash) == 1 else "are parameters"
         raise ValueError(f"{', '.join(clash)} {what} of {name}, not key material: put it in the watermark, e.g. '{name}:"
                          + ",".join(f"{f}={v}" for f, v in clash.items()) + "'")
@@ -191,7 +191,7 @@ def calibrate(key: Key, base: str, prompts: list[str] | None = None, *, n=500, d
     lens = sorted(len(tok(t, add_special_tokens=False)["input_ids"]) for t in texts)
     key.calibration = {"base": base, "null": sorted(s for s, _ in scores(sch, texts)), "n": len(texts),
                        "n_tokens": lens[len(lens) // 2],   # the null holds for texts of about this length
-                       # C9: a detector's null can drift with length (PRO: 14% false positives at 50 tokens against a
+                       # C9: a detector's null can drift with length (OpenMark: 14% false positives at 50 tokens against a
                        # 200-token threshold), so short texts are judged against the null of texts cut as short
                        "by_length": {str(n): sorted(s for s, _ in scores(sch, cut(tok, texts, n))) for n in LENGTHS
                                      if n < lens[len(lens) // 2]}}

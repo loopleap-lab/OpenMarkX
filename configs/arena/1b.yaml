@@ -1,9 +1,9 @@
 # The 1B leaderboard: every registered method on Llama-3.2-1B.   openmarkx bench configs/arena/1b.yaml
 base: llama-3.2-1b
 methods:
-  - pro
-  - pro-coopt-c100
-  - pro-full-b01
+  - openmark
+  - openmark-coopt-c100
+  - openmark-full-b01
   - gaussmark
   - markllm-unigram-d
   - markllm-kgw-d

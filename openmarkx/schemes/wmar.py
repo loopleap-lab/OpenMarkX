@@ -3,7 +3,7 @@
 A green list per context (the previous image token, context size 1) over the codebook's alive codes. The rule is a
 score table Z over (previous alive code, next alive code); its green lists are the top gamma share of each row (hard,
 straight-through). It starts at WMAR's linear-seeding table (from the taming adapter's codec), or, without one, at a
-table drawn from the key's secret. With colearn (PRO's CAWP) the table is trained with the model; a column-balance
+table drawn from the key's secret. With colearn (OpenMark's CAWP) the table is trained with the model; a column-balance
 term keeps every code green in about gamma of the contexts, and an optional null term keeps the unmarked model from
 already favouring the green lists. Ported from exp/arimg/pro_taming.py (policy_table, detect_table, cmd_colearn).
 

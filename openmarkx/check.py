@@ -147,7 +147,7 @@ def _run(name, source, base, n_null, store_dir):
         trainable = sch.kind == "none" if sch.imprint == Imprint.EDIT else sch.kind == "distill_logit"   # what embed runs
         ok = trainable and isinstance(sch.access, Access) and isinstance(sch.imprint, Imprint)
         msg = f"class={kind_of(sch)} imprint={sch.imprint.value} access={sch.access.name} kind={sch.kind}"
-        y = _yaml_row(name)
+        y = _yaml_row(sch.name if not source else name)
         if y is not None:
             ok = ok and y.get("access") == sch.access.name and y.get("imprint") == sch.imprint.value
             msg += "; matches configs/watermark yaml" if ok else "; differs from configs/watermark yaml"
@@ -354,7 +354,7 @@ def _decode(model, tok, scheme, n=12, new_tokens=40):
     from transformers import LogitsProcessorList
     procs = None
     if scheme is not None:
-        if hasattr(scheme, "processor"):                   # a decode-time teacher (MarkLLM, PRO)
+        if hasattr(scheme, "processor"):                   # a decode-time teacher (MarkLLM, OpenMark)
             step = scheme.processor()
         else:                                              # otherwise the Signal on the last position
             step = lambda ids, sc: scheme.target_logits(ids, sc.float()[:, None, :])[:, 0]

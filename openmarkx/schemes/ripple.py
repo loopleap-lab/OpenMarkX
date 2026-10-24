@@ -1,10 +1,10 @@
-"""ripple: a keyed watermark for fields predicted on 3D points (PRO for a physics surrogate), and its detector.
+"""ripple: a keyed watermark for fields predicted on 3D points (OpenMark for a physics surrogate), and its detector.
 Moved from exp/geopt/fieldmark.py (functions unchanged; scale/m_out kwargs default to the old globals).
 
 Mark: for a secret key, M random frequencies w_m (wavelengths in a chosen band), signs s_m and phases b_m give one
 smooth pattern per output channel, g_c(x) = sum_m s_m cos(w_m . x + b_m), scaled to unit RMS on each geometry.
 A marked field (in the model's normalized units) is y + eps * g(x): the "generation-time" rule a closed service would
-apply to every output, which PRO then learns into the open model's weights.
+apply to every output, which OpenMark then learns into the open model's weights.
 
 Detector: needs only the points and the field (normalized with the published output mean/std). The field's own smooth
 structure is removed first (least squares onto a fixed basis of long-wavelength functions of position), so what is

@@ -1,7 +1,27 @@
 """One name-keyed registry for schemes, edits and model adapters."""
 from __future__ import annotations
 
-SCHEMES: dict = {}       # name -> class (for a plugin: the version loaded last)
+class _Names(dict):
+    """name -> class. An old name (alias) finds the class too, but only current names are listed."""
+
+    def __init__(self):
+        super().__init__()
+        self.aliases = {}
+
+    def canonical(self, name):
+        return name if dict.__contains__(self, name) else self.aliases.get(name, name)
+
+    def __getitem__(self, name):
+        return dict.__getitem__(self, self.canonical(name))
+
+    def __contains__(self, name):
+        return dict.__contains__(self, self.canonical(name))
+
+    def get(self, name, default=None):
+        return dict.get(self, self.canonical(name), default)
+
+
+SCHEMES: dict = _Names()  # name -> class (for a plugin: the version loaded last); old names resolve through aliases
 VERSIONS: dict = {}      # (name, module) -> class: every loaded plugin version, so a key finds its own code
 LOADED: set = set()      # sha256 of every plugin file imported in this process (by you, or by a trusted key)
 EDITS: dict = {}         # weight edits: fn(release, out, **params) -> Release (modify)
@@ -29,6 +49,17 @@ def register_scheme(cls=None, *, name: str | None = None):
         VERSIONS[(n, c.__module__)] = c
         return c
     return wrap(cls) if cls is not None else wrap
+
+
+def register_scheme_alias(old: str, new: str):
+    """Let an old scheme name keep working (keys, releases, configs and command lines written with it)."""
+    SCHEMES.aliases[old] = new
+
+
+def canonical_scheme(name: str) -> str:
+    """The current name of a scheme (an old name, e.g. "pro", gives "openmark"); unknown names come back unchanged."""
+    from . import schemes  # noqa: F401  (registers the built-ins and their old names)
+    return SCHEMES.canonical(name)
 
 
 def plugin_schemes(module_name: str) -> list[str]:

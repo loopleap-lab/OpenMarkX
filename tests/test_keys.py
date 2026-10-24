@@ -17,12 +17,12 @@ def store(tmp_path, monkeypatch):
 def test_commitment_is_salted_and_path_free(store):
     f1 = store / "a.json"; f1.write_text("[1,2,3]")
     sub = store / "sub"; sub.mkdir(); f2 = sub / "a.json"; f2.write_text("[1,2,3]")
-    k1 = omx.Key(scheme="pro", params={"mapping": str(f1)}, nonce="00")
-    k2 = omx.Key(scheme="pro", params={"mapping": str(f2)}, nonce="00")
+    k1 = omx.Key(scheme="openmark", params={"mapping": str(f1)}, nonce="00")
+    k2 = omx.Key(scheme="openmark", params={"mapping": str(f2)}, nonce="00")
     K.store(k1); K.store(k2)
     assert k1.params["mapping"] == k2.params["mapping"]          # same content -> same blob ref
     assert k1.commitment == k2.commitment                         # so the commitment does not depend on the path
-    assert omx.Key(scheme="pro", params=dict(k1.params)).commitment != k1.commitment   # fresh nonce -> new commitment
+    assert omx.Key(scheme="openmark", params=dict(k1.params)).commitment != k1.commitment   # fresh nonce -> new commitment
 
 
 def test_edited_release_carries_no_key(store):

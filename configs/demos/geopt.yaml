@@ -1,4 +1,4 @@
-# Physics: PRO on GeoPT (aircraft surface fields), last night's sweep s1_e02: the mark written into the last layer in
+# Physics: OpenMark on GeoPT (aircraft surface fields), last night's sweep s1_e02: the mark written into the last layer in
 # closed form (edit_last), no gradient steps. Needs the GeoPT repo: export OMX_GEOPT_DIR=<GeoPT checkout>.
 model:
   name: geopt

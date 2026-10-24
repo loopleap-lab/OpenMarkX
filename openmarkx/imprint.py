@@ -72,7 +72,7 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
                                              target_modules=LORA_TARGETS.split(",")))
     corpus = torch.load(data or DATA["llama3"], weights_only=True)["train"][:, :seq_len]
     if bos:   # start every chunk with BOS, as real prompts do: otherwise the position after BOS is never trained, and
-              # FPL's perturbations broke it once (pro-full generated " Ur Ur Ur ..." only after BOS, 2026-10-05)
+              # FPL's perturbations broke it once (openmark-full, then named pro-full, generated " Ur Ur Ur ..." only after BOS, 2026-10-05)
         corpus = torch.cat([torch.full((len(corpus), 1), tok.bos_token_id, dtype=corpus.dtype), corpus[:, :-1]], 1)
     with torch.no_grad():                                  # catch broken weights before hours of training
         for i in range(0, 64 if str(device).startswith("cuda") else 8, 8):
@@ -87,11 +87,11 @@ def embed(scheme: str, base: str, out: str, *, steps=1500, bs=16, accum=1, seq_l
     cfg = dict(scheme=scheme, base=base, steps=steps, bs=bs, accum=accum, seq_len=seq_len, lr=lr, rank=rank, seed=seed, bos=bos)
     json.dump(cfg, open(f"{out}/embed_args.json", "w"), indent=1)
     log = open(f"{out}/train_log.jsonl", "a"); t0 = time.time(); skipped = 0
-    booster = getattr(sch, "booster", None)                # PRO's Booster robust training (simulated fine-tune)
+    booster = getattr(sch, "booster", None)                # OpenMark's Booster robust training (simulated fine-tune)
     attack_loss = []
 
     def attack_grads(att):
-        """Gradient of the simulated attack: clean-text fine-tuning ("clean"), or, as PRO's FPL, learning the
+        """Gradient of the simulated attack: clean-text fine-tuning ("clean"), or, as OpenMark's FPL, learning the
         anti-watermarked distribution (base logits with the watermark bias subtracted) on the same text ("anti")."""
         lg = model(input_ids=att).logits[:, :-1].float()
         if booster.get("attack", "clean") == "anti":

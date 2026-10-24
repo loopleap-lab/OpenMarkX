@@ -1,15 +1,16 @@
-"""PRO (NeurIPS 2026) as a OpenMarkX scheme. The PRO watermark itself is the paper's code, shipped unchanged in
-openmarkx/third_party/pro.
+"""OpenMark (PRO in the paper, NeurIPS 2026) as an OpenMarkX scheme. The watermark itself is the paper's code (PRO),
+shipped unchanged in openmarkx/third_party/pro.
 
 Signal: one semantic bias per sequence, bias = delta * tanh(tau * (T(BERT(context)) - mean))[mapping], where T is the
 watermark policy and `mapping` (token -> policy dimension) is the secret key. Score: PRO's detect_batch, the mean of
 the mapped +-1 values over 10-word chunks after a 40-word context.
 
-  pro             the policy T frozen at its released initial weights (transform_model_cbert.pth)
-  pro-coopt-c100  T co-optimized with the student; its non-vanishing regularizer acts on T's centered output (what
-                  reaches the logits) with weight 100, which keeps T from collapsing during distillation
-  pro-full-b01    pro-coopt-c100 plus forgetting-perturbation training (FPL, beta 0.1)
-The experimental variants are ablations on the way to these settings.
+  openmark             the policy T frozen at its released initial weights (transform_model_cbert.pth)
+  openmark-coopt-c100  T co-optimized with the student; its non-vanishing regularizer acts on T's centered output
+                       (what reaches the logits) with weight 100, which keeps T from collapsing during distillation
+  openmark-full-b01    openmark-coopt-c100 plus forgetting-perturbation training (FPL, beta 0.1)
+The experimental variants are ablations on the way to these settings. Every scheme here also answers to its name
+from before the rename (pro, pro-coopt-c100, ...), so keys, releases and configs that name it keep working.
 """
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ from ..paths import RUNS
 from ..models import text_vocab_size
 
 INITIAL_POLICY = os.path.join(os.path.dirname(os.path.dirname(__file__)), "third_party", "pro", "transform_model_cbert.pth")
-from ..registry import register_scheme
+from ..registry import register_scheme, register_scheme_alias
 from ..primitives import Access
 from .base import Scheme
 
@@ -34,8 +35,8 @@ def resolve_path(ref):
 
 
 @register_scheme
-class PRO(Scheme):
-    name, kind = "pro", "distill_logit"
+class OpenMark(Scheme):
+    name, kind = "openmark", "distill_logit"
     access = Access.R0_AUX                                 # the detector runs the BERT embedder and the policy
     rng_bound = False                                      # the mapping is drawn by random.Random(secret): any device
     key_fields = ("mapping", "transform", "gamma", "delta", "chunk_size", "spread", "rng_device")
@@ -47,7 +48,7 @@ class PRO(Scheme):
                          transform_wd=transform_wd, centered_range=centered_range, **params)
         self.gamma, self.delta, self.chunk = gamma, delta, chunk_size
         self.w_aux, self.tau0, self.tau1, self.co_opt = transform_loss_weight, tau_init, tau_max, co_opt
-        # PRO's own run trains the transform at its global lr (1e-5); at the LoRA lr (2e-4) the KL objective flattens the
+        # The PRO code's own run trains the transform at its global lr (1e-5); at the LoRA lr (2e-4) the KL objective flattens the
         # transform until v - mean is numerical noise and the mark is unreadable (seen 2026-10-05). Keep PRO's setting.
         self.t_lr, self.t_wd = transform_lr, transform_wd
         self.centered_range = centered_range
@@ -61,7 +62,7 @@ class PRO(Scheme):
         from ..keys import STORE, new_secret, resolve
         key = dict(key or {})
         if not key:
-            # A new release gets a secret token -> policy-dimension mapping (PRO's code draws one at random when no
+            # A new release gets a secret token -> policy-dimension mapping (the PRO code draws one at random when no
             # mapping file is given); the mapping shipped with the PRO code is public, so it must not be the key.
             import json
             import random
@@ -73,7 +74,7 @@ class PRO(Scheme):
             key = {"mapping": mpath}
         if "mapping" not in key:
             # never fall back to the mapping shipped with the PRO code: it is public, so it cannot be a key
-            raise ValueError("this PRO key has no 'mapping': a PRO key must carry its own secret mapping "
+            raise ValueError("this OpenMark key has no 'mapping': an OpenMark key must carry its own secret mapping "
                              "(pass key=None to draw a new one)")
         tpath = resolve(key.get("transform")) or INITIAL_POLICY
         mpath = resolve(key["mapping"])
@@ -133,7 +134,7 @@ class PRO(Scheme):
             self.wm.set_tanh_temperature(self.tau0 + min(step / steps, 1.0) * (self.tau1 - self.tau0))
 
     def wrong_key(self, params, rng, workdir):
-        """PRO's secret is the token -> policy-dimension mapping: redraw it, keep the policy (trained or not)."""
+        """OpenMark's secret is the token -> policy-dimension mapping: redraw it, keep the policy (trained or not)."""
         if "mapping" not in params:
             return None
         import json
@@ -153,7 +154,7 @@ class PRO(Scheme):
         return key
 
     def processor(self):
-        """PRO at decoding time (PRO's own PROLogitsProcessor), frozen and hard +-1."""
+        """OpenMark at decoding time (the PRO code's own PROLogitsProcessor), frozen and hard +-1."""
         from ..third_party.pro import PROLogitsProcessor
         self.wm.transform_model.eval(); self.wm.set_tanh_temperature(self.tau1)
         lp = PROLogitsProcessor(self.wm)
@@ -179,10 +180,10 @@ class PRO(Scheme):
 
 
 @register_scheme
-class PROCoopt(PRO):
+class OpenMarkCoopt(OpenMark):
     """Co-optimized policy (mapping model M trained with the student), with the paper's regularizer weight
     (lambda = 1, arXiv 2510.23891 Eq. 4). The code default 1e-3 let M collapse in our first runs."""
-    name = "pro-coopt"
+    name = "openmark-coopt"
     experimental = True                                # an ablation (see the module docstring)
 
     def __init__(self, **params):
@@ -192,28 +193,28 @@ class PROCoopt(PRO):
 
 
 @register_scheme
-class PROBooster(PRO):
-    """PRO + Booster robust training (PRO code: train_logit_distill_robust.py, robustness_mode=booster): each step
+class OpenMarkBooster(OpenMark):
+    """OpenMark + Booster robust training (PRO code: train_logit_distill_robust.py, robustness_mode=booster): each step
     simulates one fine-tuning step on clean text and penalizes how much it would move the model."""
-    name = "pro-booster"
+    name = "openmark-booster"
     experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 1.0}
 
 
 @register_scheme
-class PROFPL(PRO):
-    """PRO + Forgotten Perturbation-aware Learning (arXiv 2510.23891 Eq. 6; code: booster_anti): each step simulates
+class OpenMarkFPL(OpenMark):
+    """OpenMark + Forgotten Perturbation-aware Learning (arXiv 2510.23891 Eq. 6; code: booster_anti): each step simulates
     one fine-tuning step toward the anti-watermarked distribution and penalizes how much it moves the model,
     with the paper's alpha = 0.1 and beta = 5."""
-    name = "pro-fpl"
+    name = "openmark-fpl"
     experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 5.0, "attack": "anti"}
 
 
 @register_scheme
-class PROCooptCentered(PROCoopt):
+class OpenMarkCooptCentered(OpenMarkCoopt):
     """Co-optimized policy with the non-vanishing term on the centered output (closes the shift loophole)."""
-    name = "pro-coopt-c"
+    name = "openmark-coopt-c"
     experimental = True                                # an ablation (see the module docstring)
 
     def __init__(self, **params):
@@ -222,18 +223,18 @@ class PROCooptCentered(PROCoopt):
 
 
 @register_scheme
-class PROFPLSmall(PRO):
+class OpenMarkFPLSmall(OpenMark):
     """FPL with beta = 0.5: tests whether beta = 5 pulls a LoRA student toward the anti-watermark optimum."""
-    name = "pro-fpl-b05"
+    name = "openmark-fpl-b05"
     experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
 
 
 @register_scheme
-class PROCooptCentered100(PROCooptCentered):
-    """pro-coopt-c with lambda = 100: the centered term averages over every violating entry (~5k per batch), so at
+class OpenMarkCooptCentered100(OpenMarkCooptCentered):
+    """openmark-coopt-c with lambda = 100: the centered term averages over every violating entry (~5k per batch), so at
     lambda = 1 each entry gets ~1e-4 of gradient and the KL pull still flattens M (seen 2026-10-05)."""
-    name = "pro-coopt-c100"
+    name = "openmark-coopt-c100"
     experimental = False
 
     def __init__(self, **params):
@@ -242,17 +243,27 @@ class PROCooptCentered100(PROCooptCentered):
 
 
 @register_scheme
-class PROFull(PROCooptCentered100):
-    """Full PRO as in the paper: co-optimized policy (centered non-vanishing term, lambda = 100) + FPL (beta = 0.5;
+class OpenMarkFull(OpenMarkCooptCentered100):
+    """Full OpenMark as in the paper (PRO): co-optimized policy (centered non-vanishing term, lambda = 100) + FPL (beta = 0.5;
     beta = 5 pulled our LoRA student to the inverted mark)."""
-    name = "pro-full"
+    name = "openmark-full"
     experimental = True                                # an ablation (see the module docstring)
     booster = {"alpha": 0.1, "lamb": 0.5, "attack": "anti"}
 
 
 @register_scheme
-class PROFullB01(PROFull):
-    """pro-full with beta = 0.1 (beta 0.5 cut the learned share from 0.97 to 0.15)."""
-    name = "pro-full-b01"
+class OpenMarkFullB01(OpenMarkFull):
+    """openmark-full with beta = 0.1 (beta 0.5 cut the learned share from 0.97 to 0.15)."""
+    name = "openmark-full-b01"
     experimental = False
     booster = {"alpha": 0.1, "lamb": 0.1, "attack": "anti"}
+
+
+# Names from before the rename (PRO in the paper): class names for code that imports them, scheme names for keys,
+# releases, configs and command lines that use them.
+PRO, PROCoopt, PROBooster, PROFPL, PROCooptCentered, PROFPLSmall, PROCooptCentered100, PROFull, PROFullB01 = (
+    OpenMark, OpenMarkCoopt, OpenMarkBooster, OpenMarkFPL, OpenMarkCooptCentered, OpenMarkFPLSmall,
+    OpenMarkCooptCentered100, OpenMarkFull, OpenMarkFullB01)
+for _cls in (OpenMark, OpenMarkCoopt, OpenMarkBooster, OpenMarkFPL, OpenMarkCooptCentered, OpenMarkFPLSmall,
+             OpenMarkCooptCentered100, OpenMarkFull, OpenMarkFullB01):
+    register_scheme_alias("pro" + _cls.name[len("openmark"):], _cls.name)

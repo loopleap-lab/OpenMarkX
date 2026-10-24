@@ -107,7 +107,7 @@ PRIMITIVES = ("Key", "Signal", "Imprint", "Perturb", "Probe", "Score")
 
 def kind_of(scheme) -> str:
     """The two classes of the appendix (§0, §1.1): teacher-learned schemes learn a teacher into the weights through
-    Signal (the teacher comes from MarkLLM, or the scheme owns it, like PRO's policy); teacher-free schemes write the
+    Signal (the teacher comes from MarkLLM, or the scheme owns it, like OpenMark's policy); teacher-free schemes write the
     weights directly and never use Signal (GaussMark)."""
     return "teacher-free" if getattr(scheme, "imprint", Imprint.DISTILL) == Imprint.EDIT else "teacher-learned"
 

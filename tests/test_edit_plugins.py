@@ -47,13 +47,13 @@ def test_text_edit_must_return_one_string_per_text():
 def test_arena_with_plugin_edits(tmp_path):
     from openmarkx import bench
     arena = tmp_path / "arena.yaml"
-    arena.write_text(f"base: llama-3.2-1b\nmethods: [pro]\nplugins: [{PLUGIN}]\n"
+    arena.write_text(f"base: llama-3.2-1b\nmethods: [openmark]\nplugins: [{PLUGIN}]\n"
                      "edits: [noise:scale=0.01, text:typos:rate=0.05, quantize:bits=4]\n")
     a = bench.load_arena(str(arena))
     assert ("noise", {"scale": 0.01}) in a["grid"] and ("text:typos", {"rate": 0.05}) in a["grid"]
     cmd = next(j["cmd"] for j in bench.plan(a) if j["id"].startswith("bench:edits"))
     assert f"--plugin {PLUGIN}" in cmd
-    arena.write_text("base: llama-3.2-1b\nmethods: [pro]\nedits: [text:typos:rate=0.05]\n")
+    arena.write_text("base: llama-3.2-1b\nmethods: [openmark]\nedits: [text:typos:rate=0.05]\n")
     saved = TEXT_EDITS.pop("typos")                      # as in a fresh process that did not load the file
     try:
         with pytest.raises(ValueError, match="plugins"):
