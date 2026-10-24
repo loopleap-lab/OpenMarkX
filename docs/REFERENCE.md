@@ -24,6 +24,10 @@ Everything goes under `~/.openmarkx` unless set otherwise:
 | `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `~/.openmarkx/MarkLLM` |
 | `HF_HOME` | Hugging Face cache; base models download here on first use | Hugging Face's default |
 
+Names from before the rename to OpenMarkX still work: an unset `OMX_*` variable falls back to its `MWX_*` namesake,
+`~/.markweightx` is used when `~/.openmarkx` does not exist, `import markweightx` and the `markweightx` command run
+OpenMarkX, and the scheme names `pro`, `pro-coopt-c100`, ... are the `openmark` ones.
+
 Base model names (`llama-3.2-1b`, `llama-3.2-1b-instruct`, `llama-3.1-8b`, ...) are fetched from Hugging Face at a
 pinned revision (`openmarkx/paths.py`); any local model directory or repo id also works. Gated models such as
 `meta-llama/*` need `huggingface-cli login`.
@@ -58,7 +62,7 @@ openmarkx modify RELEASE --edit finetune:steps=200 --out edited/
 openmarkx generate edited/ --prompts prompts.jsonl --out texts.jsonl
 openmarkx rewrite texts.jsonl --edit synonym:ratio=0.3 --out reworded.jsonl
 openmarkx detect texts.jsonl --key KEY                                 # --null wrong_key: no calibration needed
-openmarkx port their_lora/ --watermark pro --key-file key.json --base llama-3.2-1b   # a checkpoint made elsewhere
+openmarkx port their_lora/ --watermark openmark --key-file key.json --base llama-3.2-1b   # a checkpoint made elsewhere
 openmarkx verify edited/ --key KEY --prompts prompts.jsonl            # one verdict for the model
 openmarkx verify edited/ --key KEY --prompts prompts.jsonl --sequential --budget 200   # as few texts as needed
 openmarkx --help                                                       # every command, with examples
@@ -178,13 +182,13 @@ toolkit and can be benchmarked with `openmarkx bench`.
 
 | Scheme | Method | How the mark gets in | Detector needs |
 |---|---|---|---|
-| `pro` | PRO (ours), watermark policy frozen | distill PRO's semantic teacher into the weights (LoRA) | text, key (with its policy) |
-| `pro-coopt-c100` | PRO with the policy co-optimized during distillation | same, policy trained jointly | text, key |
-| `pro-full-b01` | PRO co-optimized, with forgetting-perturbation training (FPL) | same, plus FPL | text, key |
+| `openmark` | OpenMark (ours; PRO in the paper), watermark policy frozen | distill OpenMark's semantic teacher into the weights (LoRA) | text, key (with its policy) |
+| `openmark-coopt-c100` | OpenMark with the policy co-optimized during distillation | same, policy trained jointly | text, key |
+| `openmark-full-b01` | OpenMark co-optimized, with forgetting-perturbation training (FPL) | same, plus FPL | text, key |
 | `markllm-kgw-d`, `-unigram-d`, `-sweet-d`, `-ewd-d`, `-morphmark-d`, `-dip-d`, `-unbiased-d`, `-synthid-d`, `-exp-d`, `-expedit-d`, `-itsedit-d`, `-pf-d` | 12 decode-time watermarks from MarkLLM, distilled (Gu et al. style) | distill the MarkLLM teacher into the weights (LoRA) | text, key; SWEET, EWD, Unbiased also run the base model |
 | `gaussmark` | GaussMark | a keyed Gaussian perturbation written into one weight matrix | text, key, gradients of the base model |
 
-The PRO watermark ships with the package (`openmarkx/third_party/pro`, the paper's code); its sentence embedder
+The OpenMark watermark ships with the package (`openmarkx/third_party/pro`, the paper's PRO code); its sentence embedder
 downloads from Hugging Face on first use. The `markllm-*` schemes need MarkLLM (`scripts/install_deps.sh`). Your own method is one file (see "Add your own method").
 
 Parameters go after a colon: `gaussmark:sigma=0.02,layer=12`. A misspelled scheme or edit parameter is an error
@@ -200,7 +204,7 @@ follows the same Gumbel-max rule as EXP.
 made with, as a Release and a Key. Nothing is retrained and the weights stay where they are.
 
 ```python
-release, key = omx.port("their_lora/", "pro", {"mapping": "map.json", "transform": "policy.pth"}, "llama-3.2-1b")
+release, key = omx.port("their_lora/", "openmark", {"mapping": "map.json", "transform": "policy.pth"}, "llama-3.2-1b")
 release, key = omx.port("their_model/", "markllm-kgw-d", {"secret": 123456}, "llama-3.2-1b", key_public=True)
 ```
 
@@ -212,7 +216,7 @@ detect with such a key, and anyone can also remove or forge the mark, so `detect
 | Level | The detector holds | Schemes |
 |---|---|---|
 | `R0` | text, tokenizer, key | KGW family, Unigram, EXP family, SynthID, DIP, PF, ITSEdit |
-| `R0_AUX` | + an auxiliary network that ships in the key | PRO (its watermark policy) |
+| `R0_AUX` | + an auxiliary network that ships in the key | OpenMark (its watermark policy) |
 | `R1` | + forward passes of the base model | SWEET, EWD, Unbiased |
 | `R2` | + gradients of the base model | GaussMark |
 
@@ -225,7 +229,7 @@ refused before any model is loaded.
 `d.n_evidence` and `d.to_markagentx()` give its fields, and as there an empty text answers `p_value = 1.0` with no
 evidence. `detect(..., null="wrong_key")` (CLI `--null wrong_key`) is MarkAgentX's wrong-key null: each text is
 scored under `n_null` keys drawn from `random.Random(0xC0FFEE)`, and `p = (1 + #{wrong keys >= S}) / (n_null + 1)`.
-A wrong key is the true key with only its secret redrawn (`Scheme.wrong_key`; PRO redraws its mapping and keeps
+A wrong key is the true key with only its secret redrawn (`Scheme.wrong_key`; OpenMark redraws its mapping and keeps
 its policy). It needs no calibration but costs `n_null` rebindings of the scheme; teacher-free schemes are refused,
 since their closed-form null is already exact. The draws are reproducible but are not MarkAgentX's keys: each scheme
 draws its own kind of secret. `tests/test_markagentx.py` checks the fields against a MarkAgentX checkout
@@ -235,7 +239,7 @@ draws its own kind of secret. `tests/test_markagentx.py` checks the fields again
 
 Keys never ship with a release. `release.json` holds only the key's commitment, which is sha256 over a nonce, the
 scheme, its parameters and the plugin source. The key lives in the key store, `$OMX_KEYS` (default
-`$OMX_RUNS/keys`). Each key carries its own fresh secret: MarkLLM's public default hash keys are replaced, and PRO
+`$OMX_RUNS/keys`). Each key carries its own fresh secret: MarkLLM's public default hash keys are replaced, and OpenMark
 draws its own token mapping. A calibrated key carries a frozen empirical null, so `detect` returns calibrated
 p-values. The calibration also holds nulls for the texts cut to 20, 50 and 100 tokens: a text is judged against the
 null calibrated at the largest length not above its own, because some detectors' false positives grow on short texts
@@ -329,21 +333,21 @@ The built-ins (`synonym`, `word_deletion`, `context_synonym`) are registered the
 ```yaml
 # configs/arena/plugins_example.yaml
 base: llama-3.2-1b
-methods: [pro, markllm-kgw-d]
+methods: [openmark, markllm-kgw-d]
 plugins: [examples/my_edits.py]          # loaded before the edits are checked, and by every step that runs them
 edits: [finetune:steps=800, noise:scale=0.01, text:synonym:ratio=0.3, text:typos:rate=0.05]
 ```
 
 `bench` checks every edit and its parameters when it reads the file, so a typo fails at once rather than on a GPU
 an hour later. Each new edit becomes a column (`noise_scale0.01`, `typos_rate0.05`) after the default ones. For
-scale, these are the default columns of the 1B board for PRO (TPR at 1% FPR, from our runs, `$OMX_RUNS/e2/llama-3.2-1b/leaderboard.md`):
+scale, these are the default columns of the 1B board for OpenMark (TPR at 1% FPR, from our runs, `$OMX_RUNS/e2/llama-3.2-1b/leaderboard.md`):
 
 | method | learned | FT 800 | merge .4 | prune 20% | nf4 | delete 30% | synonym 30% |
 |---|---|---|---|---|---|---|---|
-| pro | 0.88 | 0.07 | 0.55 | 0.89 | 0.89 | 0.83 | 0.67 |
+| openmark | 0.88 | 0.07 | 0.55 | 0.89 | 0.89 | 0.83 | 0.67 |
 
 and the paper's numbers for the same kinds of edit on Llama-3-8B are in [LEADERBOARD.md](../LEADERBOARD.md)
-(e.g. after 4-bit HQQ PRO keeps 0.91 against 0.77 for Gloaguen et al.; after 300 steps of math fine-tuning, 0.43
+(e.g. after 4-bit HQQ OpenMark keeps 0.91 against 0.77 for Gloaguen et al.; after 300 steps of math fine-tuning, 0.43
 against 0.22). A new edit is read against these: close to `nf4` means harmless, close to `FT 800` means it erases the mark.
 
 ### Use your own dataset or domain
@@ -476,7 +480,7 @@ openmarkx bench my_arena.yaml --queue mybox         # or hand them to the GPU sc
 ```yaml
 # my_arena.yaml
 base: llama-3.2-1b
-methods: [pro-coopt-c100, my_mark.py]                 # built-in names (with :params) or plugin files
+methods: [openmark-coopt-c100, my_mark.py]                 # built-in names (with :params) or plugin files
 edits: [finetune:steps=800, quantize:bits=4, text:synonym:ratio=0.3]   # optional; default: the full grid
 ```
 
@@ -538,7 +542,7 @@ and a grant axis.
 ```
 openmarkx/        api.py (the facade) · cli.py · bench.py · check.py · keys.py · registry.py · primitives.py · types.py
   models/           base.py (Model, Output) · text.py · agent.py · vlm.py · taming.py · geopt.py
-  schemes/          base.py (Scheme, FieldScheme) · markllm.py · pro.py · gaussmark.py · wmar.py · ripple.py
+  schemes/          base.py (Scheme, FieldScheme) · markllm.py · openmark.py · gaussmark.py · wmar.py · ripple.py
   edits/            weights.py (finetune, merge, prune, quantize) · text.py (synonym, word_deletion) · outputs.py (image_roundtrip)
   pipeline.py (openmarkx run) · train.py (phased imprint) · imprint.py · external.py · quality.py
   sampling.py · scoring.py · vlm.py · paths.py

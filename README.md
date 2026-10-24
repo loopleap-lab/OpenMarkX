@@ -41,6 +41,9 @@ Python 3.10+ and a CUDA GPU. Without a GPU, the
 [Colab notebook](https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
 runs on a free T4. Runs and keys go under `~/.openmarkx`; back up the keys, a lost key cannot be recovered.
 
+OpenMarkX was called MarkWeightX. Code, keys and runs made under the old names (`import markweightx`, the
+`markweightx` command, `--watermark pro`, `MWX_*` variables, `~/.markweightx`) keep working.
+
 ## Get started
 
 One command runs a whole experiment: it learns the mark into the weights, checks the outputs with the key, applies
@@ -68,7 +71,7 @@ openmarkx detect texts.jsonl --key KEY
 
 ```bash
 python exp/prepare_data.py                                    # once: C4 text and prompts
-openmarkx embed --base llama-3.2-1b --watermark pro         # prints {"release": ..., "key": ...}
+openmarkx embed --base llama-3.2-1b --watermark openmark    # prints {"release": ..., "key": ...}
 openmarkx calibrate KEY --base llama-3.2-1b                 # the detection threshold, on the unmarked model
 openmarkx modify RELEASE --edit finetune:steps=300 --out edited/
 openmarkx generate edited/ --prompts prompts.jsonl --out texts.jsonl
@@ -82,7 +85,7 @@ The same in Python:
 import openmarkx as omx
 
 prompts = ["The history of the city begins", "A good recipe for bread"]
-release, key = omx.embed("llama-3.2-1b", "pro")
+release, key = omx.embed("llama-3.2-1b", "openmark")
 key = omx.calibrate(key, "llama-3.2-1b")
 edited = omx.modify(release, "finetune:steps=300")
 hits = omx.detect(omx.generate(edited, prompts), key)
@@ -110,7 +113,7 @@ Taming adapters in `openmarkx/models/` are worked examples.
 
 | Method | How the mark gets in |
 |---|---|
-| `pro` (ours) | PRO's watermark policy, learned into the weights |
+| `openmark` (ours) | OpenMark (PRO in the paper): a watermark policy, learned into the weights |
 | `markllm-<x>-d` | one of 12 MarkLLM decoding watermarks (KGW, SynthID, ...), learned into the weights |
 | `gaussmark` | a keyed perturbation written into one weight matrix |
 | `wmar`, `ripple` | a green list over image tokens; a keyed pattern over a predicted field |

@@ -1,4 +1,4 @@
-"""bad-leak: a OpenMarkX scheme in one file. Check it with `openmarkx check --adapter examples/my_scheme.py`."""
+"""bad-leak: an OpenMarkX scheme in one file. Check it with `openmarkx check --adapter examples/my_scheme.py`."""
 import torch
 
 import openmarkx as omx

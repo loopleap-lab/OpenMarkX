@@ -1,4 +1,4 @@
-"""my-scheme: a OpenMarkX scheme in one file. Check it with `openmarkx check --adapter examples/my_scheme.py`."""
+"""my-scheme: an OpenMarkX scheme in one file. Check it with `openmarkx check --adapter examples/my_scheme.py`."""
 import torch
 
 import openmarkx as omx

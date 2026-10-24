@@ -1,9 +1,9 @@
 # Leaderboard
 
-Results reported in the PRO paper (NeurIPS 2026), on **LLaMA-3-8B**. Each method is distilled into the model's
-weights; detection uses 5,000 watermarked and 5,000 non-watermarked texts (50-token C4 prefixes, 200-token
-continuations, temperature 1). PPL is the median perplexity under LLaMA-2-13B (unwatermarked LLaMA-3-8B: 3.6).
-Settings of each modification are in the paper's appendix.
+Results reported in the PRO paper (NeurIPS 2026), on **LLaMA-3-8B**; OpenMark is the method called PRO in the paper.
+Each method is distilled into the model's weights; detection uses 5,000 watermarked and 5,000 non-watermarked texts
+(50-token C4 prefixes, 200-token continuations, temperature 1). PPL is the median perplexity under LLaMA-2-13B
+(unwatermarked LLaMA-3-8B: 3.6). Settings of each modification are in the paper's appendix.
 
 These numbers come from the paper and are not shipped results of this repository: OpenMarkX contains the toolkit
 to run such a benchmark (`openmarkx bench`), not trained watermarked weights.
@@ -12,7 +12,7 @@ to run such a benchmark (`openmarkx bench`), not trained watermarked weights.
 
 TPR at 5% FPR / TPR at 1% FPR / PPL (paper, Table "robustness").
 
-| Modification | Setting | Gu et al.-KTH | Gu et al.-KGW | Gloaguen et al.-KGW | **PRO** |
+| Modification | Setting | Gu et al.-KTH | Gu et al.-KGW | Gloaguen et al.-KGW | **OpenMark** |
 |---|---|---|---|---|---|
 | Unaltered | | 0.78 / 0.54 / 5.0 | 0.96 / 0.83 / 4.9 | 0.94 / 0.84 / 6.2 | **0.99 / 0.92 / 4.2** |
 | Quantization, 8 bits | GPTQ | 0.66 / 0.42 / 5.2 | 0.92 / 0.79 / 5.0 | 0.95 / 0.84 / 6.3 | 0.97 / 0.86 / 4.3 |
@@ -47,7 +47,7 @@ TPR (paper, Table "fpr_tpr").
 |---|---|---|---|
 | Gu et al.-KTH | 25.8% | 53.6% | 84.0% |
 | Gu et al.-KGW | 54.2% | 82.7% | 97.5% |
-| **PRO** | **78.1%** | **92.3%** | **99.5%** |
+| **OpenMark** | **78.1%** | **92.3%** | **99.5%** |
 
 ## Paraphrasing
 
@@ -58,7 +58,7 @@ AUC under DIPPER paraphrasing (paper, Table "dipper").
 | Gu et al.-KTH | 0.82 | 0.79 |
 | Gu et al.-KGW | 0.86 | 0.84 |
 | Gloaguen et al.-KGW | 0.80 | 0.74 |
-| **PRO** | **0.90** | **0.87** |
+| **OpenMark** | **0.90** | **0.87** |
 
 ## Downstream tasks
 
@@ -68,7 +68,7 @@ Accuracy of LLaMA-3-8B before and after watermarking (paper, Table "downstream")
 |---|---|---|---|---|
 | Base | 0.7607 | 0.5708 | 0.2963 | 0.7583 |
 | Gu et al.-KGW | 0.7583 | 0.5683 | 0.2877 | 0.7582 |
-| **PRO** | 0.7594 | 0.5705 | 0.2920 | 0.7582 |
+| **OpenMark** | 0.7594 | 0.5705 | 0.2920 | 0.7582 |
 
 ## Run your own
 

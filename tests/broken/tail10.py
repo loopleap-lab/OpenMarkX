@@ -1,4 +1,4 @@
-"""tail10: a OpenMarkX scheme in one file. Check it with `openmarkx check --adapter my_mark.py`."""
+"""tail10: an OpenMarkX scheme in one file. Check it with `openmarkx check --adapter my_mark.py`."""
 import torch
 
 import openmarkx as omx
