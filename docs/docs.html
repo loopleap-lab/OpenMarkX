@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TraceWeightX Developer Guide</title>
+<title>OpenMarkX Developer Guide</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=JetBrains+Mono:wght@400;500;700&display=swap">
@@ -57,7 +57,7 @@ h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; }
 .hl { color: var(--accent); }
 section.band { padding-block: 80px; scroll-margin-top: 72px; }
 section.band + section.band { border-top: 1px solid var(--line); }
-#why, #results { background: var(--band); }  /* alternate light and oat, as on the PRO page */
+#why, #results { background: var(--band); }  /* alternate light and oat, as on the OpenMark page */
 
 #why .head { max-width: 1100px; }
 .head p.markdef { max-width: none; font-size: 14px; margin-top: 12px; }
@@ -750,7 +750,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .ltext p { margin: 0; font-size: var(--t-text); line-height: 1.8; }
 .ltext .w.g { background: var(--good-soft); color: var(--good); box-shadow: inset 0 -2px 0 var(--good); padding: 0 3px; }
 .lrow.after .lbox.model { border-color: var(--good); }
-/* one 7 s loop, played while in view: TraceWeightX moves the step into the model, the result holds, then everything
+/* one 7 s loop, played while in view: OpenMarkX moves the step into the model, the result holds, then everything
    eases back to the start (no jump between rounds) */
 .learn { --loop: 7s; }
 .learn .lrow.after * , .learn .lrow.after .lbox.ghost::before, .learn .lrow.after .la::after { animation-duration: var(--loop); animation-iteration-count: infinite; animation-play-state: paused; animation-timing-function: ease-in-out; animation-fill-mode: both; }
@@ -776,7 +776,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .lrow.after .ltext .w.g { animation-name: lGreen; }
 @keyframes lGreen { 0%, 40% { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; } 48%, 84% { background: var(--good-soft); color: var(--good); box-shadow: inset 0 -2px 0 var(--good); } 92%, 100% { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; } }
 
-/* ---- the toolkit: a stack of four slabs; TraceWeightX is the thick amber one; methods plug into it ---- */
+/* ---- the toolkit: a stack of four slabs; OpenMarkX is the thick amber one; methods plug into it ---- */
 .stack { --t-lab: 14px; --t-text: 16px; display: grid; border: 2px solid var(--rule); background: var(--paper); }
 .sl { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: center; gap: 20px; padding: 18px 22px; }
 .sl + .sl { border-top: 2px solid var(--rule); }
@@ -818,7 +818,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .who3 p { margin: 0; font-size: 16px; color: var(--muted); }
 .who3 code { font-family: var(--font); font-size: 14px; background: var(--code-bg); color: var(--code-ink); padding: 8px 12px; justify-self: start; max-width: 100%; overflow-x: auto; }
 
-/* ---- PRO: two principles, each with its diagram and the numbers that back it ---- */
+/* ---- OpenMark: two principles, each with its diagram and the numbers that back it ---- */
 .pro2 { --t-lab: 14px; --t-text: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 2px solid var(--rule); background: var(--paper); }
 @media (max-width: 860px) { .pro2 { grid-template-columns: minmax(0, 1fr); } }
 .pp { display: grid; grid-template-rows: auto auto 1fr; gap: 22px; padding: 26px clamp(18px, 3vw, 32px); min-width: 0; }
@@ -879,7 +879,7 @@ details.more { margin-top: 16px; } details.more > summary { font-size: 16px; col
 .figs figcaption { font-size: 16px; color: var(--muted); }
 .key3 { font-size: 14px; }
 
-/* ---- demos: the case, then three TraceWeightX steps, then the result ---- */
+/* ---- demos: the case, then three OpenMarkX steps, then the result ---- */
 .scene { margin: 0 0 18px; font-size: 18px; max-width: 70ch; }
 .scene b { font-weight: 700; }
 .how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid var(--rule); margin-bottom: 8px; }
@@ -1246,49 +1246,49 @@ pre.wc { max-height: 520px; overflow: auto; }
   <div class="wrap">
     <a class="brand" href="./#top">
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 12.5 L13 21.5 L17 15 L21 21.5 L23.5 12.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Trace<span class="hl">Weight</span><span class="xb">X</span></span>
+      <span>Open<span class="hl">Mark</span><span class="xb">X</span></span>
     </a>
-    <div class="nav-links"><a href="./#weights">Why</a><a href="./#toolkit">Toolkit</a><a href="pro.html">PRO</a><a href="./#demos">Demos</a><a href="./#start">Get started</a><a href="docs.html" aria-current="page">Docs</a></div>
-    <div class="nav-end"><a class="iconbtn " href="https://github.com/UCF-ML-Research/MarkWeightX" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg></a><a class="btn sm primary" href="./#start">Get started</a></div>
+    <div class="nav-links"><a href="./#weights">Why</a><a href="./#toolkit">Toolkit</a><a href="openmark.html">OpenMark</a><a href="./#demos">Demos</a><a href="./#start">Get started</a><a href="docs.html" aria-current="page">Docs</a></div>
+    <div class="nav-end"><a class="iconbtn " href="https://github.com/UCF-ML-Research/OpenMarkX" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg></a><a class="btn sm primary" href="./#start">Get started</a></div>
   </div>
 </nav>
 <main class="guide">
-  <p class="kicker">TraceWeightX &middot; Developer guide</p>
+  <p class="kicker">OpenMarkX &middot; Developer guide</p>
   <h1>Developer <span class="hl">Guide</span></h1>
   <p class="lead">How to add your own method, edit or model. To run a demo or check a file, see <a href="./#start">Get started</a>.</p>
   <p class="date">Updated October 23, 2026</p>
-  <div class="keys3" aria-label="Three ways to extend TraceWeightX">
+  <div class="keys3" aria-label="Three ways to extend OpenMarkX">
     <a class="key" href="#method"><span class="kn">01</span><b>A method</b><span>How the key marks outputs, and how outputs are scored</span><code>my_mark.py</code></a>
     <a class="key" href="#edit"><span class="kn">02</span><b>An edit</b><span>What a user might do to the released model or its outputs</span><code>my_edits.py</code></a>
     <a class="key" href="#model"><span class="kn">03</span><b>A model</b><span>How to load and run a new kind of model</span><code>my_model.py</code></a>
   </div>
 
   <h2 id="tools"><span class="dn">1</span>The three tools</h2>
-  <p class="sum">Every method and model uses the same three commands. <code>markweightx run</code> chains them for a whole experiment.</p>
+  <p class="sum">Every method and model uses the same three commands. <code>openmarkx run</code> chains them for a whole experiment.</p>
   <div class="t3">
-    <div><b>embed</b><p>Train the mark into the model; the key stays with you.</p><pre class="code">markweightx embed --base llama-3-8b \
+    <div><b>embed</b><p>Train the mark into the model; the key stays with you.</p><pre class="code">openmarkx embed --base llama-3-8b \
   --watermark pro</pre></div>
-    <div><b>modify</b><p>Play the user who edits the released weights.</p><pre class="code">markweightx bench arena.yaml
+    <div><b>modify</b><p>Play the user who edits the released weights.</p><pre class="code">openmarkx bench arena.yaml
 # edits: [quantize:bits=4, finetune:steps=300]</pre></div>
-    <div><b>detect</b><p>Score outputs with the key. <code>verify</code> does the same on a suspect model: it samples the model, then detects.</p><pre class="code">markweightx detect texts.jsonl \
+    <div><b>detect</b><p>Score outputs with the key. <code>verify</code> does the same on a suspect model: it samples the model, then detects.</p><pre class="code">openmarkx detect texts.jsonl \
   --key release/</pre></div>
   </div>
-  <pre class="code">markweightx run configs/demos/geopt.yaml    # all three, for any model: data, mark, edits, detection, report</pre>
+  <pre class="code">openmarkx run configs/demos/geopt.yaml    # all three, for any model: data, mark, edits, detection, report</pre>
 
   <h2 id="method"><span class="dn">2</span>Add a method</h2>
   <p class="sum">Write it, check it, embed it, benchmark it. Pick a step to see what you write or run.</p>
-  <div class="walk"><div class="wsl"><button class="ws on" type="button" data-i="0"><b>1&nbsp; Write the method</b><span>markweightx new-scheme my-mark</span></button><button class="ws" type="button" data-i="1"><b>2&nbsp; Check it</b><span>markweightx check --adapter my_mark.py</span></button><button class="ws" type="button" data-i="2"><b>3&nbsp; Embed and detect</b><span>markweightx embed ...</span></button><button class="ws" type="button" data-i="3"><b>4&nbsp; Benchmark it</b><span>markweightx bench my_arena.yaml</span></button></div><div><pre class="code wc" data-i="0"><span class="fn">my_mark.py</span>
-&quot;&quot;&quot;my-mark: a TraceWeightX scheme in one file. Check it with `markweightx check --adapter my_mark.py`.&quot;&quot;&quot;
+  <div class="walk"><div class="wsl"><button class="ws on" type="button" data-i="0"><b>1&nbsp; Write the method</b><span>openmarkx new-scheme my-mark</span></button><button class="ws" type="button" data-i="1"><b>2&nbsp; Check it</b><span>openmarkx check --adapter my_mark.py</span></button><button class="ws" type="button" data-i="2"><b>3&nbsp; Embed and detect</b><span>openmarkx embed ...</span></button><button class="ws" type="button" data-i="3"><b>4&nbsp; Benchmark it</b><span>openmarkx bench my_arena.yaml</span></button></div><div><pre class="code wc" data-i="0"><span class="fn">my_mark.py</span>
+&quot;&quot;&quot;my-mark: a OpenMarkX scheme in one file. Check it with `openmarkx check --adapter my_mark.py`.&quot;&quot;&quot;
 import torch
 
-import markweightx as mwx
+import openmarkx as omx
 
 
-@mwx.register_scheme
-class MyMark(mwx.Scheme):
+@omx.register_scheme
+class MyMark(omx.Scheme):
     name = &quot;my-mark&quot;
-    imprint = mwx.Imprint.DISTILL      # DISTILL: learn target_logits into the weights; EDIT: write weights directly
-    access = mwx.Access.R0             # what the detector needs besides the text: R0, R0_AUX, R1 or R2
+    imprint = omx.Imprint.DISTILL      # DISTILL: learn target_logits into the weights; EDIT: write weights directly
+    access = omx.Access.R0             # what the detector needs besides the text: R0, R0_AUX, R1 or R2
 
     def __init__(self, delta: float = 2.0, **params):
         super().__init__(delta=delta, **params)
@@ -1299,7 +1299,7 @@ class MyMark(mwx.Scheme):
         super().setup(model, tokenizer, device, key)
         key = dict(key or {})
         if &quot;secret&quot; not in key:
-            key[&quot;secret&quot;] = mwx.keys.new_secret()
+            key[&quot;secret&quot;] = omx.keys.new_secret()
         g = torch.Generator().manual_seed(int(key[&quot;secret&quot;]))
         self.green = torch.rand(model.config.vocab_size, generator=g) &lt; 0.5
         return {&quot;secret&quot;: int(key[&quot;secret&quot;])}
@@ -1317,56 +1317,56 @@ class MyMark(mwx.Scheme):
         return (g - 0.5 * n) / (0.25 * n) ** 0.5, len(ids)
 
 </pre><pre class="code wc" data-i="1" hidden><span class="fn">shell</span>
-markweightx check --adapter my_mark.py
+openmarkx check --adapter my_mark.py
 # runs C1-C10 against a tiny Llama, on CPU, in minutes
 # a failed check names what to fix; fix it and run again</pre><pre class="code wc" data-i="2" hidden><span class="fn">shell</span>
-markweightx embed --base llama-3.2-1b --watermark my_mark.py
-markweightx calibrate RELEASE_DIR --trust-plugin          # freeze the null for this key
-markweightx generate RELEASE_DIR --prompts prompts.jsonl --out texts.jsonl
-markweightx detect texts.jsonl --key RELEASE_DIR --trust-plugin</pre><pre class="code wc" data-i="3" hidden><span class="fn">shell</span>
+openmarkx embed --base llama-3.2-1b --watermark my_mark.py
+openmarkx calibrate RELEASE_DIR --trust-plugin          # freeze the null for this key
+openmarkx generate RELEASE_DIR --prompts prompts.jsonl --out texts.jsonl
+openmarkx detect texts.jsonl --key RELEASE_DIR --trust-plugin</pre><pre class="code wc" data-i="3" hidden><span class="fn">shell</span>
 # my_arena.yaml
 base: llama-3.2-1b
 methods: [pro, markllm-kgw-d, my_mark.py]       # built-in names (with :params) or plugin files
 edits: [finetune:steps=800, quantize:bits=4, text:synonym:ratio=0.3]   # optional; default: the full grid
 
-markweightx bench my_arena.yaml --dry-run        # what is done, what would run
-markweightx bench my_arena.yaml                  # run the missing steps, then print the leaderboard</pre></div></div>
+openmarkx bench my_arena.yaml --dry-run        # what is done, what would run
+openmarkx bench my_arena.yaml                  # run the missing steps, then print the leaderboard</pre></div></div>
 
   <h3 id="checks">The checks</h3>
-  <p><code>markweightx check</code> runs these before a method joins the leaderboard. Each of the 17 broken adapters in <code>tests/broken/</code> must fail one of them.</p>
+  <p><code>openmarkx check</code> runs these before a method joins the leaderboard. Each of the 17 broken adapters in <code>tests/broken/</code> must fail one of them.</p>
   <div class="tw"><table><tr><td><b>C1</b></td><td>declared</td><td>imprint, access and kind are declared; kind is one embed trains</td></tr><tr><td><b>C2</b></td><td>access</td><td>detect with a grant one level too low is refused before any model loads</td></tr><tr><td><b>C3</b></td><td>round trip</td><td>a fresh process holding only the key reproduces the scores</td></tr><tr><td><b>C4</b></td><td>key</td><td>fresh keys give different scores; no tiny key space</td></tr><tr><td><b>C5</b></td><td>null</td><td>closed-form p-values are not too small on human text; marked text gets lower p</td></tr><tr><td><b>C6</b></td><td>signal</td><td>text decoded with the signal scores clearly above plain text</td></tr><tr><td><b>C7</b></td><td>isolation</td><td>an EDIT release holds only model files, no key material</td></tr><tr><td><b>C8</b></td><td>determinism</td><td>the same key gives the same material and scores; setup leaves the model unchanged</td></tr><tr><td><b>C9</b></td><td>shorter texts</td><td>the null holds for 50- and 100-token texts (needs the real base; run by the experiments)</td></tr><tr><td><b>C10</b></td><td>positions</td><td>target_logits on a whole sequence equals it on each prefix</td></tr></table></div>
 
   <details class="more" id="ref"><summary>Everything a method can set</summary>
-  <p>From <code>markweightx/schemes/base.py</code>. The built-in methods in <code>markweightx/schemes/</code> are working examples.</p>
-  <div class="tw"><table><tr><td><code>name</code></td><td>attribute</td><td>the registry name, used by --watermark</td></tr><tr><td><code>imprint</code></td><td>attribute</td><td>DISTILL: learn target_logits into the weights; EDIT: write the weights directly</td></tr><tr><td><code>access</code></td><td>attribute</td><td>what the detector needs besides the text: R0, R0_AUX, R1 (base model) or R2</td></tr><tr><td><code>kind</code></td><td>attribute</td><td>distill_logit, distill_sampling or none</td></tr><tr><td><code>exact_null</code></td><td>attribute</td><td>True when pvalue() is exact, so it is used even after calibrate</td></tr><tr><td><code>setup(model, tokenizer, device, key)</code></td><td>method</td><td>draw a new key or bind an existing one; return the key material</td></tr><tr><td><code>target_logits(input_ids, logits)</code></td><td>method</td><td>the teacher's logits at every position: the training signal</td></tr><tr><td><code>score(text)</code></td><td>method</td><td>(statistic, n_tokens); higher means more evidence of the mark</td></tr><tr><td><code>pvalue(statistic, n_tokens)</code></td><td>method</td><td>optional closed-form p-value; None uses the calibrated null</td></tr><tr><td><code>save(key_dir, key)</code></td><td>method</td><td>write key files (e.g. a trained model) into the private key directory</td></tr><tr><td><code>trainable_params()</code></td><td>method</td><td>extra parameters trained with the model, as PRO's policy</td></tr><tr><td><code>imprint_edit(model, tokenizer, out)</code></td><td>method</td><td>EDIT methods only: write the mark into the weights</td></tr></table></div>
+  <p>From <code>openmarkx/schemes/base.py</code>. The built-in methods in <code>openmarkx/schemes/</code> are working examples.</p>
+  <div class="tw"><table><tr><td><code>name</code></td><td>attribute</td><td>the registry name, used by --watermark</td></tr><tr><td><code>imprint</code></td><td>attribute</td><td>DISTILL: learn target_logits into the weights; EDIT: write the weights directly</td></tr><tr><td><code>access</code></td><td>attribute</td><td>what the detector needs besides the text: R0, R0_AUX, R1 (base model) or R2</td></tr><tr><td><code>kind</code></td><td>attribute</td><td>distill_logit, distill_sampling or none</td></tr><tr><td><code>exact_null</code></td><td>attribute</td><td>True when pvalue() is exact, so it is used even after calibrate</td></tr><tr><td><code>setup(model, tokenizer, device, key)</code></td><td>method</td><td>draw a new key or bind an existing one; return the key material</td></tr><tr><td><code>target_logits(input_ids, logits)</code></td><td>method</td><td>the teacher's logits at every position: the training signal</td></tr><tr><td><code>score(text)</code></td><td>method</td><td>(statistic, n_tokens); higher means more evidence of the mark</td></tr><tr><td><code>pvalue(statistic, n_tokens)</code></td><td>method</td><td>optional closed-form p-value; None uses the calibrated null</td></tr><tr><td><code>save(key_dir, key)</code></td><td>method</td><td>write key files (e.g. a trained model) into the private key directory</td></tr><tr><td><code>trainable_params()</code></td><td>method</td><td>extra parameters trained with the model, as OpenMark's policy</td></tr><tr><td><code>imprint_edit(model, tokenizer, out)</code></td><td>method</td><td>EDIT methods only: write the mark into the weights</td></tr></table></div>
   </details>
 
   <h2 id="edit"><span class="dn">3</span>Add an edit</h2>
   <p class="sum">An edit is what a user might do to the released model or to its outputs: one function in a plugin file. Give every parameter a default; the parameters name the leaderboard column.</p>
   <pre class="code"><span class="fn">my_edits.py</span>
-@mwx.register_edit                       # a weight edit: release in, edited release out
+@omx.register_edit                       # a weight edit: release in, edited release out
 def noise(rel, out, *, scale=0.01, seed=0, device="cuda:0"):
     model = materialize(rel, device)     # the release as one plain model
     add_noise(model, scale, seed)
     return edited_release(rel, out, "noise", dict(scale=scale, seed=seed), model)
 
-@mwx.register_text_edit                  # a text edit: texts in, texts out
+@omx.register_text_edit                  # a text edit: texts in, texts out
 def typos(texts, *, rate=0.05, seed=0):
     return [swap_letters(t, rate, seed) for t in texts]
 
 <span class="fn">arena.yaml</span>
 plugins: [my_edits.py]
 edits: [quantize:bits=4, finetune:steps=300, noise:scale=0.01, text:typos:rate=0.05]</pre>
-  <p>Built in: fine-tuning, quantization, pruning and merging on the weights; synonym, word deletion and contextual synonym on texts; <code>image_roundtrip</code> on image tokens (decode, then encode again, as a saved image). <code>@mwx.register_output_edit</code> adds an output edit. <code>examples/my_edits.py</code> is the full file.</p>
+  <p>Built in: fine-tuning, quantization, pruning and merging on the weights; synonym, word deletion and contextual synonym on texts; <code>image_roundtrip</code> on image tokens (decode, then encode again, as a saved image). <code>@omx.register_output_edit</code> adds an output edit. <code>examples/my_edits.py</code> is the full file.</p>
 
   <h2 id="model"><span class="dn">4</span>Add a model</h2>
-  <p class="sum">An adapter says how to load and run the model. With a method for its outputs, one config runs everything: data, mark, detection, edits, report. The <a href="./#start">home page</a> walks through a full GeoPT run. Working adapters: <code>markweightx/models/geopt.py</code> and <code>markweightx/models/taming.py</code>.</p>
+  <p class="sum">An adapter says how to load and run the model. With a method for its outputs, one config runs everything: data, mark, detection, edits, report. The <a href="./#start">home page</a> walks through a full GeoPT run. Working adapters: <code>openmarkx/models/geopt.py</code> and <code>openmarkx/models/taming.py</code>.</p>
   <pre class="code"><span class="fn">my_model.py</span>
-@mwx.register_model
-class MyModel(mwx.Model):
+@omx.register_model
+class MyModel(omx.Model):
     name = "my_model"
     unit = "surface point"          # what one output unit is
-    output = mwx.Output.FIELD       # TOKENS: trained by KL; FIELD: trained by MSE
+    output = omx.Output.FIELD       # TOKENS: trained by KL; FIELD: trained by MSE
 
     def load(self, path, device):   # the base (path None) or a release
         return load_weights(path, device)
@@ -1384,8 +1384,8 @@ imprint: {phases: [{steps: 2000, lr: 1.0e-5, trainable: full}]}
 detect: {null: wrong_keys}
 quality: rel_l2
 out: runs/my_model</pre>
-  <pre class="code">markweightx run my_run.yaml            # each step resumes after an interruption
-markweightx run my_run.yaml --smoke    # a few steps and samples, to check the setup</pre>
+  <pre class="code">openmarkx run my_run.yaml            # each step resumes after an interruption
+openmarkx run my_run.yaml --smoke    # a few steps and samples, to check the setup</pre>
   <p class="callout"><b>Code from another project</b> stays in its own checkout and is imported unchanged: the demos use WMAR (<code>MWX_WMAR_DIR</code>) and GeoPT (<code>MWX_GEOPT_DIR</code>). An adapter reaches such code through <code>require_external</code>, which stops with the name of the missing variable.</p>
   <p>The four demos are configs in <code>configs/demos/</code>: <code>taming</code>, <code>medgemma</code>, <code>geopt</code>, <code>agent</code>.</p>
 
@@ -1404,10 +1404,10 @@ markweightx run my_run.yaml --smoke    # a few steps and samples, to check the s
     <div class="fgrid">
       <div><a class="brand" href="./">
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 12.5 L13 21.5 L17 15 L21 21.5 L23.5 12.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Trace<span class="hl">Weight</span><span class="xb">X</span></span>
+      <span>Open<span class="hl">Mark</span><span class="xb">X</span></span>
     </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for tracing open-source models through watermarks in their weights. UCF ML Research</p></div>
-      <div><h4>Project</h4><ul><li><a href="./#weights">Why</a></li><li><a href="./#toolkit">Toolkit</a></li><li><a href="pro.html">PRO results</a></li><li><a href="./#demos">Demos</a></li></ul></div>
-      <div><h4>Learn</h4><ul><li><a href="./#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a href="https://github.com/UCF-ML-Research/MarkWeightX">GitHub</a></li><li><a href="https://ucf-ml-research.github.io/PRO/">PRO</a></li></ul></div>
+      <div><h4>Project</h4><ul><li><a href="./#weights">Why</a></li><li><a href="./#toolkit">Toolkit</a></li><li><a href="openmark.html">OpenMark results</a></li><li><a href="./#demos">Demos</a></li></ul></div>
+      <div><h4>Learn</h4><ul><li><a href="./#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a href="https://github.com/UCF-ML-Research/OpenMarkX">GitHub</a></li><li><a href="https://ucf-ml-research.github.io/PRO/">Paper</a></li></ul></div>
     </div>
   </div>
 </footer>
@@ -1415,7 +1415,7 @@ markweightx run my_run.yaml --smoke    # a few steps and samples, to check the s
 
   // ---- code highlighting: comments, strings, keywords, decorators, numbers, CLI flags; text nodes only
   window.mwxHL = function (root) {
-    const RE = /(#[^\n]*)|("""[\s\S]*?"""|"[^"\n]*"|'[^'\n]*')|(@[\w.]+)|\b(def|class|return|import|from|if|else|elif|for|in|not|and|or|None|True|False|self|super|with|as|lambda|raise|try|except|pass)\b|(--[\w-]+)|\b(markweightx|mwx)\b|\b(\d+(?:\.\d+)?(?:e-?\d+)?)\b/g;
+    const RE = /(#[^\n]*)|("""[\s\S]*?"""|"[^"\n]*"|'[^'\n]*')|(@[\w.]+)|\b(def|class|return|import|from|if|else|elif|for|in|not|and|or|None|True|False|self|super|with|as|lambda|raise|try|except|pass)\b|(--[\w-]+)|\b(openmarkx|omx)\b|\b(\d+(?:\.\d+)?(?:e-?\d+)?)\b/g;
     const cls = [null, "tk-c", "tk-s", "tk-d", "tk-k", "tk-f", "tk-x", "tk-n"];
     const walk = (n) => {
       if (n.nodeType === 1) { if (!/^tk-/.test(n.className) && !n.classList.contains("fn")) [...n.childNodes].forEach(walk); return; }

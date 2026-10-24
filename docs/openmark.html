@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PRO Results</title>
+<title>OpenMark Results</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=JetBrains+Mono:wght@400;500;700&display=swap">
@@ -57,7 +57,7 @@ h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; }
 .hl { color: var(--accent); }
 section.band { padding-block: 80px; scroll-margin-top: 72px; }
 section.band + section.band { border-top: 1px solid var(--line); }
-#why, #results { background-color: var(--band); }  /* alternate light and oat, as on the PRO page */
+#why, #results { background-color: var(--band); }  /* alternate light and oat, as on the OpenMark page */
 
 #why .head { max-width: 1100px; }
 .head p.markdef { max-width: none; font-size: 14px; margin-top: 12px; }
@@ -772,7 +772,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .learn.skip .lrow.before .ltext .w.g { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; }
 .learn.skip .nomark { opacity: 1; }
 @media (max-width: 860px) { .lrow.before .lbox.step::before { left: 50%; right: auto; top: -8px; bottom: -8px; width: 2px; height: auto; margin: 0 0 0 -1px; transform: scaleY(0); transform-origin: top; } .learn.skip .lrow.before .lbox.step::before { transform: none; } }
-/* one 7 s loop, played while in view: TraceWeightX moves the step into the model, the result holds, then everything
+/* one 7 s loop, played while in view: OpenMarkX moves the step into the model, the result holds, then everything
    eases back to the start (no jump between rounds) */
 .learn { --loop: 7s; }
 .learn .lrow.after * , .learn .lrow.after .lbox.ghost::before, .learn .lrow.after .la::after { animation-duration: var(--loop); animation-iteration-count: 1; animation-play-state: paused; animation-timing-function: ease-in-out; animation-fill-mode: both; }
@@ -798,7 +798,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .lrow.after .ltext .w.g { animation-name: lGreen; }
 @keyframes lGreen { 0%, 40% { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; } 48%, 84% { background: var(--good-soft); color: var(--good); box-shadow: inset 0 -2px 0 var(--good); } 92%, 100% { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 transparent; } }
 
-/* ---- the toolkit: a stack of four slabs; TraceWeightX is the thick amber one; methods plug into it ---- */
+/* ---- the toolkit: a stack of four slabs; OpenMarkX is the thick amber one; methods plug into it ---- */
 .stack { --t-lab: 14px; --t-text: 16px; display: grid; border: 2px solid var(--rule); background: var(--paper); }
 .sl { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: center; gap: 20px; padding: 18px 22px; }
 .sl + .sl { border-top: 2px solid var(--rule); }
@@ -841,7 +841,7 @@ main *, section *, .nav *, footer * { border-radius: 0 !important; }
 .who3 p { margin: 0; font-size: 16px; color: var(--muted); }
 .who3 code { font-family: var(--font); font-size: 14px; background: var(--code-bg); color: var(--code-ink); padding: 8px 12px; justify-self: start; max-width: 100%; overflow-x: auto; }
 
-/* ---- PRO: two principles, each with its diagram and the numbers that back it ---- */
+/* ---- OpenMark: two principles, each with its diagram and the numbers that back it ---- */
 .pro2 { --t-lab: 14px; --t-text: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 2px solid var(--rule); background: var(--paper); }
 @media (max-width: 860px) { .pro2 { grid-template-columns: minmax(0, 1fr); } }
 .pp { display: grid; grid-template-rows: auto auto 1fr; gap: 22px; padding: 26px clamp(18px, 3vw, 32px); min-width: 0; }
@@ -925,7 +925,7 @@ details.more { margin-top: 16px; } details.byfold[open] > summary { margin-botto
 .figs figcaption { font-size: 16px; color: var(--muted); }
 .key3 { font-size: 14px; }
 
-/* ---- demos: the case, then three TraceWeightX steps, then the result ---- */
+/* ---- demos: the case, then three OpenMarkX steps, then the result ---- */
 .scene { margin: 0 0 18px; font-size: 18px; max-width: 70ch; }
 .scene b { font-weight: 700; }
 .how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid var(--rule); margin-bottom: 8px; }
@@ -1454,14 +1454,14 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
 </style>
 
-<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open weights</span><span>PRO &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open weights</span><span>PRO &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
+<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open weights</span><span>OpenMark (PRO) &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open weights</span><span>OpenMark (PRO) &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
 <nav class="nav" aria-label="Site">
   <div class="wrap">
     <a class="brand" href="index.html#top">
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 12.5 L13 21.5 L17 15 L21 21.5 L23.5 12.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Trace<span class="hl">Weight</span><span class="xb">X</span></span>
+      <span>Open<span class="hl">Mark</span><span class="xb">X</span></span>
     </a>
-    <div class="nav-links"><a href="index.html#weights">Why</a><a href="index.html#toolkit">Toolkit</a><a href="#pro">PRO</a><a href="#results">Results</a><a href="index.html#demos">Demos</a><a href="index.html#start">Get started</a><a href="docs.html">Docs</a></div>
+    <div class="nav-links"><a href="index.html#weights">Why</a><a href="index.html#toolkit">Toolkit</a><a href="#pro">OpenMark</a><a href="#results">Results</a><a href="index.html#demos">Demos</a><a href="index.html#start">Get started</a><a href="docs.html">Docs</a></div>
     <div class="nav-end"><a class="iconbtn js-repo" href="index.html#start" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg></a><a class="btn sm primary" href="index.html#start">Get started</a></div>
   </div>
 </nav>
@@ -1471,7 +1471,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 <section class="band" id="pro">
   <div class="wrap">
     <div class="head">
-      <div><h2>PRO: <span class="hl">Precise</span> and <span class="hl">Robust</span></h2><p>PRO is our method in TraceWeightX and its default. It learns a mark that is precise to detect and hard to edit away.</p></div>
+      <div><h2>OpenMark: <span class="hl">Precise</span> and <span class="hl">Robust</span></h2><p>OpenMark (called PRO in the paper) is our method in OpenMarkX and its default. It learns a mark that is precise to detect and hard to edit away.</p></div>
     </div>
     <div class="pro2">
       <div class="pp">
@@ -1483,7 +1483,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
         </div>
       </div>
       <div class="pp">
-        <div class="ph"><b>Robust</b><span>During training, PRO simulates the edit that would erase the mark fastest, and trains the model so that edit barely hurts it.</span></div>
+        <div class="ph"><b>Robust</b><span>During training, OpenMark simulates the edit that would erase the mark fastest, and trains the model so that edit barely hurts it.</span></div>
         <div class="pdia">
           <div class="pbox"><svg class="nnbig" viewBox="0 0 40 40" aria-hidden="true"><g class="e"><path d="M8 10L20 20M8 30L20 20M20 20L32 10M20 20L32 30M8 10L20 8M8 30L20 32M20 8L32 10M20 32L32 30"/></g><circle cx="8" cy="10" r="3.4"/><circle cx="8" cy="30" r="3.4"/><circle cx="20" cy="8" r="3.4"/><circle cx="20" cy="20" r="3.4"/><circle cx="20" cy="32" r="3.4"/><circle cx="32" cy="10" r="3.4"/><circle cx="32" cy="30" r="3.4"/></svg><b>Model</b></div><div class="both loop" aria-hidden="true"><i></i><i></i><span class="t">simulate it</span><span class="b">stay marked</span></div><div class="pbox rule edited"><svg class="nnbig" viewBox="0 0 40 40" aria-hidden="true"><g class="e"><path d="M8 10L20 20M8 30L20 20M20 20L32 10M20 20L32 30M8 10L20 8M8 30L20 32M20 8L32 10M20 32L32 30"/></g><circle cx="8" cy="10" r="3.4"/><circle cx="8" cy="30" r="3.4"/><circle cx="20" cy="8" r="3.4"/><circle cx="20" cy="20" r="3.4"/><circle cx="20" cy="32" r="3.4"/><circle cx="32" cy="10" r="3.4"/><circle cx="32" cy="30" r="3.4"/></svg><b>Worst-case edit</b><em class="edx">erases the mark fastest</em></div>
         </div>
@@ -1494,21 +1494,21 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
 <section class="band" id="results">
   <div class="wrap">
-    <div class="head"><div><h2><span class="hl">Results</span></h2><p>Alice releases her model watermarked with PRO, and users edit it. How much of the mark is left after each edit, and how good is the model?</p></div></div>
+    <div class="head"><div><h2><span class="hl">Results</span></h2><p>Alice releases her model watermarked with OpenMark, and users edit it. How much of the mark is left after each edit, and how good is the model?</p></div></div>
     <div id="edits" class="edits-part">
     <div class="ftree" id="ftree" aria-label="Alice's released model and four edited copies of it, each with how much of the mark is still detected">
       <div class="root"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Alice&rsquo;s LLM</b><span>as released</span><div class="rnums"><div><small>Detection</small><em>&ge;99%</em><span>traced to her</span></div><div><small>Fidelity after watermarking</small><em class="fid">4.1</em><span>perplexity; unmarked model 3.5</span></div></div></div>
       <div class="branch" aria-hidden="true"></div>
       <div class="kids"><div class="kid" style="--d:0"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Quantized</b><span>4-bit</span><div class="kv"><i style="width:99%"></i></div><em>&ge;99%</em></div><div class="kid" style="--d:1"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Pruned</b><span>50% of weights</span><div class="kv"><i style="width:99%"></i></div><em>&ge;99%</em></div><div class="kid" style="--d:2"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Merged</b><span>with another model, t = 0.3</span><div class="kv"><i style="width:99%"></i></div><em>&ge;99%</em></div><div class="kid" style="--d:3"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Fine-tuned</b><span>300 steps on math</span><div class="kv"><i style="width:61.5%"></i></div><em>61.5%</em></div><div class="kid add" style="--d:4"><b>+ your edit</b><span>one file, like a method</span></div></div>
-      <p class="tcap">After release, users edit the model and publish their own copies. Each branch is one edit of Alice&rsquo;s model; the number is how many of its texts are still traced to her (PRO on Granite-4.2-3B, 200 generated texts per model, 1% false positives).</p>
+      <p class="tcap">After release, users edit the model and publish their own copies. Each branch is one edit of Alice&rsquo;s model; the number is how many of its texts are still traced to her (OpenMark on Granite-4.2-3B, 200 generated texts per model, 1% false positives).</p>
     </div>
-    <p class="apiline"><code>m2 = mwx.modify(m, <em>"merge"</em>, t=<em>0.3</em>)</code><span>Every edit plugs in the same way.</span></p>
+    <p class="apiline"><code>m2 = omx.modify(m, <em>"merge"</em>, t=<em>0.3</em>)</code><span>Every edit plugs in the same way.</span></p>
     <h3 class="subh" id="compare">Compared with other watermarking methods (LLaMA-3-8B)</h3>
     <div class="mx">
       <div class="mxh"><span class="gn">Detection after each edit &middot; Llama-3-8B &middot; texts flagged at 1% false positives</span><div class="seg" role="group" aria-label="Edit strength" id="mxSeg"><button type="button" data-k="0">Light</button><button type="button" data-k="1" aria-pressed="true">Medium</button><button type="button" data-k="2">Heavy</button></div></div>
       <div class="tablewrap"><table id="mxTable"></table></div>
     </div>
-    <p class="mxsum">PRO keeps the most mark under merging and fine-tuning, the edits that erase marks fastest.</p>
+    <p class="mxsum">OpenMark keeps the most mark under merging and fine-tuning, the edits that erase marks fastest.</p>
     </div>
   </div>
 </section>
@@ -1518,18 +1518,18 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     <div class="fgrid">
       <div><a class="brand" href="index.html#top">
       <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 12.5 L13 21.5 L17 15 L21 21.5 L23.5 12.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Trace<span class="hl">Weight</span><span class="xb">X</span></span>
+      <span>Open<span class="hl">Mark</span><span class="xb">X</span></span>
     </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for tracing open-source models through watermarks in their weights. UCF ML Research</p></div>
-      <div><h4>Project</h4><ul><li><a href="index.html#weights">Why</a></li><li><a href="index.html#toolkit">Toolkit</a></li><li><a href="#pro">PRO</a></li><li><a href="#results">Results</a></li><li><a href="index.html#demos">Demos</a></li></ul></div>
-      <div><h4>Learn</h4><ul><li><a href="index.html#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a class="js-repo" href="index.html#start">GitHub</a></li><li><a href="https://ucf-ml-research.github.io/PRO/">PRO</a></li></ul></div>
+      <div><h4>Project</h4><ul><li><a href="index.html#weights">Why</a></li><li><a href="index.html#toolkit">Toolkit</a></li><li><a href="#pro">OpenMark</a></li><li><a href="#results">Results</a></li><li><a href="index.html#demos">Demos</a></li></ul></div>
+      <div><h4>Learn</h4><ul><li><a href="index.html#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a class="js-repo" href="index.html#start">GitHub</a></li><li><a href="https://ucf-ml-research.github.io/PRO/">Paper</a></li></ul></div>
     </div>
   </div>
 </footer>
 
 <script>
 (() => {
-  const REPO = "https://github.com/UCF-ML-Research/MarkWeightX";   // the public repository URL, once it exists (e.g. https://github.com/<org>/MarkWeightX)
-  const LB = {"rows":[{"cat":"Unaltered","setting":"","kth":[0.54,0.78,5.0],"kgw":[0.83,0.96,4.9],"glo":[0.84,0.94,6.2],"pro":[0.92,0.99,4.2]},{"cat":"Quantization, 8 bits","setting":"GPTQ","kth":[0.42,0.66,5.2],"kgw":[0.79,0.92,5.0],"glo":[0.84,0.95,6.3],"pro":[0.86,0.97,4.3]},{"cat":"Quantization, 8 bits","setting":"INT8","kth":[0.45,0.69,5.1],"kgw":[0.73,0.91,5.0],"glo":[0.84,0.94,6.4],"pro":[0.77,0.93,4.4]},{"cat":"Quantization, 4 bits","setting":"HQQ","kth":[0.29,0.54,6.1],"kgw":[0.83,0.95,5.5],"glo":[0.77,0.91,7.9],"pro":[0.91,0.98,4.8]},{"cat":"Quantization, 4 bits","setting":"GPTQ","kth":[0.36,0.64,5.5],"kgw":[0.74,0.91,5.1],"glo":[0.81,0.94,7.3],"pro":[0.79,0.94,5.1]},{"cat":"Pruning, Wanda","setting":"\u03c1 = 0.2","kth":[0.47,0.73,8.6],"kgw":[0.84,0.96,7.5],"glo":[0.9,0.97,9.9],"pro":[0.92,0.99,7.0]},{"cat":"Pruning, Wanda","setting":"\u03c1 = 0.5","kth":[0.35,0.64,8.4],"kgw":[0.66,0.86,6.9],"glo":[0.8,0.93,8.9],"pro":[0.84,0.96,6.2]},{"cat":"Pruning, SparseGPT","setting":"\u03c1 = 0.2","kth":[0.55,0.78,7.7],"kgw":[0.82,0.95,8.1],"glo":[0.84,0.95,9.0],"pro":[0.91,0.98,7.1]},{"cat":"Pruning, SparseGPT","setting":"\u03c1 = 0.5","kth":[0.5,0.76,8.1],"kgw":[0.74,0.91,7.8],"glo":[0.78,0.93,9.6],"pro":[0.89,0.97,8.0]},{"cat":"Merging, SLERP","setting":"t = 0.1","kth":[0.15,0.36,5.2],"kgw":[0.53,0.76,4.3],"glo":[0.59,0.82,6.1],"pro":[0.78,0.92,4.2]},{"cat":"Merging, SLERP","setting":"t = 0.3","kth":[0.08,0.21,5.1],"kgw":[0.39,0.65,4.0],"glo":[0.37,0.62,5.3],"pro":[0.6,0.83,4.1]},{"cat":"Merging, SLERP","setting":"t = 0.5","kth":[0.02,0.09,4.8],"kgw":[0.12,0.3,3.8],"glo":[0.14,0.34,4.6],"pro":[0.28,0.57,4.0]},{"cat":"Merging, SLERP","setting":"t = 0.7","kth":[0.02,0.06,4.3],"kgw":[0.05,0.15,3.7],"glo":[0.06,0.19,4.2],"pro":[0.12,0.31,3.9]},{"cat":"Merging, SLERP","setting":"t = 0.9","kth":[0.01,0.06,4.1],"kgw":[0.03,0.11,3.6],"glo":[0.03,0.11,4.0],"pro":[0.06,0.17,3.8]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 300","kth":[0.08,0.21,5.1],"kgw":[0.2,0.48,4.1],"glo":[0.22,0.45,5.5],"pro":[0.43,0.7,4.1]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 600","kth":[0.05,0.17,4.9],"kgw":[0.16,0.38,3.7],"glo":[0.19,0.41,5.2],"pro":[0.26,0.51,3.9]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 900","kth":[0.03,0.09,4.8],"kgw":[0.11,0.3,3.6],"glo":[0.13,0.31,5.2],"pro":[0.22,0.46,3.7]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 1200","kth":[0.02,0.09,4.7],"kgw":[0.09,0.25,3.5],"glo":[0.1,0.25,5.0],"pro":[0.18,0.4,3.6]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 1500","kth":[0.02,0.02,4.5],"kgw":[0.08,0.23,3.5],"glo":[0.08,0.22,5.1],"pro":[0.17,0.37,3.6]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 300","kth":[0.11,0.27,7.3],"kgw":[0.4,0.63,6.9],"glo":[0.41,0.65,7.4],"pro":[0.43,0.71,7.0]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 600","kth":[0.08,0.22,5.7],"kgw":[0.24,0.45,4.9],"glo":[0.23,0.48,7.0],"pro":[0.31,0.56,5.4]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 900","kth":[0.06,0.16,4.8],"kgw":[0.14,0.32,5.0],"glo":[0.16,0.34,6.8],"pro":[0.25,0.5,5.1]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 1200","kth":[0.03,0.11,4.7],"kgw":[0.12,0.29,4.3],"glo":[0.12,0.31,6.3],"pro":[0.18,0.4,4.8]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 1500","kth":[0.02,0.07,4.6],"kgw":[0.1,0.26,4.2],"glo":[0.12,0.3,5.9],"pro":[0.17,0.39,4.0]}],"dipper":[["Gu \u00b7 KTH","0.82","0.79"],["Gu \u00b7 KGW","0.86","0.84"],["Gloaguen \u00b7 KGW","0.80","0.74"],["PRO","0.90","0.87"]],"downstream":[["Base","0.7607","0.5708","0.2963","0.7583"],["Gu \u00b7 KGW","0.7583","0.5683","0.2877","0.7582"],["PRO","0.7594","0.5705","0.2920","0.7582"]]};
+  const REPO = "https://github.com/UCF-ML-Research/OpenMarkX";   // the public repository URL, once it exists (e.g. https://github.com/<org>/MarkWeightX)
+  const LB = {"rows":[{"cat":"Unaltered","setting":"","kth":[0.54,0.78,5.0],"kgw":[0.83,0.96,4.9],"glo":[0.84,0.94,6.2],"pro":[0.92,0.99,4.2]},{"cat":"Quantization, 8 bits","setting":"GPTQ","kth":[0.42,0.66,5.2],"kgw":[0.79,0.92,5.0],"glo":[0.84,0.95,6.3],"pro":[0.86,0.97,4.3]},{"cat":"Quantization, 8 bits","setting":"INT8","kth":[0.45,0.69,5.1],"kgw":[0.73,0.91,5.0],"glo":[0.84,0.94,6.4],"pro":[0.77,0.93,4.4]},{"cat":"Quantization, 4 bits","setting":"HQQ","kth":[0.29,0.54,6.1],"kgw":[0.83,0.95,5.5],"glo":[0.77,0.91,7.9],"pro":[0.91,0.98,4.8]},{"cat":"Quantization, 4 bits","setting":"GPTQ","kth":[0.36,0.64,5.5],"kgw":[0.74,0.91,5.1],"glo":[0.81,0.94,7.3],"pro":[0.79,0.94,5.1]},{"cat":"Pruning, Wanda","setting":"\u03c1 = 0.2","kth":[0.47,0.73,8.6],"kgw":[0.84,0.96,7.5],"glo":[0.9,0.97,9.9],"pro":[0.92,0.99,7.0]},{"cat":"Pruning, Wanda","setting":"\u03c1 = 0.5","kth":[0.35,0.64,8.4],"kgw":[0.66,0.86,6.9],"glo":[0.8,0.93,8.9],"pro":[0.84,0.96,6.2]},{"cat":"Pruning, SparseGPT","setting":"\u03c1 = 0.2","kth":[0.55,0.78,7.7],"kgw":[0.82,0.95,8.1],"glo":[0.84,0.95,9.0],"pro":[0.91,0.98,7.1]},{"cat":"Pruning, SparseGPT","setting":"\u03c1 = 0.5","kth":[0.5,0.76,8.1],"kgw":[0.74,0.91,7.8],"glo":[0.78,0.93,9.6],"pro":[0.89,0.97,8.0]},{"cat":"Merging, SLERP","setting":"t = 0.1","kth":[0.15,0.36,5.2],"kgw":[0.53,0.76,4.3],"glo":[0.59,0.82,6.1],"pro":[0.78,0.92,4.2]},{"cat":"Merging, SLERP","setting":"t = 0.3","kth":[0.08,0.21,5.1],"kgw":[0.39,0.65,4.0],"glo":[0.37,0.62,5.3],"pro":[0.6,0.83,4.1]},{"cat":"Merging, SLERP","setting":"t = 0.5","kth":[0.02,0.09,4.8],"kgw":[0.12,0.3,3.8],"glo":[0.14,0.34,4.6],"pro":[0.28,0.57,4.0]},{"cat":"Merging, SLERP","setting":"t = 0.7","kth":[0.02,0.06,4.3],"kgw":[0.05,0.15,3.7],"glo":[0.06,0.19,4.2],"pro":[0.12,0.31,3.9]},{"cat":"Merging, SLERP","setting":"t = 0.9","kth":[0.01,0.06,4.1],"kgw":[0.03,0.11,3.6],"glo":[0.03,0.11,4.0],"pro":[0.06,0.17,3.8]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 300","kth":[0.08,0.21,5.1],"kgw":[0.2,0.48,4.1],"glo":[0.22,0.45,5.5],"pro":[0.43,0.7,4.1]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 600","kth":[0.05,0.17,4.9],"kgw":[0.16,0.38,3.7],"glo":[0.19,0.41,5.2],"pro":[0.26,0.51,3.9]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 900","kth":[0.03,0.09,4.8],"kgw":[0.11,0.3,3.6],"glo":[0.13,0.31,5.2],"pro":[0.22,0.46,3.7]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 1200","kth":[0.02,0.09,4.7],"kgw":[0.09,0.25,3.5],"glo":[0.1,0.25,5.0],"pro":[0.18,0.4,3.6]},{"cat":"Fine-tuning, OpenMathInstruct","setting":"s = 1500","kth":[0.02,0.02,4.5],"kgw":[0.08,0.23,3.5],"glo":[0.08,0.22,5.1],"pro":[0.17,0.37,3.6]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 300","kth":[0.11,0.27,7.3],"kgw":[0.4,0.63,6.9],"glo":[0.41,0.65,7.4],"pro":[0.43,0.71,7.0]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 600","kth":[0.08,0.22,5.7],"kgw":[0.24,0.45,4.9],"glo":[0.23,0.48,7.0],"pro":[0.31,0.56,5.4]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 900","kth":[0.06,0.16,4.8],"kgw":[0.14,0.32,5.0],"glo":[0.16,0.34,6.8],"pro":[0.25,0.5,5.1]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 1200","kth":[0.03,0.11,4.7],"kgw":[0.12,0.29,4.3],"glo":[0.12,0.31,6.3],"pro":[0.18,0.4,4.8]},{"cat":"Fine-tuning, OpenCodeInstruct","setting":"s = 1500","kth":[0.02,0.07,4.6],"kgw":[0.1,0.26,4.2],"glo":[0.12,0.3,5.9],"pro":[0.17,0.39,4.0]}],"dipper":[["Gu \u00b7 KTH","0.82","0.79"],["Gu \u00b7 KGW","0.86","0.84"],["Gloaguen \u00b7 KGW","0.80","0.74"],["OpenMark","0.90","0.87"]],"downstream":[["Base","0.7607","0.5708","0.2963","0.7583"],["Gu \u00b7 KGW","0.7583","0.5683","0.2877","0.7582"],["OpenMark","0.7594","0.5705","0.2920","0.7582"]]};
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -1552,7 +1552,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
   (function board() {
     if (!document.getElementById("lbTable")) return;
     if (!LB || !LB.rows) { $("lbTable").innerHTML = "<tbody><tr><td class=\"l\">The leaderboard data is missing from this build: see LEADERBOARD.md.</td></tr></tbody>"; return; }
-    const MS = [["pro", "PRO", "#C15F3C", "PR"], ["glo", "KGW (Gloaguen et al.)", "#5C7043", "GL"], ["kgw", "KGW (Gu et al.)", "#4F6E91", "KG"], ["kth", "KTH (Gu et al.)", "#8A6FA8", "KT"]];
+    const MS = [["pro", "OpenMark", "#C15F3C", "PR"], ["glo", "KGW (Gloaguen et al.)", "#5C7043", "GL"], ["kgw", "KGW (Gu et al.)", "#4F6E91", "KG"], ["kth", "KTH (Gu et al.)", "#8A6FA8", "KT"]];
     const NAME = (x) => /gloaguen/i.test(x) ? "KGW (Gloaguen et al.)" : /kth/i.test(x) ? "KTH (Gu et al.)" : /kgw/i.test(x) ? "KGW (Gu et al.)" : x;
     const METRICS = [["t1", "TPR @ 1% FPR", 1, true], ["t5", "TPR @ 5% FPR", 0, true], ["ppl", "PPL", 2, false]];
     const CATS = [...new Set(LB.rows.map((r) => r.cat))];
@@ -1590,36 +1590,36 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
   // quickstart code
   const CODE = {
     install: `<span class="c"># to use it, the pip line at the top is enough; to change the code or run the benchmark:</span>
-git clone ${REPO || "&lt;repository&gt;"} && cd TraceWeightX
+git clone ${REPO || "&lt;repository&gt;"} && cd OpenMarkX
 pip install -e ".[test]"
 bash scripts/install_deps.sh
 python exp/prepare_data.py          <span class="c"># once: C4 prompts and training text</span>`,
-    python: `<span class="k">import</span> markweightx <span class="k">as</span> mwx
+    python: `<span class="k">import</span> openmarkx <span class="k">as</span> mwx
 
 <span class="c"># owner: train the watermark into the weights, keep the key</span>
-release, key = mwx.embed(<span class="c">"llama-3.2-1b"</span>, <span class="c">"pro"</span>)
-key = mwx.calibrate(key, <span class="c">"llama-3.2-1b"</span>)
+release, key = omx.embed(<span class="c">"llama-3.2-1b"</span>, <span class="c">"openmark"</span>)
+key = omx.calibrate(key, <span class="c">"llama-3.2-1b"</span>)
 
 <span class="c"># user: modify the weights and generate</span>
-child = mwx.modify(release, <span class="c">"finetune:steps=200"</span>)
-texts = mwx.generate(child, prompts)
+child = omx.modify(release, <span class="c">"finetune:steps=200"</span>)
+texts = omx.generate(child, prompts)
 
 <span class="c"># detector: single texts, then the whole model</span>
-hits = mwx.detect(texts, key)
-mwx.verify_model(child, key, prompts, sequential=<span class="k">True</span>, budget=200)`,
-    cli: `markweightx embed --base llama-3.2-1b --watermark pro
-markweightx modify RELEASE --edit quantize:bits=4 --out edited/
-markweightx generate edited/ --prompts prompts.jsonl --out texts.jsonl
-markweightx detect texts.jsonl --key KEY
-markweightx verify edited/ --key KEY --prompts prompts.jsonl --sequential`,
-    plugin: `markweightx new-scheme my-mark          <span class="c"># one file: key, signal, score</span>
-markweightx check --adapter my_mark.py  <span class="c"># ten tests, minutes on CPU</span>
+hits = omx.detect(texts, key)
+omx.verify_model(child, key, prompts, sequential=<span class="k">True</span>, budget=200)`,
+    cli: `openmarkx embed --base llama-3.2-1b --watermark pro
+openmarkx modify RELEASE --edit quantize:bits=4 --out edited/
+openmarkx generate edited/ --prompts prompts.jsonl --out texts.jsonl
+openmarkx detect texts.jsonl --key KEY
+openmarkx verify edited/ --key KEY --prompts prompts.jsonl --sequential`,
+    plugin: `openmarkx new-scheme my-mark          <span class="c"># one file: key, signal, score</span>
+openmarkx check --adapter my_mark.py  <span class="c"># ten tests, minutes on CPU</span>
 
 <span class="c"># arena.yaml</span>
 base: llama-3.2-1b
 methods: [pro, markllm-kgw-d, my_mark.py]
 
-markweightx bench arena.yaml            <span class="c"># train, modify, detect, leaderboard</span>`,
+openmarkx bench arena.yaml            <span class="c"># train, modify, detect, leaderboard</span>`,
   };
   const TABS = [["install", "Install"], ["python", "Python"], ["cli", "Shell"]];
   let tab = "install";
@@ -1647,7 +1647,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     else play();
   })();
 
-  // ---- PRO cards: the diagrams move while in view
+  // ---- OpenMark cards: the diagrams move while in view
   (() => {
     const el = document.querySelector(".pro2"); if (!el) return;
     if (!("IntersectionObserver" in window)) { el.classList.add("play"); return; }
@@ -1681,7 +1681,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
 
   // ---- code highlighting: comments, strings, keywords, decorators, numbers, CLI flags; text nodes only
   window.mwxHL = function (root) {
-    const RE = /(#[^\n]*)|("""[\s\S]*?"""|"[^"\n]*"|'[^'\n]*')|(@[\w.]+)|\b(def|class|return|import|from|if|else|elif|for|in|not|and|or|None|True|False|self|super|with|as|lambda|raise|try|except|pass)\b|(--[\w-]+)|\b(markweightx|mwx)\b|\b(\d+(?:\.\d+)?(?:e-?\d+)?)\b/g;
+    const RE = /(#[^\n]*)|("""[\s\S]*?"""|"[^"\n]*"|'[^'\n]*')|(@[\w.]+)|\b(def|class|return|import|from|if|else|elif|for|in|not|and|or|None|True|False|self|super|with|as|lambda|raise|try|except|pass)\b|(--[\w-]+)|\b(openmarkx|omx)\b|\b(\d+(?:\.\d+)?(?:e-?\d+)?)\b/g;
     const cls = [null, "tk-c", "tk-s", "tk-d", "tk-k", "tk-f", "tk-x", "tk-n"];
     const walk = (n) => {
       if (n.nodeType === 1) { if (!/^tk-/.test(n.className) && !n.classList.contains("fn")) [...n.childNodes].forEach(walk); return; }
@@ -1702,11 +1702,11 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     const cfg = { geo: "# run.yaml\nmodel:\n  name: my-geopt\n  source: my_model.py\n  data: data/aircraft\nscheme: {name: ripple-mark, source: my_mark.py}\ndetect: {fpr: 0.01, null: wrong_keys}\nquality: rel_l2\nout: runs/my-geopt",
                   img: "# run.yaml\nmodel: {name: my-taming, source: my_model.py}\nscheme:\n  name: codebook-mark\n  source: my_mark.py\ndata: {classes: 0-999, per_class: 20}\nquality: fid\nout: runs/my-taming" };
     const mark = {
-      geo: "@mwx.register_scheme\nclass RippleMark(mwx.FieldScheme):\n    name = \"ripple-mark\"\n\n    # key: a secret ripple for this release\n    def setup(self, model, codec, device, key=None):\n        key = key or {\"secret\": new_secret()}\n        self.ripple = ripple_from(key[\"secret\"])\n        return key\n\n    # training target: the unmarked output plus a faint ripple\n    def target_output(self, inputs, output):\n        return output + 0.02 * self.ripple(output)\n\n    # check: does the change from the unmarked output follow the ripple?\n    def score(self, output, reference, inputs):\n        return correlation(output - reference, self.ripple(reference)), len(output)",
-      img: "@mwx.register_scheme\nclass CodebookMark(mwx.Scheme):\n    name = \"codebook-mark\"\n    imprint = mwx.Imprint.DISTILL\n\n    # key: a green list, started from WMAR\n    def setup(self, model, codec, device, key=None):\n        self.green = wmar_table(key)\n        return key\n\n    # training signal: favour green entries\n    def target_logits(self, prev, logits):\n        return logits + delta * self.green[prev]\n\n    # detection: (statistic, units scored)\n    def score(self, tokens):\n        return z_test(tokens, self.green), len(tokens)\n\n    # PRO learns the list with the model\n    def trainable_params(self):\n        return [self.green]" };
+      geo: "@omx.register_scheme\nclass RippleMark(omx.FieldScheme):\n    name = \"ripple-mark\"\n\n    # key: a secret ripple for this release\n    def setup(self, model, codec, device, key=None):\n        key = key or {\"secret\": new_secret()}\n        self.ripple = ripple_from(key[\"secret\"])\n        return key\n\n    # training target: the unmarked output plus a faint ripple\n    def target_output(self, inputs, output):\n        return output + 0.02 * self.ripple(output)\n\n    # check: does the change from the unmarked output follow the ripple?\n    def score(self, output, reference, inputs):\n        return correlation(output - reference, self.ripple(reference)), len(output)",
+      img: "@omx.register_scheme\nclass CodebookMark(omx.Scheme):\n    name = \"codebook-mark\"\n    imprint = omx.Imprint.DISTILL\n\n    # key: a green list, started from WMAR\n    def setup(self, model, codec, device, key=None):\n        self.green = wmar_table(key)\n        return key\n\n    # training signal: favour green entries\n    def target_logits(self, prev, logits):\n        return logits + delta * self.green[prev]\n\n    # detection: (statistic, units scored)\n    def score(self, tokens):\n        return z_test(tokens, self.green), len(tokens)\n\n    # OpenMark learns the list with the model\n    def trainable_params(self):\n        return [self.green]" };
     const model = {
-      geo: "@mwx.register_model\nclass GeoPTModel(mwx.Model):\n    name = \"my-geopt\"\n    unit = \"surface point\"\n    output = mwx.Output.FIELD   # a field per input\n\n    # the released weights (path None: the base model)\n    def load(self, path, device):\n        return load_geopt(path, device)\n\n    # (aircraft shape, flight condition) in, a field out\n    def run(self, net, inputs):\n        return [net(points, cond) for points, cond in inputs]\n\n    # the pass training uses\n    def forward(self, net, batch):\n        return batch, net(batch[\"points\"], batch[\"cond\"])",
-      img: "@mwx.register_model\nclass TamingModel(mwx.Model):\n    name = \"my-taming\"\n    unit = \"image token\"\n    output = mwx.Output.TOKENS  # tokens, one by one\n\n    # the released weights (path None: the base model)\n    def load(self, path, device):\n        return load_taming(path, device)\n\n    # class labels in, 16x16 image tokens out\n    def run(self, net, labels):\n        return net.sample(labels)\n\n    # the pass training uses: logits for the next token\n    def forward(self, net, batch):\n        return batch[\"prev\"], net(batch[\"seqs\"])" };
+      geo: "@omx.register_model\nclass GeoPTModel(omx.Model):\n    name = \"my-geopt\"\n    unit = \"surface point\"\n    output = omx.Output.FIELD   # a field per input\n\n    # the released weights (path None: the base model)\n    def load(self, path, device):\n        return load_geopt(path, device)\n\n    # (aircraft shape, flight condition) in, a field out\n    def run(self, net, inputs):\n        return [net(points, cond) for points, cond in inputs]\n\n    # the pass training uses\n    def forward(self, net, batch):\n        return batch, net(batch[\"points\"], batch[\"cond\"])",
+      img: "@omx.register_model\nclass TamingModel(omx.Model):\n    name = \"my-taming\"\n    unit = \"image token\"\n    output = omx.Output.TOKENS  # tokens, one by one\n\n    # the released weights (path None: the base model)\n    def load(self, path, device):\n        return load_taming(path, device)\n\n    # class labels in, 16x16 image tokens out\n    def run(self, net, labels):\n        return net.sample(labels)\n\n    # the pass training uses: logits for the next token\n    def forward(self, net, batch):\n        return batch[\"prev\"], net(batch[\"seqs\"])" };
     let ex = "geo", file = "model";
     const show = () => { const m = document.getElementById("mkcode"); if (m) m.textContent = (file === "mark" ? mark : model)[ex]; if (m && window.mwxHL) mwxHL(m);
       for (const b of document.querySelectorAll(".mkh button")) b.setAttribute("aria-pressed", String(b.dataset.f === file)); };
@@ -1720,23 +1720,23 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
   })();
   // ---- hero: copy the install line; play the recorded session once it scrolls into view
   if ($("installCopy")) $("installCopy").addEventListener("click", () => copy($("installCopy"), $("installCmd")));
-  // ---- hero terminal: embed, modify (the attacker), detect; numbers are the PRO paper's Llama-3-8B results
+  // ---- hero terminal: embed, modify (the attacker), detect; numbers are the OpenMark paper's Llama-3-8B results
   (() => {
     const T = document.getElementById("term"); if (!T) return;
     const S = [
       ["note", "# embed: the owner trains the mark into the weights"],
-      ["cmd", "markweightx embed --base llama-3-8b --watermark pro"],
+      ["cmd", "openmarkx embed --base llama-3-8b --watermark pro"],
       ["box", [["Base", "llama-3-8b"], ["Method", "pro (precise + robust)"], ["Key", "release/key.json (keep it private)"], ["Output", "release/"]]],
       ["bar", "training"],
       ["ok", "saved release/ : 92% of its texts flagged, 1% false positives"],
       ["gap"],
       ["note", "# modify: play the attacker, who edits the released model"],
-      ["cmd", "markweightx modify release/ --quantize 4bit --out attacked/"],
+      ["cmd", "openmarkx modify release/ --quantize 4bit --out attacked/"],
       ["bar", "quantizing to 4 bits"],
       ["ok", "saved attacked/"],
       ["gap"],
       ["note", "# detect: is the edited model still traced to the owner?"],
-      ["cmd", "markweightx detect attacked/ --key release/"],
+      ["cmd", "openmarkx detect attacked/ --key release/"],
       ["bar", "scoring generated texts"],
       ["res", "91% of texts flagged, 1% false positives", "\u2190 Watermarked"],
       ["dim", "prior method after the same edit: 77%"],
@@ -1825,7 +1825,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
       ["merge", [["Merging, SLERP", "t = 0.1"], ["Merging, SLERP", "t = 0.3"], ["Merging, SLERP", "t = 0.5"]], ["t = 0.1", "t = 0.3", "t = 0.5"]],
       ["fine-tune", [["Fine-tuning, OpenMathInstruct", "s = 300"], ["Fine-tuning, OpenMathInstruct", "s = 900"], ["Fine-tuning, OpenMathInstruct", "s = 1500"]], ["300 steps", "900 steps", "1500 steps"]],
     ];
-    const MS = [["pro", "PRO (ours)"], ["glo", "KGW (Gloaguen et al.)"], ["kgw", "KGW (Gu et al.)"], ["kth", "KTH (Gu et al.)"]];
+    const MS = [["pro", "OpenMark (ours)"], ["glo", "KGW (Gloaguen et al.)"], ["kgw", "KGW (Gu et al.)"], ["kth", "KTH (Gu et al.)"]];
     function draw(k) {
       let h = "<thead><tr><th></th>" + COLS.map(([n, , lab]) => `<th>${n}<small>${lab[k]}</small></th>`).join("") + "</tr></thead><tbody>";
       for (const [id, name] of MS) {
@@ -1845,7 +1845,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
 </script>
 <script>
 // Get Started: the workflow of one run (install -> config -> run -> outputs -> detect). The run's numbers and files come
-// from a real `markweightx run configs/demos/geopt.yaml` (static/runs/geopt/viewer.json, report.json).
+// from a real `openmarkx run configs/demos/geopt.yaml` (static/runs/geopt/viewer.json, report.json).
 (() => {
   const root = document.getElementById("workflow"); if (!root) return;
   const $ = (q) => root.querySelector(q), esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -1859,7 +1859,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
     const WHAT = { prepare: "load the data and the model", imprint: "learn the mark into the weights", generate: "outputs of the base and the marked model",
                    detect: "score both with the key", quality: "compare quality before and after" };
     const STEPS = [
-      { cmd: "pip install git+https://github.com/UCF-ML-Research/MarkWeightX", out: ['<span class="runv-d">Successfully installed markweightx</span>'],
+      { cmd: "pip install git+https://github.com/UCF-ML-Research/OpenMarkX", out: ['<span class="runv-d">Successfully installed openmarkx</span>'],
         head: "One package", cap: "Language, image-text, image, agent and physics models run through the same commands.",
         fig: () => el("div", "wf-chips", ["text", "vlm", "taming", "agent", "geopt"].map((m) => `<code>${m}</code>`).join("") + '<span>model adapters, and your own in one file</span>') },
       { cmd: "export MWX_GEOPT_DIR=~/GeoPT    # where the GeoPT code is", out: [],
@@ -1870,7 +1870,7 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
           '<b>model:</b>', '<b>  name: geopt</b>', '<b>  ckpt: $MWX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt</b>',
           'scheme:', '  name: ripple', '  params: {eps: 0.02}', 'detect: {fpr: 0.01, null: wrong_keys}', 'quality: rel_l2',
           'out: runs/demos/geopt'].join("\n")) },
-      { cmd: "markweightx run configs/demos/geopt.yaml",
+      { cmd: "openmarkx run configs/demos/geopt.yaml",
         out: RUN.map((k) => `  <span class="runv-ok">&#10003;</span> <b>${k.padEnd(9)}</b>${esc(WHAT[k].padEnd(40))}${sec[k] > 0.05 ? `<span class="runv-d">${dur(sec[k]).padStart(8)}</span>` : ""}`),
         head: "One command runs the experiment", cap: "Each step saves its output, so a stopped run picks up where it stopped.",
         fig: () => { const o = el("ol", "wf-steps"); RUN.forEach((k) => o.append(el("li", null, `<b>${k}</b><span>${esc(WHAT[k])}</span>`))); return o; } },
@@ -1886,11 +1886,11 @@ markweightx bench arena.yaml            <span class="c"># train, modify, detect,
             '├── assets/           <span>examples for this page</span>',
             '└── progress.jsonl    <span>one line per step</span>',
             '',
-            '~/.markweightx/keys/  <b>your key</b>  <span>private, never published</span>'].join("\n")));
+            '~/.openmarkx/keys/  <b>your key</b>  <span>private, never published</span>'].join("\n")));
           w.append(el("pre", "wf-yaml", ['report.json', `  detect:  ${Math.round(d.tpr_at_1fpr * d.n_wm)} of ${d.n_wm} flagged at 1% false positives`,
             `  quality: error ${(100 * v.quality.before).toFixed(2)}% -> ${(100 * v.quality.after).toFixed(2)}%`].join("\n")));
           return w; } },
-      { cmd: "markweightx detect field.npz --model geopt \\\n    --key runs/demos/geopt/release",
+      { cmd: "openmarkx detect field.npz --model geopt \\\n    --key runs/demos/geopt/release",
         out: [`<span class="runv-d">{"file": "field.npz", "statistic": ${(+ex.z_marked).toFixed(2)}, ..., "flagged": true}</span>`],
         head: "Check a field later", cap: "With your key and your unmarked model, any field is checked in seconds.",
         fig: () => { const z = (+ex.z_marked).toFixed(1), t = (+d.thr).toFixed(1);

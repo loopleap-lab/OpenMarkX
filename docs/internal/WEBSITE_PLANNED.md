@@ -30,7 +30,7 @@ Checked against `markweightx/api.py` on 2026-10-23.
 
 | Page place | Numbers | Source |
 |---|---|---|
-| pro.html (was index Results), edit tree | root, quantize 4-bit, prune 50%, merge t=0.3 shown as "≥99%" (measured 99.5 / 99.5 / 100 / 99.0%, n = 200; user 2026-10-23: show them alike); fine-tune 300 steps on math 61.5% |
+| openmark.html (was index Results), edit tree | root, quantize 4-bit, prune 50%, merge t=0.3 shown as "≥99%" (measured 99.5 / 99.5 / 100 / 99.0%, n = 200; user 2026-10-23: show them alike); fine-tune 300 steps on math 61.5% |
 | Results, detection table, terminal demo (91%, prior 77%) | LLaMA-3-8B | PRO paper (LEADERBOARD.md) |
 | To do | Granite-4.2-3B KGW (Gu et al.), KTH (Gu et al.), KGW (Gloaguen et al.) | being prepared; replace the LLaMA-3-8B table once measured, never with simulated numbers |
 | Results, edit tree root | 99% traced; perplexity 4.1 (unmarked 3.5) — perplexity computed by a collaborator (user, 2026-10-23), LLaMA-2-13B scorer as in the paper, on Granite B_k8 step 200; not reproduced by our runs (our gpt-oss-20b scorer: 247 vs 171, relative only). No capability shown | Granite-4.2-3B `granite3b_B_k8_r2` step 200 unedited (TPR 0.995; mean of HellaSwag 0.648 and MMLU 0.565); base Granite 0.657 |
@@ -38,4 +38,4 @@ Checked against `markweightx/api.py` on 2026-10-23.
 
 ## Name (2026-10-23)
 
-The site shows the name **TraceWeightX** (user choice after a naming discussion: keep Weight and X, put tracing in front; "open-source" lives in the subtitle "Provenance for open-source models"). X = any model, any method (the toolkit); the crosshair X in the logo = locating the source. The code still uses `markweightx` / `mwx` and the repo URL is still `UCF-ML-Research/MarkWeightX`; user 2026-10-23: no code or repo rename for now. docs.html synced to TraceWeightX on 2026-10-23 (nav, footer, home-page links).
+The site shows the name **OpenMarkX** (user choice after a naming discussion: keep Weight and X, put tracing in front; "open-source" lives in the subtitle "Provenance for open-source models"). X = any model, any method (the toolkit); the crosshair X in the logo = locating the source. The code still uses `markweightx` / `mwx` and the repo URL is still `UCF-ML-Research/MarkWeightX`; user 2026-10-23: no code or repo rename for now. docs.html synced to OpenMarkX on 2026-10-23 (nav, footer, home-page links).
