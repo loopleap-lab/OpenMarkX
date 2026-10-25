@@ -8,7 +8,7 @@
 #SBATCH --mem=64G
 #SBATCH --time=06:00:00
 #SBATCH --array=0-12%8
-#SBATCH --output=/blue/sgao1/ji757406.ucf/mwx-runs/jobs/%x-%A_%a.out
+#SBATCH --output=/blue/qi855292.ucf/ji757406.ucf/jobs/%x-%A_%a.out
 # FID as in WMAR (50 per class x 1000 classes, vs ImageNet val): tasks 0-11 generate (set, 250-class chunk) and keep
 # Inception features; task 12 extracts the reference features. Then: fid50k.py fid (CPU). Each task runs once and
 # exits; a rerun resumes from its last saved class. SMOKE=1: classes 0-1, 4 images each, base only.
@@ -16,10 +16,10 @@ set -euo pipefail
 source /blue/qi855292.ucf/ji757406.ucf/MarkWeightX/exp/arimg/arimg.env
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 OUT=${OUT:-$MWX_RUNS/arimg/fid50k}
-STUDENT=/orange/sgao1/ji757406.ucf/archive_20261024/mwx-runs/arimg/colearn/P14_fromP2_fixed_lr1e-4/transformer.pt
+# OpenMark weights: a /blue copy of the archived P14 run, made by the img-copy-p14 job (/orange is not job I/O)
+STUDENT=$MWX_RUNS/arimg/fid50k_student/transformer.pt
 P=$B/OpenMarkX/exp/arimg/fid50k.py
-mkdir -p $MWX_RUNS/jobs
-nvidia-smi --query-gpu=timestamp,name,utilization.gpu,memory.used --format=csv -l 30 > $MWX_RUNS/jobs/img-fid50k-${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}.gpu.csv &
+nvidia-smi --query-gpu=timestamp,name,utilization.gpu,memory.used --format=csv -l 30 > $B/jobs/img-fid50k-${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}.gpu.csv &
 cd $WMAR
 i=$SLURM_ARRAY_TASK_ID
 if [ "${SMOKE:-0}" = 1 ]; then
