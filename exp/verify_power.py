@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scipy.stats import binom
 
-from markweightx.api import sequential_p
+from openmarkx.api import sequential_p
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     a = ap.parse_args()
     rng, fpr, alpha = random.Random(1), 0.01, 0.01
     from scipy.stats import betabinom
-    from markweightx.api import null_ab
+    from openmarkx.api import null_ab
     ab = null_ab(a.null_n, fpr) if a.null_n else None
     tail = (lambda k, n: betabinom.sf(k - 1, n, *ab)) if ab else (lambda k, n: binom.sf(k - 1, n, fpr))
 

@@ -1,4 +1,4 @@
-"""Image+text models (markweightx.vlm) on a tiny random Gemma 3: LoRA stays in the language model, the loss covers
+"""Image+text models (openmarkx.vlm) on a tiny random Gemma 3: LoRA stays in the language model, the loss covers
 the answer tokens, and a few steps of distillation move the student toward the teacher."""
 import pytest
 import torch
@@ -7,8 +7,8 @@ transformers = pytest.importorskip("transformers")
 if not hasattr(transformers, "Gemma3ForConditionalGeneration"):
     pytest.skip("transformers without Gemma 3", allow_module_level=True)
 
-from markweightx.models import text_vocab_size
-from markweightx.vlm import LORA_TARGETS_LM, answer_logits, distill_loss, lora_lm_only
+from openmarkx.models import text_vocab_size
+from openmarkx.vlm import LORA_TARGETS_LM, answer_logits, distill_loss, lora_lm_only
 
 V, IMG = 300, 299          # vocabulary; the image soft token is the last id
 
@@ -87,9 +87,9 @@ def _toy_embed(monkeypatch, tmp_path):
     """embed_vlm on the tiny model: the processor and the batches are synthetic, the training loop is the real one."""
     import json
     import types
-    from markweightx import vlm
-    from markweightx.registry import register_scheme
-    from markweightx.schemes.base import Scheme
+    from openmarkx import vlm
+    from openmarkx.registry import register_scheme
+    from openmarkx.schemes.base import Scheme
 
     @register_scheme
     class ToyGreen(Scheme):
@@ -134,7 +134,7 @@ def test_embed_resumes_with_the_same_key_and_state(monkeypatch, tmp_path):
     import os
     assert os.path.exists(f"{out}/resume.pt")
     import glob
-    from markweightx.keys import STORE
+    from openmarkx.keys import STORE
     (draft,) = glob.glob(f"{STORE}/resume/*.json")
     draft_secret = json.load(open(draft))["secret"]
     resumed = vlm.embed_vlm("test-vlm-green", "tiny", out, pairs, **kw)
@@ -143,7 +143,7 @@ def test_embed_resumes_with_the_same_key_and_state(monkeypatch, tmp_path):
     import json
     log = [json.loads(l) for l in open(f"{out}/train_log.jsonl")]
     assert [r["step"] for r in log] == [1, 2, 3, 4, 4, 5, 6]     # stopped in step 5; state saved at 3; resumed at 4
-    from markweightx.keys import load_key
+    from openmarkx.keys import load_key
     assert load_key(resumed).params["secret"] == draft_secret   # the key drawn before the stop, not a new one
     from safetensors.torch import load_file
     a = load_file(f"{tmp_path}/full/adapter/adapter_model.safetensors")
@@ -154,7 +154,7 @@ def test_embed_resumes_with_the_same_key_and_state(monkeypatch, tmp_path):
 def test_generation_resumes_from_partial_file(monkeypatch, tmp_path):
     import types
     from transformers import BatchFeature
-    from markweightx import vlm
+    from openmarkx import vlm
     m = tiny()
     monkeypatch.setattr(vlm, "chat_batch", lambda proc, items: BatchFeature(
         {k: v[:len(items)] for k, v in batch(B=8, A=0)[0].items()}))

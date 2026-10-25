@@ -1,16 +1,16 @@
-"""The demo run is now one command: markweightx run configs/demos/medgemma.yaml. This script keeps the sweeps.
+"""The demo run is now one command: openmarkx run configs/demos/medgemma.yaml. This script keeps the sweeps.
 GPU: learn a scheme's watermark into MedGemma's language model (LoRA) on the distillation set.
 
   python exp/med/embed.py --scheme pro --steps 1500
-Writes $MWX_RUNS/med/<base>/<scheme>/{release.json, adapter/, train_log.jsonl}; the key goes to the key store.
+Writes $OMX_RUNS/med/<base>/<scheme>/{release.json, adapter/, train_log.jsonl}; the key goes to the key store.
 """
 import argparse
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from markweightx.paths import RUNS
-from markweightx.vlm import embed_vlm
+from openmarkx.paths import RUNS
+from openmarkx.vlm import embed_vlm
 
 
 def main():
@@ -23,10 +23,10 @@ def main():
     ap.add_argument("--answer_len", type=int, default=128)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--tag", default="")
-    ap.add_argument("--pairs", default=None, help="default: $MWX_RUNS/med/pairs_<base>_mxqa*.jsonl (all shards)")
+    ap.add_argument("--pairs", default=None, help="default: $OMX_RUNS/med/pairs_<base>_mxqa*.jsonl (all shards)")
     ap.add_argument("--no_grad_ckpt", action="store_true", help="faster on a large GPU")
     a = ap.parse_args()
-    from markweightx.api import scheme_spec
+    from openmarkx.api import scheme_spec
     name, params, src = scheme_spec(a.scheme)
     out = os.path.join(RUNS, "med", a.base, a.scheme.replace(":", "_") + a.tag)
     pairs = a.pairs or os.path.join(RUNS, "med", f"pairs_{a.base}_mxqa*.jsonl")

@@ -1,4 +1,4 @@
-# Agent: PRO (delta 2) learned into Llama-3.1-8B-Instruct, then run as a HotpotQA ReAct agent; the final answer
+# Agent: OpenMark (delta 2) learned into Llama-3.1-8B-Instruct, then run as a HotpotQA ReAct agent; the final answer
 # (about 300 words, temperature 0.7) is what the detector checks. Data from exp/agent/prepare.py and distill_data.py.
 model:
   name: agent
@@ -9,11 +9,11 @@ model:
   temperature: 0.7
   bs: 50
 scheme:
-  name: pro
+  name: openmark
   params: {delta: 2.0}
 data:
-  train: $MWX_DATA/agent/data_llama-3.1-8b-instruct.pt
-  eval: $MWX_DATA/agent/hotpot_dev.jsonl
+  train: $OMX_DATA/agent/data_llama-3.1-8b-instruct.pt
+  eval: $OMX_DATA/agent/hotpot_dev.jsonl
 imprint:
   bs: 16
   seq_len: 256
@@ -23,4 +23,4 @@ generate: {n: 300}
 detect: {fpr: 0.01, null: base}
 edits: []
 quality: accuracy
-out: $MWX_RUNS/demos/agent
+out: $OMX_RUNS/demos/agent

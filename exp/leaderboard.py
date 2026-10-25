@@ -3,7 +3,7 @@
   python exp/leaderboard.py [--tag e2 --base llama-3.2-1b] [--format latex]
 Prints the board and saves it as RUNS/<tag>/<base>/leaderboard.md (and .json for the demo). --format latex prints the
 main table as a LaTeX tabular, in the layout of the PRO paper's main table. A plugin method (run through
-markweightx bench) is a main-board row like a built-in one.
+openmarkx bench) is a main-board row like a built-in one.
 Columns: learned (no edit) and the decode-time teacher ceiling; weight edits; text edits; PPL of the student and
 mean 4-gram repetition. A cell is marked * when the edited model's text is degenerate (rep4 > 0.3), because
 looping text inflates some detectors.
@@ -16,7 +16,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from markweightx.paths import RUNS as R  # noqa: E402
+from openmarkx.paths import RUNS as R  # noqa: E402
 COLS = [("finetune_steps200", "FT 200"), ("finetune_steps800", "FT 800"), ("finetune_steps2400", "FT 2400"),
         ("merge_ratio0.2", "merge .2"), ("merge_ratio0.4", "merge .4"), ("merge_ratio0.6", "merge .6"),
         ("prune_sparsity0.2", "prune 20%"), ("prune_sparsity0.5", "prune 50%"),
@@ -49,7 +49,7 @@ def main():
     rows.sort(key=lambda r: -r["learned"])
     for r in rows:
         r["main"] = is_main(r)
-    from markweightx.files import write_json
+    from openmarkx.files import write_json
     write_json(f"{root}/leaderboard.json", {"base": a.base, "tag": a.tag, "rows": rows, "not_included": NOT_INCLUDED},
                indent=1)
     ppl_base = rows[0]["ppl_base"] if rows else 0
@@ -61,7 +61,7 @@ def main():
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         markdown(rows, a.base, ppl_base)
-    from markweightx.files import write_text
+    from openmarkx.files import write_text
     write_text(f"{root}/leaderboard.md", buf.getvalue())
     print(buf.getvalue(), end="")
 
@@ -90,7 +90,7 @@ def markdown(rows, base, ppl_base):
     print("\nforged ↓: share of texts an attacker forges without Alice's model or key (token counts from her 311 texts, then a biased base model); lower is safer.")
     print("\n\\* degenerate text (4-gram repetition > 0.3); the score is inflated by looping, not by the watermark.")
     print("\n† more than 2% false positives on texts cut to 50 or 100 tokens at this threshold: see the C9 table; "
-          "mwx.calibrate keeps a null per length for this.")
+          "omx.calibrate keeps a null per length for this.")
     for k, why in NOT_INCLUDED.items():
         print(f"\nNot included: {k}: {why}.")
     main = [r for r in rows if r["main"]]
@@ -110,7 +110,7 @@ def markdown(rows, base, ppl_base):
             print(f"| {r['scheme']} | " + " | ".join(cell(c) for c in cols) + " |")
         n = next(v["n"] for r in main for v in (r.get("by_length") or {}).values())
         print(f"\n{n} texts per cell (1% = {max(1, round(n / 100))} texts); **bold**: more than 2% false positives. "
-              "The TPR column uses the 1% threshold of the cut null (what mwx.calibrate now does per length); "
+              "The TPR column uses the 1% threshold of the cut null (what omx.calibrate now does per length); "
               "– : not measured yet (exp/length_check.py).")
     print("\n### Ablations: experimental variants and parameter sweeps (not methods you would pick)\n")
     table([r for r in rows if not r["main"]], ppl_base)
@@ -118,9 +118,9 @@ def markdown(rows, base, ppl_base):
 
 def is_main(r) -> bool:
     """A leaderboard method is a registered, non-experimental scheme at its default parameters, or a plugin method
-    (it passed markweightx check to get here). Parameter sweeps (name:k=v) are ablations."""
-    from markweightx.registry import SCHEMES
-    import markweightx.schemes  # noqa: F401  (registers the built-in schemes)
+    (it passed openmarkx check to get here). Parameter sweeps (name:k=v) are ablations."""
+    from openmarkx.registry import SCHEMES
+    import openmarkx.schemes  # noqa: F401  (registers the built-in schemes)
     if ":" in r["scheme"] or r.get("sweep") or r.get("experimental"):
         return False
     if r.get("scheme_source"):
@@ -133,7 +133,7 @@ def label(r):
     """Ablation rows say what actually ran: the parameters that differ from the method's current defaults."""
     if r.get("main") or not r.get("scheme_params"):
         return r["scheme"]
-    from markweightx.registry import get_scheme, resolved_params
+    from openmarkx.registry import get_scheme, resolved_params
     name = r["scheme"].split(":")[0]
     try:
         now = resolved_params(get_scheme(name))

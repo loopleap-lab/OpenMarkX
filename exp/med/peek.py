@@ -1,7 +1,7 @@
 """GPU: a quick look at a training run before it finishes: answer part of the eval half with an intermediate adapter
 (adapter_step<N>) and score the answers with the run's key.
 
-  python exp/med/peek.py --run $MWX_RUNS/med/medgemma-1.5-4b-it/pro --step 1000 --n 200
+  python exp/med/peek.py --run $OMX_RUNS/med/medgemma-1.5-4b-it/pro --step 1000 --n 200
 The key comes from the private draft that embed_vlm writes to the key store when a run starts. Nothing in the run
 directory is changed; results go to <run>/peek_step<N>.json.
 """
@@ -13,9 +13,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from markweightx.paths import RUNS
-from markweightx.scoring import scores, summary
-from markweightx.types import Key
+from openmarkx.paths import RUNS
+from openmarkx.scoring import scores, summary
+from openmarkx.types import Key
 
 
 def main():
@@ -30,12 +30,12 @@ def main():
     cfg = json.load(open(os.path.join(a.run, "embed_args.json")))
     if not a.step:
         a.step = max(int(d.split("step")[1]) for d in os.listdir(a.run) if d.startswith("adapter_step"))
-    from markweightx.keys import STORE
+    from openmarkx.keys import STORE
     draft = os.path.join(STORE, "resume", hashlib.sha1(os.path.abspath(a.run).encode()).hexdigest()[:16] + ".json")
     key = Key(scheme=cfg["scheme"], params={**json.load(open(draft)), "rng_device": "cuda"}, base=cfg["base"],
               scheme_params={})
-    from markweightx.api import build_scheme
-    from markweightx.vlm import generate_vlm, load_processor, load_vlm
+    from openmarkx.api import build_scheme
+    from openmarkx.vlm import generate_vlm, load_processor, load_vlm
     from peft import PeftModel
     items = [json.loads(l) for l in open(os.path.join(RUNS, "med", "mxqa_mm_eval.jsonl"))][:a.n]
     proc = load_processor(cfg["base"])

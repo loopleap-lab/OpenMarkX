@@ -4,7 +4,7 @@
 Each training chunk is the last --seq_len tokens of (chat prompt + the model's answer), the answer forced to
 --answer_len tokens, so every chunk contains the assistant header and mostly answer text. Writes the corpus format of
 exp/prepare_data.py ({"train": [N, seq_len] tokens, "eval_texts": held-out answers}) to
-$MWX_RUNS/agent/data_<base>.pt; shards go to .s<k>of<N>.partial.jsonl first (resumable), then a merge step:
+$OMX_RUNS/agent/data_<base>.pt; shards go to .s<k>of<N>.partial.jsonl first (resumable), then a merge step:
   python exp/agent/distill_data.py --merge --num_shards 4
 """
 import argparse
@@ -15,7 +15,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import torch
 
-from markweightx.paths import RUNS
+from openmarkx.paths import RUNS
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
         out = os.path.join(d, f"data_{a.base}.pt")
         torch.save({"train": torch.tensor(train), "eval_texts": evals, "model": a.base, "source": "dolly-self"}, out)
         print({"train": len(train), "eval": len(evals), "out": out}); return
-    from markweightx.models import load_base, load_tokenizer
+    from openmarkx.models import load_base, load_tokenizer
     tok = load_tokenizer(a.base)
     prompts = [json.loads(l)["text"] for l in open(os.path.join(d, "dolly_prompts.jsonl"))][:a.n]
     mine = list(range(a.shard, len(prompts), a.num_shards))

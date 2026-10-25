@@ -10,11 +10,11 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from markweightx.api import _matching_device, build_scheme, scheme_for
-from markweightx.keys import load_key
-from markweightx.models import load_tokenizer
-from markweightx.scoring import length_curve
-from markweightx.types import Release
+from openmarkx.api import _matching_device, build_scheme, scheme_for
+from openmarkx.keys import load_key
+from openmarkx.models import load_tokenizer
+from openmarkx.scoring import length_curve
+from openmarkx.types import Release
 
 
 def main():
@@ -30,13 +30,13 @@ def main():
     key = load_key(rel)
     sch = scheme_for(key, rel.base, _matching_device(key, a.device, type(build_scheme(key, trust_plugin=True))),
                      trust_plugin=True)
-    from markweightx.scoring import scores
+    from openmarkx.scoring import scores
     again = [s for s, _ in scores(sch, base[:20])]          # this binding must reproduce the run's own scores
     if any(abs(x - y) > 1e-3 * max(1.0, abs(y)) for x, y in zip(again, tx["scores"]["null"][:20])):
         raise SystemExit(f"{a.release}: rescoring the base texts does not reproduce texts.json "
                          f"({again[:3]} vs {tx['scores']['null'][:3]}); not writing by_length")
     res["by_length"] = length_curve(sch, load_tokenizer(rel.base), tx["student"], base, res["student"]["thr"])
-    from markweightx.files import write_json
+    from openmarkx.files import write_json
     write_json(f"{a.release}/result.json", res, indent=1)
     print(json.dumps({"release": a.release, "by_length": res["by_length"]}), flush=True)
 

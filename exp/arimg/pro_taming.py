@@ -1,5 +1,5 @@
-"""The demo run is now one command: markweightx run configs/demos/taming.yaml. This script keeps the sweeps.
-PRO for autoregressive image generation: WMAR's generation-time KGW watermark on Taming's image tokens, learned into
+"""The demo run is now one command: openmarkx run configs/demos/taming.yaml. This script keeps the sweeps.
+OpenMark (PRO in the paper) for autoregressive image generation: WMAR's generation-time KGW watermark on Taming's image tokens, learned into
 the transformer's weights (LoRA) by logit distillation, then detected with WMAR's detector, unchanged.
 
 Run from the WMAR checkout (its `deps.taming` and `wmar` packages), e.g.
@@ -245,7 +245,7 @@ def detect_table(codes, Gp, alive, gamma):
 
 
 def cmd_colearn(a):
-    """PRO's idea on image tokens: the watermark policy and the model learn together. The policy is a score table over
+    """OpenMark's idea on image tokens: the watermark policy and the model learn together. The policy is a score table over
     (previous alive code, next alive code), started at WMAR's linear-seeding green table; its green lists are the top
     gamma share of each row (hard, straight-through). The GPT (full fine-tune) is distilled toward base + delta * green
     list, and the same KL pulls the policy toward green lists the GPT can express; a column-balance term keeps every
@@ -466,7 +466,7 @@ def cmd_fold(a):
 
 
 def cmd_edit(a):
-    """Closed-form PRO for WMAR: the green list depends only on the previous token, so solve the change of the output
+    """Closed-form OpenMark for WMAR: the green list depends only on the previous token, so solve the change of the output
     head that adds delta on that token's green list, by ridge regression of the wanted logit shift on the final hidden
     features (ln_f output) over the base model's own sequences; restricted to the codes the model ever uses (alive)."""
     import glob

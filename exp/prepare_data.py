@@ -1,9 +1,9 @@
 """The training and evaluation text every experiment uses: C4 (en) by default, tokenized with the base's tokenizer.
 
-  python exp/prepare_data.py                      # -> $MWX_RUNS/data_llama8b_256.pt (markweightx.paths.DATA)
-  python exp/prepare_data.py --dataset my_physics.jsonl --out $MWX_RUNS/data_physics.pt     # your own domain text
-  python exp/prepare_data.py --dataset camel-ai/physics --field message_2 --out $MWX_RUNS/data_physics.pt
-Point every step at another corpus with MWX_DATA=<file> (embed, the fine-tune edit, prompts, calibration).
+  python exp/prepare_data.py                      # -> $OMX_RUNS/data_llama8b_256.pt (openmarkx.paths.DATA)
+  python exp/prepare_data.py --dataset my_physics.jsonl --out $OMX_RUNS/data_physics.pt     # your own domain text
+  python exp/prepare_data.py --dataset camel-ai/physics --field message_2 --out $OMX_RUNS/data_physics.pt
+Point every step at another corpus with OMX_DATA=<file> (embed, the fine-tune edit, prompts, calibration).
 The first 600 documents are held out: evaluation prompts (their first 50 tokens) and human continuations. The rest
 is chunked into 40,000 training sequences of 256 tokens (embed, and the fine-tune edit, which reads past 10,000).
 Llama-3.2-1B and Llama-3.1-8B share this tokenizer (128,256 tokens), so one file serves both.
@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from datasets import load_dataset
 
-from markweightx.models import load_tokenizer
-from markweightx.paths import DATA
+from openmarkx.models import load_tokenizer
+from openmarkx.paths import DATA
 
 
 def documents(a):

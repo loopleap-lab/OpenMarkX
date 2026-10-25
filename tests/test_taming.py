@@ -11,15 +11,15 @@ FAKE = "fakes:FakeTaming"
 
 
 def test_missing_wmar_dir_names_the_variable(monkeypatch):
-    from markweightx.external import MissingExternal
-    from markweightx.registry import get_model
-    monkeypatch.delenv("MWX_WMAR_DIR", raising=False)
-    with pytest.raises(MissingExternal, match="MWX_WMAR_DIR"):
+    from openmarkx.external import MissingExternal
+    from openmarkx.registry import get_model
+    monkeypatch.delenv("OMX_WMAR_DIR", raising=False)
+    with pytest.raises(MissingExternal, match="OMX_WMAR_DIR"):
         get_model("taming", modelpath="taming.ckpt").load(None, "cpu")
 
 
 def test_taming_fake_samples_codes_of_shape_256():
-    from markweightx.registry import get_model
+    from openmarkx.registry import get_model
     m = get_model("taming", factory=FAKE)
     net = m.load(None, "cpu")
     codes = m.run(net, [1, 2])
@@ -28,8 +28,8 @@ def test_taming_fake_samples_codes_of_shape_256():
 
 
 def test_roundtrip_returns_codes_of_same_shape():
-    from markweightx.edits.outputs import image_roundtrip
-    from markweightx.registry import get_model
+    from openmarkx.edits.outputs import image_roundtrip
+    from openmarkx.registry import get_model
     m = get_model("taming", factory=FAKE)
     codes = m.run(m.load(None, "cpu"), [3])
     again = image_roundtrip(codes, model=m)
@@ -37,7 +37,7 @@ def test_roundtrip_returns_codes_of_same_shape():
 
 
 def test_taming_forward_feeds_wmar_in_alive_space():
-    from markweightx.registry import get_model, get_scheme
+    from openmarkx.registry import get_model, get_scheme
     m = get_model("taming", factory=FAKE)
     net = m.load(None, "cpu")
     sch = get_scheme("wmar")
@@ -53,7 +53,7 @@ def test_fid_names_torch_fidelity_when_missing(tmp_path):
         pytest.skip("torch-fidelity is installed")
     except ImportError:
         pass
-    from markweightx.quality import fid
+    from openmarkx.quality import fid
     with pytest.raises(ImportError, match="torch-fidelity"):
         fid(str(tmp_path), str(tmp_path))
 
@@ -74,9 +74,9 @@ def test_wmar_wrapper_is_built_inside_its_checkout(tmp_path, monkeypatch):
     (w / "wmar/utils/utils.py").write_text("def update_weights(*a): pass\n")
     (w / "wmar/watermarking/gentime_watermark.py").write_text(
         "SeedStrategy = SplitStrategy = str\nclass GentimeWatermark:\n    def __init__(self, *a): pass\n")
-    monkeypatch.setenv("MWX_WMAR_DIR", str(w))
+    monkeypatch.setenv("OMX_WMAR_DIR", str(w))
     monkeypatch.chdir(tmp_path)
-    from markweightx.registry import get_model
+    from openmarkx.registry import get_model
     m = get_model("taming", modelpath="ckpt")
     wrapper, _ = m._wrapper("cpu")
     assert wrapper.alive == "1 2 3" and os.getcwd() == str(tmp_path)      # built there, cwd restored
@@ -84,7 +84,7 @@ def test_wmar_wrapper_is_built_inside_its_checkout(tmp_path, monkeypatch):
 
 def test_codec_moves_inputs_to_the_vq_device():
     """Codes come back on the CPU after sampling; the VQ lives on the model's device (cuda on HPG)."""
-    from markweightx.registry import get_model
+    from openmarkx.registry import get_model
     m = get_model("taming", factory=FAKE)
     m.load(None, "cpu")
     seen = []

@@ -15,15 +15,15 @@ from test_pipeline import geopt_cfg, run_cfg, write_cfg
 
 @pytest.fixture
 def store(tmp_path, monkeypatch):
-    import markweightx.keys as K
+    import openmarkx.keys as K
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     return tmp_path / "keys"
 
 
 # I-1: key material (wmar's policy table) never sits in the release directory, not even mid-run
 def test_train_imprint_keeps_resume_state_out_of_the_release(tmp_path, store):
-    from markweightx.registry import get_model, get_scheme
-    from markweightx.train import imprint
+    from openmarkx.registry import get_model, get_scheme
+    from openmarkx.train import imprint
     m = get_model("taming", factory="fakes:FakeTaming")
     net = m.load(None, "cpu")
     sch = get_scheme("wmar")
@@ -39,9 +39,9 @@ def test_train_imprint_keeps_resume_state_out_of_the_release(tmp_path, store):
 
 # I-2: a resumed imprint keeps the key it started with
 def test_resumed_imprint_keeps_its_secret(tmp_path, store, monkeypatch):
-    import markweightx.train as T
-    from markweightx.keys import load_key
-    from markweightx.schemes.ripple import RippleScheme
+    import openmarkx.train as T
+    from openmarkx.keys import load_key
+    from openmarkx.schemes.ripple import RippleScheme
     cfg = geopt_cfg(tmp_path / "run")
     cfg["imprint"] = {"phases": [{"steps": 6, "lr": 1e-3, "trainable": "full"}], "save_every": 2}
     secrets, real_setup, real_cycle = [], RippleScheme.setup, T._cycle
@@ -76,7 +76,7 @@ def test_resumed_imprint_keeps_its_secret(tmp_path, store, monkeypatch):
       "imprint": {"edit_last": True}, "edits": [], "quality": "none"}, "edit_last"),
 ])
 def test_config_rejects_settings_the_run_would_ignore(tmp_path, patch, word):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     with pytest.raises(pipeline.ConfigError, match=word):
         pipeline.load_config(write_cfg(tmp_path, {**geopt_cfg(tmp_path / "r"), **patch}))
 
@@ -92,15 +92,15 @@ def test_rerun_step_invalidates_later_steps(tmp_path, store):
 
 # I-5: no null kind silently computes something else
 def test_derivative_null_is_refused(tmp_path):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     with pytest.raises(pipeline.ConfigError, match="derivative"):
         pipeline.load_config(write_cfg(tmp_path, {**geopt_cfg(tmp_path / "r"), "detect": {"null": "derivative"}}))
 
 
 def test_wmar_wrong_key_is_another_table(tmp_path, store):
     import random
-    from markweightx.keys import stage_dir
-    from markweightx.registry import get_model, get_scheme
+    from openmarkx.keys import stage_dir
+    from openmarkx.registry import get_model, get_scheme
     m = get_model("taming", factory="fakes:FakeTaming")
     m.load(None, "cpu")
     s = get_scheme("wmar")
@@ -114,7 +114,7 @@ def test_wmar_wrong_key_is_another_table(tmp_path, store):
 # I-6: after edit_last, gradient phases train towards the unedited model + mark, not a double mark
 def test_imprint_uses_the_given_teacher(tmp_path):
     from fakes import tiny_field_net
-    from markweightx.train import imprint
+    from openmarkx.train import imprint
     from test_train import Shift, TinyField
     net, teacher = tiny_field_net(), tiny_field_net()
     with torch.no_grad():
@@ -129,9 +129,9 @@ def test_imprint_uses_the_given_teacher(tmp_path):
 
 # I-7: code a release names runs only under trust
 def test_release_named_factory_needs_trust(tmp_path):
-    from markweightx.models import load_release
-    from markweightx.registry import UntrustedPlugin
-    from markweightx.types import Release
+    from openmarkx.models import load_release
+    from openmarkx.registry import UntrustedPlugin
+    from openmarkx.types import Release
     rel = Release(str(tmp_path), "geopt", "ripple", model={"name": "geopt", "params": {"factory": "runpy:run_path"}},
                   format="state_dict")
     with pytest.raises(UntrustedPlugin):
@@ -143,8 +143,8 @@ def test_release_named_factory_needs_trust(tmp_path):
 
 # I-8: co-learning clips the model's gradients only, as pro_taming.py's cmd_colearn
 def test_colearn_clips_model_weights_only(tmp_path, store, monkeypatch):
-    from markweightx.registry import get_model, get_scheme
-    from markweightx.train import imprint
+    from openmarkx.registry import get_model, get_scheme
+    from openmarkx.train import imprint
     m = get_model("taming", factory="fakes:FakeTaming")
     net = m.load(None, "cpu")
     sch = get_scheme("wmar")
@@ -159,7 +159,7 @@ def test_colearn_clips_model_weights_only(tmp_path, store, monkeypatch):
 
 # I-9: eps: auto is refused for ripple until calibration models the learning noise
 def test_ripple_eps_auto_is_refused(tmp_path):
-    from markweightx import pipeline
+    from openmarkx import pipeline
     cfg = {**geopt_cfg(tmp_path / "r"), "scheme": {"name": "ripple", "params": {"eps": "auto"}}}
     with pytest.raises(pipeline.ConfigError, match="auto"):
         pipeline.load_config(write_cfg(tmp_path, cfg))

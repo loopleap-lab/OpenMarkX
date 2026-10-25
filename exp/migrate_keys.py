@@ -11,9 +11,9 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from markweightx.keys import store
-from markweightx.paths import RUNS
-from markweightx.types import Key, Release, _canon
+from openmarkx.keys import store
+from openmarkx.paths import RUNS
+from openmarkx.types import Key, Release, _canon
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
                 rel.save()
     print(f"{n} releases, {len(keys)} distinct keys" + ("" if a.apply else " (dry run)"))
     # GaussMark keys made before the release dtype was recorded: read it from the release's safetensors
-    from markweightx.keys import STORE, key_path
+    from openmarkx.keys import STORE, key_path
     from safetensors import safe_open
     for f in sorted(glob.glob(f"{RUNS}/e2/**/release.json", recursive=True)):
         rel = Release.open(os.path.dirname(f))

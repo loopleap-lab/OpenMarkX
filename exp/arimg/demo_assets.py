@@ -1,4 +1,4 @@
-"""Demo assets for PRO on Taming: images with their 16x16 tokens colored green / red by WMAR's detector, and FID.
+"""Demo assets for OpenMark on Taming: images with their 16x16 tokens colored green / red by WMAR's detector, and FID.
 
 Run from the WMAR checkout after `pro_taming.py eval` (it reuses eval_codes_<set>.pt):
   cd $WMAR && python $B/MarkWeightX/exp/arimg/demo_assets.py --run $RUN --out $RUN/demo

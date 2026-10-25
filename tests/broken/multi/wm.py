@@ -1,16 +1,16 @@
 """lowkey: the template, but the green list is seeded from secret % 16: only 16 distinct keys."""
 import math, torch
 from helper import green_list
-import markweightx as mwx
+import openmarkx as omx
 
-@mwx.register_scheme
-class Multi(mwx.Scheme):
-    name = "multi"; imprint = mwx.Imprint.DISTILL; access = mwx.Access.R0; exact_null = True
+@omx.register_scheme
+class Multi(omx.Scheme):
+    name = "multi"; imprint = omx.Imprint.DISTILL; access = omx.Access.R0; exact_null = True
     def __init__(self, delta: float = 2.0, **params):
         super().__init__(delta=delta, **params); self.delta = delta
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)
-        key = dict(key or {}); key.setdefault("secret", mwx.keys.new_secret())
+        key = dict(key or {}); key.setdefault("secret", omx.keys.new_secret())
         self.green = green_list(key["secret"], model.config.vocab_size)
         return {"secret": int(key["secret"])}
     def target_logits(self, input_ids, logits):

@@ -13,5 +13,5 @@ source /blue/qi855292.ucf/ji757406.ucf/mwx.env
 cd $B/MarkWeightX
 export PYTORCH_ALLOC_CONF=expandable_segments:True
 export MWX_DATA=$MWX_RUNS/agent/data_llama-3.1-8b-instruct.pt
-python -c "from markweightx.paths import base_path; print(base_path(\"llama-3.1-8b-instruct\"))"
+python -c "from openmarkx.paths import base_path; print(base_path(\"llama-3.1-8b-instruct\"))"
 python exp/agent/prepare.py --n_agent 300

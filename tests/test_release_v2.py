@@ -5,7 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from markweightx.types import Release
+from openmarkx.types import Release
 
 LEGACY = {"path": "", "base": "llama-3.2-1b", "scheme": "pro", "key": {}, "key_commitment": "ab" * 32,
           "adapter": "adapter", "weights": None, "load": {}, "lineage": []}
@@ -41,13 +41,13 @@ def test_release_never_contains_key_files(tmp_path):
 
 
 def test_load_release_dispatches_on_model(tmp_path):
-    import markweightx as mwx
-    from markweightx.models import load_release
+    import openmarkx as omx
+    from openmarkx.models import load_release
 
-    @mwx.register_model
-    class Echo(mwx.Model):
+    @omx.register_model
+    class Echo(omx.Model):
         name = "echo_test"
-        output = mwx.Output.FIELD
+        output = omx.Output.FIELD
 
         def load(self, path, device):
             return ("loaded", path.path, device)

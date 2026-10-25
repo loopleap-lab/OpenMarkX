@@ -1,9 +1,9 @@
-"""markweightx check must fail each broken adapter in tests/broken/ on the check that targets its defect."""
+"""openmarkx check must fail each broken adapter in tests/broken/ on the check that targets its defect."""
 import os
 
 import pytest
 
-from markweightx.check import run
+from openmarkx.check import run
 
 BROKEN = os.path.join(os.path.dirname(__file__), "broken")
 CASES = [  # file, scheme name, the check that must fail, the defect

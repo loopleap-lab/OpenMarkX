@@ -1,7 +1,7 @@
 """A tiny GPU job scheduler for shared lab machines.
 
   nohup python exp/scheduler.py --host mybox &     # runs forever; edit RUNS/sched/<host>/queue.json to add jobs
-Jobs run from the repository root with the scheduler's environment (HF_HOME, MWX_RUNS, ...) and one GPU each.
+Jobs run from the repository root with the scheduler's environment (HF_HOME, OMX_RUNS, ...) and one GPU each.
 
 Rules: at most one of *my* jobs per GPU (other users' jobs are left alone), and a job starts only when the GPU has
 at least `mem_gb` free and every path in `requires` exists. Each job: {"id", "cmd", "mem_gb", "requires": [...]}.
@@ -17,7 +17,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from markweightx.paths import RUNS as R  # noqa: E402
+from openmarkx.paths import RUNS as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ME = getpass.getuser()
@@ -88,7 +88,7 @@ def main():
             time.sleep(90)                                     # let it allocate before measuring free memory again
         tmp = f"{sf}.tmp"
         json.dump(state, open(tmp, "w"), indent=1)
-        os.replace(tmp, sf)                                # readers (markweightx bench) never see half a file
+        os.replace(tmp, sf)                                # readers (openmarkx bench) never see half a file
         time.sleep(a.every)
 
 

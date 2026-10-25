@@ -7,7 +7,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from markweightx.pipeline import load_config
+from openmarkx.pipeline import load_config
+from openmarkx.registry import canonical_scheme
 
 
 def line_args(path: str, name: str) -> dict:
@@ -43,13 +44,14 @@ def test_geopt_is_s1_e02():
     assert cfg.imprint["edit_last"] is True                  # run_mark.py's default --edit_last 1
 
 
-def test_agent_is_pro_delta2_a300t07():
+def test_agent_is_openmark_delta2_a300t07():
     cfg = demo("agent")
     emb = line_args("exp/agent/jobs/agent-pro-d2.sbatch", "learnability.py")
     run = line_args("exp/agent/jobs/agent-runv.sbatch", "hotpot_agent.py")
     demo_page = line_args("exp/agent/jobs/agent-demod2.sbatch", "demo_page.py")
     scheme, _, delta = emb["scheme"].partition(":delta=")
-    assert cfg.scheme["name"] == scheme and cfg.scheme["params"]["delta"] == float(delta)
+    assert canonical_scheme(cfg.scheme["name"]) == canonical_scheme(scheme)   # the job ran it as "pro"
+    assert cfg.scheme["params"]["delta"] == float(delta)
     assert cfg.model["base"] == emb["base"]
     assert cfg.imprint["seq_len"] == int(emb["seq_len"]) and cfg.imprint["bs"] == int(emb["bs"])
     assert cfg.model["final_words"] == int(run["final_words"]) and cfg.model["final_tokens"] == int(run["final_tokens"])
@@ -58,10 +60,10 @@ def test_agent_is_pro_delta2_a300t07():
     assert cfg.model["temperature"] == float(t.group(2)[0] + "." + t.group(2)[1:])
 
 
-def test_medgemma_is_xmed_pro():
+def test_medgemma_is_xmed_openmark():
     cfg = demo("medgemma")
     a = line_args("exp/med/jobs/Xmed-pro.sbatch", "embed.py")
-    assert cfg.scheme["name"] == a["scheme"]
+    assert canonical_scheme(cfg.scheme["name"]) == canonical_scheme(a["scheme"])
     assert cfg.imprint["bs"] == int(a["bs"]) and cfg.imprint["answer_len"] == int(a["answer_len"])
     assert cfg.model["name"] == "vlm" and cfg.model["base"] == "medgemma-1.5-4b-it"
 
@@ -73,10 +75,10 @@ def test_defaults_the_runs_did_not_override():
         assert (p["steps"], p["lr"], p["rank"]) == (1500, 2e-4, 64)
 
 
-def test_inputs_come_from_mwx_data_and_outputs_go_to_mwx_runs(monkeypatch):
-    monkeypatch.setenv("MWX_RUNS", "/runs")
-    monkeypatch.setenv("MWX_DATA", "/data")
+def test_inputs_come_from_omx_data_and_outputs_go_to_omx_runs(monkeypatch):
+    monkeypatch.setenv("OMX_RUNS", "/runs")
+    monkeypatch.setenv("OMX_DATA", "/data")
     cfg = demo("agent")
     assert cfg.data["train"].startswith("/data/") and cfg.data["eval"].startswith("/data/") and cfg.out.startswith("/runs/")
-    monkeypatch.delenv("MWX_DATA")
+    monkeypatch.delenv("OMX_DATA")
     assert demo("medgemma").data["eval"].startswith("/runs/")

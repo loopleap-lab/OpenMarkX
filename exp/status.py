@@ -1,4 +1,4 @@
-"""One-screen status of every MarkWeightX experiment on this machine.
+"""One-screen status of every OpenMarkX experiment on this machine.
   python exp/status.py            # tables for E2 (1B learnability), E5 (8B), and E4 (edit grids)"""
 import glob
 import json
@@ -7,7 +7,7 @@ import sys
 import subprocess
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from markweightx.paths import RUNS as R  # noqa: E402
+from openmarkx.paths import RUNS as R  # noqa: E402
 
 
 def row(res):

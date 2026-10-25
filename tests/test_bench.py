@@ -1,10 +1,10 @@
-"""markweightx bench: arena files, the step plan, and the scheduler queue."""
+"""openmarkx bench: arena files, the step plan, and the scheduler queue."""
 import json
 import os
 
 import pytest
 
-from markweightx import bench
+from openmarkx import bench
 
 
 def test_arena_is_validated(tmp_path):

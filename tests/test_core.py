@@ -3,15 +3,15 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from markweightx.scoring import empirical_p, repetition, summary, threshold
-from markweightx.registry import SCHEMES, get_scheme
-from markweightx.types import Release
+from openmarkx.scoring import empirical_p, repetition, summary, threshold
+from openmarkx.registry import SCHEMES, get_scheme
+from openmarkx.types import Release
 
 
 def test_registry_has_all_teachers_pro_and_nowm():
     get_scheme("nowm")
     names = set(SCHEMES)
-    assert {"pro", "nowm"} <= names
+    assert {"openmark", "nowm"} <= names
     assert len([n for n in names if n.startswith("markllm-") and n.endswith("-d")]) == 13
     assert get_scheme("markllm-expgumbel-d").kind == "distill_sampling"
     assert get_scheme("markllm-pf-d").kind == "distill_logit"
@@ -33,14 +33,14 @@ def test_repetition():
 
 
 def test_release_roundtrip(tmp_path):
-    r = Release(path=str(tmp_path / "r"), base="llama-3.2-1b", scheme="pro", key={"delta": 1.0}, adapter="a")
+    r = Release(path=str(tmp_path / "r"), base="llama-3.2-1b", scheme="openmark", key={"delta": 1.0}, adapter="a")
     r.save()
     assert Release.open(r.path) == r
 
 
 def test_length_curve_cuts_texts_and_keeps_the_threshold():
-    from markweightx.models import load_tokenizer
-    from markweightx.scoring import length_curve
+    from openmarkx.models import load_tokenizer
+    from openmarkx.scoring import length_curve
 
     class Count:                                           # statistic = number of tokens: longer looks "marked"
         def score_batch(self, texts):
@@ -53,7 +53,7 @@ def test_length_curve_cuts_texts_and_keeps_the_threshold():
 
 
 def test_short_texts_use_the_null_calibrated_at_their_length():
-    from markweightx.scoring import _null_for
+    from openmarkx.scoring import _null_for
     full, n50, n100 = [3.0], [5.0], [4.0]
     by = {"50": n50, "100": n100}
     assert _null_for(220, full, by, 200) is full
@@ -65,7 +65,7 @@ def test_short_texts_use_the_null_calibrated_at_their_length():
 def test_sequential_verdict_keeps_its_error_rates_and_power():
     import random
     from scipy.stats import binom
-    from markweightx.api import sequential_p
+    from openmarkx.api import sequential_p
     rng = random.Random(0)
 
     def run(rate, budget=200, alpha=0.01, fpr=0.01):         # the decision rule of verify_model(sequential=True)
@@ -90,7 +90,7 @@ def test_empirical_null_beta_binomial_test_is_exact_and_powerful():
     false accusations at or below alpha (testing against fpr gave ~4.7% over 200 texts), with most of the power."""
     import numpy as np
     from scipy.stats import betabinom, binom
-    from markweightx.api import null_ab, sequential_p
+    from openmarkx.api import null_ab, sequential_p
     rng = np.random.default_rng(0)
     N, fpr, alpha, n = 311, 0.01, 0.01, 200
     a, b = null_ab(N, fpr)
@@ -105,7 +105,7 @@ def test_empirical_null_beta_binomial_test_is_exact_and_powerful():
 
 
 def test_sequential_p_falls_with_more_flags_even_at_the_top():
-    from markweightx.api import null_ab, sequential_p
+    from openmarkx.api import null_ab, sequential_p
     ab = null_ab(311, 0.01)
     ps = [sequential_p(k, 200, 0.01, 0.2, ab) for k in range(0, 201, 10)]
     assert all(x >= y for x, y in zip(ps, ps[1:])) and sequential_p(0, 5000, 0.01, 0.2, ab) == 1.0   # no overflow

@@ -7,9 +7,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 import torch
 
-import markweightx.keys as K
-from markweightx.primitives import Access, Probe
-from markweightx.registry import get_scheme
+import openmarkx.keys as K
+from openmarkx.primitives import Access, Probe
+from openmarkx.registry import get_scheme
 
 
 class TinyProbe(Probe):
@@ -21,7 +21,7 @@ class TinyProbe(Probe):
 @pytest.fixture
 def tiny(tmp_path, monkeypatch):
     from transformers import LlamaConfig, LlamaForCausalLM
-    from markweightx.models import load_tokenizer
+    from openmarkx.models import load_tokenizer
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     torch.manual_seed(0)
     cfg = LlamaConfig(vocab_size=128256, hidden_size=64, intermediate_size=128, num_hidden_layers=2,
@@ -99,7 +99,7 @@ def test_release_keeps_the_checkpoint_dtype(tmp_path, monkeypatch):
     """Embedding loads the base in fp32, but the release must be saved in the checkpoint's own dtype (bf16)."""
     from safetensors import safe_open
     from transformers import AutoModelForCausalLM, LlamaConfig, LlamaForCausalLM
-    from markweightx.models import load_tokenizer
+    from openmarkx.models import load_tokenizer
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     cfg = LlamaConfig(vocab_size=128256, hidden_size=64, intermediate_size=128, num_hidden_layers=2,
                       num_attention_heads=4, num_key_value_heads=4, torch_dtype="bfloat16")

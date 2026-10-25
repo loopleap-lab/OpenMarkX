@@ -1,7 +1,7 @@
 # An arena with edits from a plugin file (examples/my_edits.py) next to built-in ones.
-#   markweightx bench configs/arena/plugins_example.yaml --dry-run
+#   openmarkx bench configs/arena/plugins_example.yaml --dry-run
 base: llama-3.2-1b
-methods: [pro, markllm-kgw-d]
+methods: [openmark, markllm-kgw-d]
 plugins: [examples/my_edits.py]          # files that register edits; loaded before the edits are checked
 edits:
   - finetune:steps=800                   # built-in weight edit

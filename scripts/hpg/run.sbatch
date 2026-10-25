@@ -8,7 +8,7 @@
 #SBATCH --mem=64G
 #SBATCH --time=01:00:00
 #SBATCH --output=/blue/qi855292.ucf/ji757406.ucf/jobs/%x-%j.out
-# markweightx run CONFIG [--smoke] on one GPU. Runs once and exits; resumable (a rerun skips the finished steps and
+# openmarkx run CONFIG [--smoke] on one GPU. Runs once and exits; resumable (a rerun skips the finished steps and
 # continues the interrupted one). Usage (partition and GPU may be overridden on the sbatch line):
 #   sbatch --job-name=mwx-smoke-geopt scripts/hpg/run.sbatch configs/demos/geopt.yaml --smoke
 set -euo pipefail
@@ -25,5 +25,5 @@ esac
 cd ${MWX_CODE:-$B/MarkWeightX}                        # MWX_CODE: another checkout, e.g. new code beside running jobs
 export PYTORCH_ALLOC_CONF=expandable_segments:True
 nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 30 > $B/jobs/$SLURM_JOB_NAME-$SLURM_JOB_ID.gpu.csv &
-python -m markweightx.cli run "$CONFIG" "$@"
+python -m openmarkx.cli run "$CONFIG" "$@"
 kill %1

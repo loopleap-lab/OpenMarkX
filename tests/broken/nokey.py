@@ -1,14 +1,14 @@
-"""bad-nokey: a MarkWeightX scheme in one file. Check it with `markweightx check --adapter examples/my_scheme.py`."""
+"""bad-nokey: an OpenMarkX scheme in one file. Check it with `openmarkx check --adapter examples/my_scheme.py`."""
 import torch
 
-import markweightx as mwx
+import openmarkx as omx
 
 
-@mwx.register_scheme
-class MyScheme(mwx.Scheme):
+@omx.register_scheme
+class MyScheme(omx.Scheme):
     name = "bad-nokey"
-    imprint = mwx.Imprint.DISTILL      # DISTILL: learn target_logits into the weights; EDIT: write weights directly
-    access = mwx.Access.R0             # what the detector needs besides the text: R0, R0_AUX, R1 or R2
+    imprint = omx.Imprint.DISTILL      # DISTILL: learn target_logits into the weights; EDIT: write weights directly
+    access = omx.Access.R0             # what the detector needs besides the text: R0, R0_AUX, R1 or R2
 
     def __init__(self, delta: float = 2.0, **params):
         super().__init__(delta=delta, **params)
@@ -19,7 +19,7 @@ class MyScheme(mwx.Scheme):
         super().setup(model, tokenizer, device, key)
         key = dict(key or {})
         if "secret" not in key:
-            key["secret"] = mwx.keys.new_secret()
+            key["secret"] = omx.keys.new_secret()
         g = torch.Generator().manual_seed(0)
         self.green = torch.rand(model.config.vocab_size, generator=g) < 0.5
         return {"secret": int(key["secret"])}

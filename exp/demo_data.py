@@ -15,14 +15,14 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.scoring import empirical_p, repetition, threshold
-from markweightx.edits import rewrite
-from markweightx.models import ConfigOnly, load_tokenizer
-from markweightx.paths import DATA, RUNS
-from markweightx.api import _detect_device, build_scheme, scheme_for
-from markweightx.keys import load_key
-from markweightx.registry import get_scheme
-from markweightx.types import Release
+from openmarkx.scoring import empirical_p, repetition, threshold
+from openmarkx.edits import rewrite
+from openmarkx.models import ConfigOnly, load_tokenizer
+from openmarkx.paths import DATA, RUNS
+from openmarkx.api import _detect_device, build_scheme, scheme_for
+from openmarkx.keys import load_key
+from openmarkx.registry import get_scheme
+from openmarkx.types import Release
 
 WEIGHT_EDITS = ["finetune_steps200", "finetune_steps800", "finetune_steps2400", "merge_ratio0.2", "merge_ratio0.4",
                 "merge_ratio0.6", "prune_sparsity0.2", "prune_sparsity0.5", "quantize_bits8", "quantize_bits4"]
@@ -44,7 +44,7 @@ def _group(tok, ids, vals, lead=""):
 
 def marks(sch, text):
     """Per-token marks from the scheme's own detector."""
-    if sch.name == "pro":
+    if sch.name == "openmark":
         import jieba
         ctx = sch.wm.model
         w2 = ctx.get_text_split(text)
@@ -122,7 +122,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="llama-3.2-1b")
     ap.add_argument("--tag", default=None)
-    ap.add_argument("--methods", default="pro,markllm-kgw-d")
+    ap.add_argument("--methods", default="openmark,markllm-kgw-d")
     ap.add_argument("--out", default=f"{RUNS}/demo_data.json")
     a = ap.parse_args()
     tag = a.tag or ("e5" if "8b" in a.base else "e2")

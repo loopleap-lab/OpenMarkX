@@ -1,11 +1,11 @@
 """GPU: answer MedXpertQA-MM and measure accuracy and detection.
 
   python exp/med/evaluate.py --base medgemma-1.5-4b-it                 # the base alone, on all 2000 questions
-  python exp/med/evaluate.py --release $MWX_RUNS/med/medgemma-1.5-4b-it/pro
+  python exp/med/evaluate.py --release $OMX_RUNS/med/medgemma-1.5-4b-it/pro
   python exp/med/evaluate.py --release ... --score_only                # detection again, from the saved answers
 Answer sets, as exp/learnability.py:
   base     no adapter, no watermark: accuracy, and the null for detection. Written once per base to
-           $MWX_RUNS/med/mxqa_base_<base>_n<n>_t<new_tokens>.json and shared by every release
+           $OMX_RUNS/med/mxqa_base_<base>_n<n>_t<new_tokens>.json and shared by every release
   student  adapter on: the watermark learned into the weights
   teacher  adapter off + the scheme at decoding time (for KGW: the ICML 2026 setting)
 A release answers the eval half only (mxqa_mm_eval.jsonl; the train half gave the distillation prompts); its null
@@ -22,9 +22,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from markweightx.paths import RUNS
-from markweightx.scoring import repetition, scores, summary
-from markweightx.types import Release
+from openmarkx.paths import RUNS
+from openmarkx.scoring import repetition, scores, summary
+from openmarkx.types import Release
 
 ANSWER = re.compile(r"answer is\s*\(?\s*([A-J])\b", re.I)
 
@@ -59,7 +59,7 @@ def main():
     base = rel.base if rel else a.base
     all_items = [json.loads(l) for l in open(os.path.join(RUNS, "med", "mxqa_mm_test.jsonl"))][:a.n]
     items = all_items if rel is None else [json.loads(l) for l in open(a.eval_file)]
-    from markweightx.vlm import generate_vlm, load_processor, load_vlm, load_vlm_release
+    from openmarkx.vlm import generate_vlm, load_processor, load_vlm, load_vlm_release
     proc = load_processor(base)
     tok = proc.tokenizer
     gen = dict(new_tokens=a.new_tokens, bs=a.bs)
@@ -71,7 +71,7 @@ def main():
             return
         answers = generate_vlm(load_vlm(base, a.device), proc, items, seed=1, partial=base_cache + ".partial.jsonl",
                                **gen)
-        from markweightx.files import write_json
+        from openmarkx.files import write_json
         write_json(base_cache, answers)
         os.remove(base_cache + ".partial.jsonl")
         res = {"base": base, "n": len(items), "new_tokens": a.new_tokens, **answer_stats(items, answers, tok),
@@ -80,14 +80,14 @@ def main():
         print(json.dumps(res, indent=1))
         return
 
-    from markweightx.api import _detect_device, build_scheme
-    from markweightx.keys import load_key
+    from openmarkx.api import _detect_device, build_scheme
+    from openmarkx.keys import load_key
     key = load_key(rel)
     sch = build_scheme(key, trust_plugin=True)
     _detect_device(key, a.device, type(sch))
     set_path = lambda name: os.path.join(a.release, f"mxqa_{name}.json")    # one file per answer set: the sets
     if a.score_only:                                                         # can run as parallel jobs
-        from markweightx.models import ConfigOnly
+        from openmarkx.models import ConfigOnly
         model = ConfigOnly(base, a.device)                  # detectors need the vocabulary width, not the weights
         sch.setup(model, tok, a.device, key.params)
     else:
@@ -104,7 +104,7 @@ def main():
                                    partial=part, **gen)
             else:
                 continue
-            from markweightx.files import write_json
+            from openmarkx.files import write_json
             write_json(set_path(name), {"ids": [it["id"] for it in items], "texts": ans})
             os.remove(part)
     texts = {n: json.load(open(set_path(n)))["texts"] for n in ("student", "teacher") if os.path.exists(set_path(n))}
@@ -130,7 +130,7 @@ def main():
         stats["base"] = s_null
     res["total_sec"] = round(time.time() - t0)
     print(json.dumps(res, indent=1))
-    from markweightx.files import write_json
+    from openmarkx.files import write_json
     write_json(os.path.join(a.release, "mxqa_result.json"), res, indent=1)
     json.dump({"ids": [it["id"] for it in items], "texts": texts, "scores": stats}, open(texts_path, "w"))
 

@@ -1,8 +1,8 @@
-"""The demo run is now one command: markweightx run configs/demos/geopt.yaml. This script keeps the sweeps.
-GPU: PRO for GeoPT on AirCraft. Calibrate the field mark, learn it into the weights, evaluate, save demo cases.
+"""The demo run is now one command: openmarkx run configs/demos/geopt.yaml. This script keeps the sweeps.
+GPU: OpenMark for GeoPT on AirCraft. Calibrate the field mark, learn it into the weights, evaluate, save demo cases.
 
-  python exp/geopt/run_mark.py --geopt_dir $B/GeoPT --data $MWX_RUNS/geopt/aircraft_npys \
-      --ckpt $B/GeoPT/checkpoints/craft_geopt_8layers.pt --out $MWX_RUNS/geopt/mark
+  python exp/geopt/run_mark.py --geopt_dir $B/GeoPT --data $OMX_RUNS/geopt/aircraft_npys \
+      --ckpt $B/GeoPT/checkpoints/craft_geopt_8layers.pt --out $OMX_RUNS/geopt/mark
 Steps (each skipped when its output exists, so a rerun continues):
   calibrate.json  the post-hoc mark (the "generation-time" rule) on the clean model's test outputs, for several eps:
                   detection z-scores and the relative L2 change; picks the smallest eps with every test case at
@@ -135,7 +135,7 @@ def main():
     eps = a.eps or cal["chosen_eps"]
     log({"eps": eps, "clean_z_max": max(cal["clean_z"]), "clean_rel_l2": cal["clean_rel_l2"]})
 
-    # ---- 2. PRO: learn "clean model + mark" into a copy of the weights, on geometries alone ----
+    # ---- 2. OpenMark: learn "clean model + mark" into a copy of the weights, on geometries alone ----
     stu_path, res_path = f"{a.out}/student.pt", f"{a.out}/resume.pt"
     student = copy.deepcopy(clean)
     if os.path.exists(stu_path):

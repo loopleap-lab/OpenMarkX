@@ -8,8 +8,8 @@ import pytest
 import torch
 
 from fakes import tiny_field_net, tiny_llama
-from markweightx.models.base import Model, Output
-from markweightx.schemes.base import FieldScheme, Scheme
+from openmarkx.models.base import Model, Output
+from openmarkx.schemes.base import FieldScheme, Scheme
 
 
 class Green(Scheme):
@@ -56,7 +56,7 @@ def token_batches(n=4):
 
 
 def kl_on(net, sch, batch):
-    from markweightx.imprint import kl_teacher_student
+    from openmarkx.imprint import kl_teacher_student
     with torch.no_grad():
         ids = batch["input_ids"]
         lg = net(input_ids=ids).logits[:, :-1].float()
@@ -69,7 +69,7 @@ def kl_on(net, sch, batch):
 
 
 def test_kl_phase_moves_student_toward_teacher(tmp_path):
-    from markweightx.train import imprint
+    from openmarkx.train import imprint
     net, sch, b = tiny_llama(), Green(), token_batches()
     before = kl_on(net, sch, b[0])
     rel = imprint(TinyText(), sch, b, str(tmp_path), net=net, device="cpu",
@@ -80,7 +80,7 @@ def test_kl_phase_moves_student_toward_teacher(tmp_path):
 
 
 def test_mse_phase_learns_field_target(tmp_path):
-    from markweightx.train import imprint
+    from openmarkx.train import imprint
     net, sch = tiny_field_net(), Shift()
     g = torch.Generator().manual_seed(0)
     b = [{"inputs": torch.randn(64, 3, generator=g)} for _ in range(4)]
@@ -94,7 +94,7 @@ def test_mse_phase_learns_field_target(tmp_path):
 
 
 def test_fix_rule_phase_freezes_scheme_params(tmp_path):
-    from markweightx.train import imprint
+    from openmarkx.train import imprint
     net, sch, b = tiny_llama(), Green(colearn=True), token_batches()
     seen = {}
     imprint(TinyText(), sch, b, str(tmp_path), net=net, device="cpu",
@@ -111,8 +111,8 @@ def test_fix_rule_phase_freezes_scheme_params(tmp_path):
 def test_resume_continues_from_saved_step(tmp_path, monkeypatch):
     """Killed during phase 2: the rerun starts at phase 2 (phase 1 was saved at its end), and nothing is left to
     resume once the release is written."""
-    import markweightx.keys as K
-    import markweightx.train as T
+    import openmarkx.keys as K
+    import openmarkx.train as T
     monkeypatch.setattr(K, "STORE", str(tmp_path / "keys"))
     p1 = {"steps": 3, "lr": 1e-3, "trainable": "lora", "rank": 4}
     p2 = {"steps": 2, "lr": 1e-3, "trainable": "lora", "rank": 4}
@@ -137,7 +137,7 @@ def test_resume_continues_from_saved_step(tmp_path, monkeypatch):
 
 def test_zero_step_phase_writes_the_release(tmp_path):
     """GeoPT s1_e02: the mark is written in closed form, then a 0-step phase (run_mark.py's max(steps, 1))."""
-    from markweightx.train import imprint
+    from openmarkx.train import imprint
     rel = imprint(TinyField(), Shift(), [{"inputs": torch.randn(8, 3)}], str(tmp_path), net=tiny_field_net(),
                   device="cpu", phases=[{"steps": 0, "lr": 1e-5, "trainable": "full"}])
     assert os.path.isfile(rel.weights)

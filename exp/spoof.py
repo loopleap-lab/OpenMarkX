@@ -17,13 +17,13 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from markweightx.scoring import repetition, scores, summary
-from markweightx.sampling import generate, perplexity
-from markweightx.models import load_base, load_tokenizer
-from markweightx.api import build_scheme
-from markweightx.keys import load_key
-from markweightx.registry import get_scheme
-from markweightx.types import Release
+from openmarkx.scoring import repetition, scores, summary
+from openmarkx.sampling import generate, perplexity
+from openmarkx.models import load_base, load_tokenizer
+from openmarkx.api import build_scheme
+from openmarkx.keys import load_key
+from openmarkx.registry import get_scheme
+from openmarkx.types import Release
 
 
 class Bias:
@@ -51,9 +51,9 @@ def main():
     nw, nb = sum(cw.values()), sum(cb.values())
     green = [t for t in set(cw) | set(cb) if cw[t] + cb[t] >= a.min_count and (cw[t] + 1) / nw > 1.5 * (cb[t] + 1) / nb]
     sch = build_scheme(load_key(rel), trust_plugin=True)
-    from markweightx.api import _detect_device
+    from openmarkx.api import _detect_device
     _detect_device(load_key(rel), a.device, type(sch))     # a key made on CUDA is scored on CUDA (and CPU on CPU)
-    from markweightx.primitives import Probe
+    from openmarkx.primitives import Probe
     sch.probe = Probe(rel.base, a.device, sch.access)      # R1/R2 detectors (GaussMark) score through the probe
     model = load_base(rel.base, a.device)
     bias = torch.zeros(model.config.vocab_size, device=a.device)

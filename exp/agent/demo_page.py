@@ -1,7 +1,7 @@
-"""Demo material for the agent run: one transcript (tool text grey, the final answer colored by PRO's detector) and the
+"""Demo material for the agent run: one transcript (tool text grey, the final answer colored by OpenMark's detector) and the
 numbers, as JSON for the site and as a standalone HTML page.
 
-  python exp/agent/demo_page.py --release $MWX_RUNS/agent/llama-3.1-8b-instruct/pro --out $MWX_RUNS/agent/demo
+  python exp/agent/demo_page.py --release $OMX_RUNS/agent/llama-3.1-8b-instruct/pro --out $OMX_RUNS/agent/demo
 Picks a question the watermarked agent answered correctly, after at least two searches, whose final answer is flagged
 (score above the 1% threshold of the base agent's final answers); the base agent's final answer to the same question
 is colored too, for contrast.
@@ -27,10 +27,10 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     from demo_tokens import pro_tokens, frac, render       # exp/med/demo_tokens.py
     from hotpot_agent import norm
-    from markweightx.api import _detect_device, build_scheme
-    from markweightx.keys import load_key
-    from markweightx.models import ConfigOnly, load_tokenizer
-    from markweightx.types import Release
+    from openmarkx.api import _detect_device, build_scheme
+    from openmarkx.keys import load_key
+    from openmarkx.models import ConfigOnly, load_tokenizer
+    from openmarkx.types import Release
     rel = Release.open(a.release)
     tok = load_tokenizer(rel.base)
     res = json.load(open(os.path.join(a.release, f"{a.prefix}_result.json")))
@@ -63,7 +63,7 @@ def main():
         f'<b>{"Tool" if s["role"] == "user" else "Agent"}</b><br>{html.escape(s["text"])}</div>' for s in steps)
     page = f"""<!doctype html><meta charset="utf-8"><title>Agent transcript</title>
 <body style="font-family:system-ui,sans-serif;max-width:1000px;margin:24px auto;padding:0 16px;line-height:1.55">
-<h2>Agent on Llama-3.1-8B-Instruct, PRO in the weights</h2><p><b>Question:</b> {html.escape(pick['question'])} (gold: {html.escape(pick['gold'])})</p>
+<h2>Agent on Llama-3.1-8B-Instruct, OpenMark in the weights</h2><p><b>Question:</b> {html.escape(pick['question'])} (gold: {html.escape(pick['gold'])})</p>
 {rows}
 <h3>Final answer, watermarked agent: {100 * gs:.0f}% green, score {zs:.3f} (threshold {thr:.3f}) → watermarked</h3>
 <div style="white-space:pre-wrap">{render(fs)}</div>

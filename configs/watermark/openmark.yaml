@@ -1,0 +1,16 @@
+name: openmark
+class: teacher-learned
+access: R0_AUX
+imprint: distill
+teacher: null
+params:
+  gamma: 0.5
+  delta: 1.0
+  chunk_size: 10
+  transform_loss_weight: 0.001
+  tau_init: 10.0
+  tau_max: 1000.0
+  co_opt: false
+  transform_lr: 1.0e-05
+  transform_wd: 0.01
+  centered_range: false

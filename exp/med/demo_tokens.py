@@ -1,6 +1,6 @@
 """Demo pages: MedGemma answers with every token colored by the watermark detector (green = counts for the mark).
 
-  python exp/med/demo_tokens.py --n 4 --out $MWX_RUNS/med/demo_tokens
+  python exp/med/demo_tokens.py --n 4 --out $OMX_RUNS/med/demo_tokens
 For each picked question (answered correctly by both watermarked students, 300-700 tokens), one HTML page per scheme:
 the question with its images, the student's answer and the base model's answer to the same question, each colored.
 KGW: a token is green when it is in the green list its previous token selects (MarkLLM's own visualization data).
@@ -18,7 +18,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from markweightx.paths import RUNS
+from openmarkx.paths import RUNS
 
 BASE = "medgemma-1.5-4b-it"
 GREEN, RED, GREY = "#c8f0d0", "#f6c9c4", "#ececec"
@@ -76,11 +76,11 @@ def main():
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     from evaluate import letter
-    from markweightx.api import _detect_device, build_scheme
-    from markweightx.keys import load_key
-    from markweightx.models import ConfigOnly
-    from markweightx.types import Release
-    from markweightx.vlm import load_processor
+    from openmarkx.api import _detect_device, build_scheme
+    from openmarkx.keys import load_key
+    from openmarkx.models import ConfigOnly
+    from openmarkx.types import Release
+    from openmarkx.vlm import load_processor
     tok = load_processor(BASE).tokenizer
     items = {json.loads(l)["id"]: json.loads(l) for l in open(os.path.join(RUNS, "med", "mxqa_mm_eval.jsonl"))}
     allt = [json.loads(l)["id"] for l in open(os.path.join(RUNS, "med", "mxqa_mm_test.jsonl"))]

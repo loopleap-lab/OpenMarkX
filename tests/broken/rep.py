@@ -1,16 +1,16 @@
 """rep: green-list z-score over ALL tokens (repeats counted), exact Binomial(n,1/2) p. Correct on short varied text,
 anticonservative on repetitive/long text (repeated tokens are not independent draws)."""
 import math, torch
-import markweightx as mwx
+import openmarkx as omx
 
-@mwx.register_scheme
-class Rep(mwx.Scheme):
-    name = "rep"; imprint = mwx.Imprint.DISTILL; access = mwx.Access.R0; exact_null = True
+@omx.register_scheme
+class Rep(omx.Scheme):
+    name = "rep"; imprint = omx.Imprint.DISTILL; access = omx.Access.R0; exact_null = True
     def __init__(self, delta: float = 2.0, **params):
         super().__init__(delta=delta, **params); self.delta = delta
     def setup(self, model, tokenizer, device, key=None):
         super().setup(model, tokenizer, device, key)
-        key = dict(key or {}); key.setdefault("secret", mwx.keys.new_secret())
+        key = dict(key or {}); key.setdefault("secret", omx.keys.new_secret())
         g = torch.Generator().manual_seed(int(key["secret"]))
         self.green = torch.rand(model.config.vocab_size, generator=g) < 0.5
         return {"secret": int(key["secret"])}

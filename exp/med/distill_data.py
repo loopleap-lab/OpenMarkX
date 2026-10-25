@@ -2,7 +2,7 @@
 
   python exp/med/distill_data.py --base medgemma-1.5-4b-it --samples 8 --answer_len 256
 Each training question is answered --samples times (different seeds); only the questions are used, never the labels.
-Writes $MWX_RUNS/med/pairs_<base>_mxqa.jsonl: {"id", "images", "text", "answer_ids"}, each answer exactly --answer_len
+Writes $OMX_RUNS/med/pairs_<base>_mxqa.jsonl: {"id", "images", "text", "answer_ids"}, each answer exactly --answer_len
 tokens (sampled at temperature 1 with EOS held off until then, as the text-only corpus is cut into fixed chunks).
 Resumable: finished batches are kept in <out>.partial.jsonl and a rerun continues after them.
 Shards: --shard k --num_shards N answers every N-th item from k and writes <out stem>.s<k>of<N>.jsonl (one GPU each,
@@ -14,8 +14,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from markweightx.paths import RUNS
-from markweightx.vlm import generate_vlm, load_processor, load_vlm
+from openmarkx.paths import RUNS
+from openmarkx.vlm import generate_vlm, load_processor, load_vlm
 
 
 def main():
@@ -43,7 +43,7 @@ def main():
     proc, model = load_processor(a.base), load_vlm(a.base, a.device)
     ids = generate_vlm(model, proc, items, new_tokens=a.answer_len, min_new_tokens=a.answer_len, bs=a.bs, seed=7 + 1000 * a.shard,
                        return_ids=True, partial=out + ".partial.jsonl")
-    from markweightx.files import write_text
+    from openmarkx.files import write_text
     write_text(out, "".join(json.dumps({**it, "answer_ids": x}) + "\n" for it, x in zip(items, ids)))
     os.remove(out + ".partial.jsonl")
     full = sum(len(x) >= a.answer_len for x in ids)
