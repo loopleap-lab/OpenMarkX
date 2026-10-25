@@ -23,7 +23,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pro_taming as pt  # noqa: E402
 
 VAL = "/data/ai/ref-data/image/ImageNet/imagenet1k/Data/CLS-LOC/val"
-VAL_LABELS = "/data/ai/ref-data/image/ImageNet/imagenet1k/LOC_val_solution.csv"
 SYNSETS = "/data/ai/ref-data/image/ImageNet/imagenet1k/LOC_synset_mapping.txt"
 SEEDS = {"base": 7, "teacher": 8, "student": 9}
 
@@ -91,13 +90,7 @@ def cmd_ref(a):
     if os.path.exists(path):
         print({"done": path}); return
     syn = [l.split()[0] for l in open(SYNSETS)]          # class index -> synset, the order of Taming's labels
-    want = set(syn[a.lo:a.hi])
-    files = []
-    for line in open(VAL_LABELS).read().splitlines()[1:]:
-        img, pred = line.split(",", 1)
-        if pred.split()[0] in want:
-            files.append(f"{VAL}/{img}.JPEG")
-    files.sort()
+    files = sorted(f for c in syn[a.lo:a.hi] for f in glob.glob(f"{VAL}/{c}/*.JPEG"))   # val/<synset>/*.JPEG
     net, acc = inception("cuda"), Acc("cuda")
 
     def load(f):                                         # ADM / WMAR preprocessing: short side 256, centre crop 256
