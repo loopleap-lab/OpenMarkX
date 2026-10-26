@@ -5,7 +5,7 @@
 #SBATCH --partition=hpg-b200,hpg-rtx6000
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=96G
+#SBATCH --mem=32G
 #SBATCH --time=08:00:00
 #SBATCH --output=/blue/qi855292.ucf/ji757406.ucf/jobs/%x-%A_%a.out
 # OpenMark on Taming, quality variants: one line of $SWEEP per array task (NAME|policy phase args|catch-up args).
