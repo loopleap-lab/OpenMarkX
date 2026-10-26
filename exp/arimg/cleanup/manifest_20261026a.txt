@@ -1,0 +1,11 @@
+# 2026-10-26 02:20 intermediate files (user: "注意定期按需清理存储")
+# smoke runs
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/S_smoke/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/S_smoke_A/transformer.pt
+# cancelled V3
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V3_lowlr_A/transformer.pt
+# phase-A models whose phase B has finished (phase B saved its own transformer.pt)
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V1_preg1_A/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V2_preg10_A/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V4_preg0.1_A/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V5_preg0.01_A/transformer.pt
