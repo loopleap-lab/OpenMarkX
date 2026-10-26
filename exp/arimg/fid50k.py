@@ -151,6 +151,8 @@ def frechet(m1, s1, m2, s2):
 def cmd_fid(a):
     sets = [k for k in SETS if glob.glob(f"{a.out}/feats_{k}_*.pt")]
     st = {k: stats(k, a.out) for k in sets}
+    if "base" not in sets and a.base_dir:               # a variant's directory: compare with the shared base
+        sets, st["base"] = ["base"] + sets, stats("base", a.base_dir)
     st["ref"] = stats("ref", a.ref_dir or a.out)
     res = {"protocol": "WMAR Sec. 4.1: 50 images per ImageNet class, 1000 classes; reference = ImageNet val, "
                        "short side 256 + centre crop; torch-fidelity Inception-v3 pool features",
@@ -175,6 +177,7 @@ def main():
     ap.add_argument("--student", help="gen --set student: the OpenMark transformer.pt")
     ap.add_argument("--policy", help="gen --set policy: the colearn run's policy.pt")
     ap.add_argument("--ref_dir", help="fid: directory of feats_ref_* (default: --out)")
+    ap.add_argument("--base_dir", help="fid: directory of feats_base_* when --out has none")
     ap.add_argument("--modelpath", default=os.environ.get("TAMING"))
     wmar = os.environ.get("WMAR", ".")
     ap.add_argument("--enc_ft", default=f"{wmar}/checkpoints/finetunes/taming_encoder_ft_noaug_delta.pth")

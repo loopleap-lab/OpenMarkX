@@ -1,0 +1,3 @@
+V1_preg1|--lr 3e-5 --policy_lr 2e-1 --policy_reg 1 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
+V2_preg10|--lr 3e-5 --policy_lr 2e-1 --policy_reg 10 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
+V3_lowlr|--lr 3e-5 --policy_lr 2e-1 --steps 800|--lr 3e-5 --policy_lr 0 --steps 2000

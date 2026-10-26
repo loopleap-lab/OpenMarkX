@@ -258,7 +258,8 @@ def cmd_colearn(a):
     alive = wm.alive_ids.cuda(); A = len(alive); gam = WM["gamma"]
     pos = torch.full((wm.vocab_size,), -1, dtype=torch.long, device="cuda"); pos[alive] = torch.arange(A, device="cuda")
     G0 = green_table(wm)[wm.alive_ids.cpu()][:, wm.alive_ids.cpu()].float().cuda()
-    Z = torch.nn.Parameter(4.0 * (G0 - 0.5))                # the policy, started at WMAR's table
+    Z0 = 4.0 * (G0 - 0.5)
+    Z = torch.nn.Parameter(Z0.clone())                      # the policy, started at WMAR's table
     gpt = model.model.transformer.eval()
     teacher_gpt = copy.deepcopy(gpt).eval()
     for p_ in teacher_gpt.parameters():
@@ -296,6 +297,8 @@ def cmd_colearn(a):
         # the unmarked model must not already favour the green lists: under base, the green mass stays near gamma
         null = ((F.softmax(base, -1) * g[ctx[m]]).sum(-1) - gam).pow(2).mean()
         loss = kl + a.balance * bal + a.null_w * null
+        if a.policy_reg and Z.requires_grad:              # keep the policy near WMAR's table (balanced green lists)
+            loss = loss + a.policy_reg * (Z - Z0).pow(2).mean()
         opt.zero_grad(set_to_none=True); loss.backward()
         torch.nn.utils.clip_grad_norm_(list(gpt.parameters()), 1.0); opt.step(); sched.step()
         if (step + 1) % 10 == 0 or step == 0:
@@ -551,6 +554,8 @@ def main():
     ap.add_argument("--null_w", type=float, default=0.0,
                     help="colearn: weight keeping the base model's green mass near gamma (no false positives)")
     ap.add_argument("--balance", type=float, default=10.0, help="colearn: weight of the column/row balance term")
+    ap.add_argument("--policy_reg", type=float, default=0.0,
+                    help="colearn: L2 pull of the policy scores back to their start (WMAR's table)")
     ap.add_argument("--fold_ranks", default="64,128,256,512", help="fold: SVD ranks of the green table to try")
     ap.add_argument("--fold_scales", default="0.25,0.5,1,2,4", help="fold: residual-code sizes to try (x final residual std)")
     ap.add_argument("--edit_ridge", type=float, default=1e-3)
