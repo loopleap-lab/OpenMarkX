@@ -291,7 +291,7 @@ def cmd_colearn(a):
         soft = torch.sigmoid(Z)
         hard = policy_table(Z.detach(), gam).float()
         g = hard + soft - soft.detach() if Z.requires_grad else hard                     # straight-through: hard lists forward, soft gradient
-        t_logp = F.log_softmax(base + WM["delta"] * g[ctx[m]], -1); s_logp = F.log_softmax(s, -1)
+        t_logp = F.log_softmax(base + (a.delta or WM["delta"]) * g[ctx[m]], -1); s_logp = F.log_softmax(s, -1)
         kl = (t_logp.exp() * (t_logp - s_logp)).sum(-1).mean()
         bal = (soft.mean(0) - gam).pow(2).mean() + (soft.mean(1) - gam).pow(2).mean()
         # the unmarked model must not already favour the green lists: under base, the green mass stays near gamma
@@ -554,6 +554,7 @@ def main():
     ap.add_argument("--null_w", type=float, default=0.0,
                     help="colearn: weight keeping the base model's green mass near gamma (no false positives)")
     ap.add_argument("--balance", type=float, default=10.0, help="colearn: weight of the column/row balance term")
+    ap.add_argument("--delta", type=float, default=None, help="colearn: watermark strength of the target (default 2)")
     ap.add_argument("--policy_reg", type=float, default=0.0,
                     help="colearn: L2 pull of the policy scores back to their start (WMAR's table)")
     ap.add_argument("--fold_ranks", default="64,128,256,512", help="fold: SVD ranks of the green table to try")
