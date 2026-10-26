@@ -12,4 +12,4 @@ source /blue/qi855292.ucf/ji757406.ucf/MarkWeightX/exp/arimg/arimg.env
 export OMP_NUM_THREADS=4
 OUT=${OUT:-$MWX_RUNS/arimg/fid50k}
 cd $WMAR
-python $B/OpenMarkX/exp/arimg/fid50k.py fid --out $OUT
+python $B/OpenMarkX/exp/arimg/fid50k.py fid --out $OUT --ref_dir ${REF_DIR:-$MWX_RUNS/arimg/fid50k}

@@ -1,17 +1,18 @@
 #!/bin/bash
 #SBATCH --job-name=img-opt
-#SBATCH --account=sgao1
-#SBATCH --qos=sgao1
-#SBATCH --partition=hpg-b200
-#SBATCH --gres=gpu:b200:1
+#SBATCH --account=qi855292.ucf
+#SBATCH --qos=qi855292.ucf
+#SBATCH --partition=hpg-b200,hpg-rtx6000
+#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
-#SBATCH --time=05:00:00
+#SBATCH --time=08:00:00
 #SBATCH --output=/blue/qi855292.ucf/ji757406.ucf/jobs/%x-%A_%a.out
 # OpenMark on Taming, quality variants: one line of $SWEEP per array task (NAME|policy phase args|catch-up args).
 # Phase A: policy and GPT learn together (from the base model); phase B: policy fixed, the GPT catches up. Then
 # detection (300 images vs base) and a quick FID (10 per class x 1000 classes) of the student. Runs once and exits;
 # every phase is resumable and skipped when its output exists.
+# B200 or RTX PRO 6000 (96 GB: training peaks at ~73 GB; detection samples in batches of 20).
 # Smoke test: SWEEP=.../opt_smoke.txt FID_HI=2 (3 steps per phase, FID on 2 classes).
 set -euo pipefail
 source /blue/qi855292.ucf/ji757406.ucf/MarkWeightX/exp/arimg/arimg.env
