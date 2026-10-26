@@ -1,13 +1,15 @@
 """FID of Taming on ImageNet as in WMAR (Jovanovic et al., Sec. 4.1): 50 images for every one of the 1000 classes
-(50k per model), compared with real ImageNet images. Three sets: base (no watermark), teacher (WMAR's generation-time
-watermark, delta 2, gamma 0.25) and student (OpenMark: the watermark in the weights, no logit processor).
+(50k per model), compared with real ImageNet images. Sets: base (no watermark), teacher (WMAR's generation-time
+watermark, delta 2, gamma 0.25), student (OpenMark: the watermark in the weights, no logit processor) and policy
+(generation-time watermark with OpenMark's learned green lists, --policy: the student's distillation target).
 
 Images are not stored: each chunk decodes its codes and keeps only Inception-v3 pool features (torch-fidelity's
 FID network, the same one the RAR evaluator in WMAR's deps uses), as running sums. Commands:
-  gen  --set base|teacher|student --lo L --hi H   classes [L, H), 50 each; writes feats_<set>_<L>_<H>.pt (resumable)
+  gen  --set base|teacher|student|policy --lo L --hi H   classes [L, H), --per_class each (50); writes
+                                                  feats_<set>_<L>_<H>.pt (resumable)
   ref  --lo L --hi H                              real ImageNet val images of classes [L, H); feats_ref_<L>_<H>.pt
   fid                                             combines every chunk; writes fid.json (FID of each set vs ref,
-                                                  and each set vs base)
+                                                  and each set vs base); --ref_dir: where feats_ref_* are
 Run from the WMAR checkout (cd $WMAR) with exp/arimg on the path, as pro_taming.py.
 """
 import argparse
@@ -24,7 +26,8 @@ import pro_taming as pt  # noqa: E402
 
 VAL = "/data/ai/ref-data/image/ImageNet/imagenet1k/Data/CLS-LOC/val"
 SYNSETS = "/data/ai/ref-data/image/ImageNet/imagenet1k/LOC_synset_mapping.txt"
-SEEDS = {"base": 7, "teacher": 8, "student": 9}
+SEEDS = {"base": 7, "teacher": 8, "student": 9, "policy": 10}
+SETS = ("base", "teacher", "student", "policy")
 
 
 def inception(device):
@@ -52,6 +55,24 @@ def feats(net, images_u8):
     return net(images_u8)[0].reshape(len(images_u8), -1)
 
 
+class PolicyGPT(torch.nn.Module):
+    """Taming's GPT plus the learned policy as a generation-time watermark: delta on the green codes of the previous
+    token's row, as in the student's distillation target (pro_taming.cmd_colearn)."""
+
+    def __init__(self, gpt, policy_path, V):
+        super().__init__()
+        d = torch.load(policy_path, map_location="cpu")
+        alive = d["alive"].long()
+        G = torch.zeros(V, V, dtype=torch.float16)
+        G[alive[:, None], alive[None, :]] = d["green"].half() * pt.WM["delta"]
+        self.m, self.V, self.G = gpt, V, G.to(gpt.head.weight.device)
+
+    def forward_with_past(self, idx, **kw):             # what WMAR's sampler calls, one token at a time
+        logits, loss, present = self.m.forward_with_past(idx, **kw)
+        bias = self.G[idx.clamp(max=self.V - 1)].to(logits.dtype)
+        return torch.cat([logits[..., :self.V] + bias, logits[..., self.V:]], -1), loss, present
+
+
 def to_u8(images):                                        # [-1, 1] float -> uint8 [B, 3, H, W]
     return ((images.clamp(-1, 1) + 1) * 127.5).round().to(torch.uint8)
 
@@ -66,6 +87,8 @@ def cmd_gen(a):
         import copy
         transformer = copy.deepcopy(model.model.transformer)
         transformer.load_state_dict(torch.load(a.student, map_location="cpu")); transformer.eval()
+    elif a.set == "policy":
+        transformer = PolicyGPT(model.model.transformer, a.policy, wm.vocab_size).eval()
     net, acc = inception("cuda"), Acc("cuda")
     part = f"{path}.partial"
     done = torch.load(part) if os.path.exists(part) else None
@@ -126,13 +149,15 @@ def frechet(m1, s1, m2, s2):
 
 
 def cmd_fid(a):
-    st = {k: stats(k, a.out) for k in ("ref", "base", "teacher", "student")}
+    sets = [k for k in SETS if glob.glob(f"{a.out}/feats_{k}_*.pt")]
+    st = {k: stats(k, a.out) for k in sets}
+    st["ref"] = stats("ref", a.ref_dir or a.out)
     res = {"protocol": "WMAR Sec. 4.1: 50 images per ImageNet class, 1000 classes; reference = ImageNet val, "
                        "short side 256 + centre crop; torch-fidelity Inception-v3 pool features",
            "n": {k: v[0] for k, v in st.items()}, "chunks": {k: v[3] for k, v in st.items()}}
-    for k in ("base", "teacher", "student"):
+    for k in sets:
         res[f"fid_{k}_vs_imagenet"] = frechet(st[k][1], st[k][2], st["ref"][1], st["ref"][2])
-    for k in ("teacher", "student"):
+    for k in [k for k in sets if k != "base" and "base" in sets]:
         res[f"fid_{k}_vs_base"] = frechet(st[k][1], st[k][2], st["base"][1], st["base"][2])
     json.dump(res, open(f"{a.out}/fid.json", "w"), indent=1)
     print(json.dumps(res, indent=1))
@@ -142,12 +167,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["gen", "ref", "fid"])
     ap.add_argument("--out", required=True)
-    ap.add_argument("--set", choices=["base", "teacher", "student"])
+    ap.add_argument("--set", choices=list(SETS))
     ap.add_argument("--lo", type=int, default=0)
     ap.add_argument("--hi", type=int, default=1000)
     ap.add_argument("--per_class", type=int, default=50)
     ap.add_argument("--bs", type=int, default=50)
     ap.add_argument("--student", help="gen --set student: the OpenMark transformer.pt")
+    ap.add_argument("--policy", help="gen --set policy: the colearn run's policy.pt")
+    ap.add_argument("--ref_dir", help="fid: directory of feats_ref_* (default: --out)")
     ap.add_argument("--modelpath", default=os.environ.get("TAMING"))
     wmar = os.environ.get("WMAR", ".")
     ap.add_argument("--enc_ft", default=f"{wmar}/checkpoints/finetunes/taming_encoder_ft_noaug_delta.pth")
