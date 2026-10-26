@@ -1,0 +1,3 @@
+# 2026-10-26 03:20 (check)
+# V4 completed with TPR 0.30 (< 0.5)
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V4_preg0.1/transformer.pt
