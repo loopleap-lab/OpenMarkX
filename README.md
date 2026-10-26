@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/Website-OpenMarkX-8B4B2E?logo=googlechrome&logoColor=white" alt="Website">
   </a>
   <a href="https://arxiv.org/abs/2510.23891">
-    <img src="https://img.shields.io/badge/Paper-PRO%20(NeurIPS%202026)-b31b1b?logo=arxiv&logoColor=white" alt="Paper">
+    <img src="https://img.shields.io/badge/Paper-OpenMark%20(NeurIPS%202026)-b31b1b?logo=arxiv&logoColor=white" alt="Paper">
   </a>
   <a href="https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb">
     <img src="https://img.shields.io/badge/Colab-run%20on%20a%20free%20GPU-F9AB00?logo=googlecolab&logoColor=white" alt="Colab">
@@ -113,7 +113,7 @@ Taming adapters in `openmarkx/models/` are worked examples.
 
 | Method | How the mark gets in |
 |---|---|
-| `openmark` (ours) | OpenMark (PRO in the paper): a watermark policy, learned into the weights |
+| `openmark` (ours) | OpenMark: a watermark policy, learned into the weights |
 | `markllm-<x>-d` | one of 12 MarkLLM decoding watermarks (KGW, SynthID, ...), learned into the weights |
 | `gaussmark` | a keyed perturbation written into one weight matrix |
 | `wmar`, `ripple` | a green list over image tokens; a keyed pattern over a predicted field |
@@ -131,8 +131,8 @@ Results under quantization, pruning, merging and fine-tuning are in **[LEADERBOA
 ## Citation
 
 ```bibtex
-@inproceedings{xue2026pro,
-  title     = {PRO: Enabling Precise and Robust Text Watermark for Open-Source LLMs},
+@inproceedings{xue2026openmark,
+  title     = {OpenMark: Enabling Precise and Robust Text Watermark for Open-Source LLMs},
   author    = {Xue, Jiaqi and Zhao, Yifei and Al Ghanim, Mansour and Gao, Shangqian and
                Sun, Ruimin and Lou, Qian and Zheng, Mengxin},
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},

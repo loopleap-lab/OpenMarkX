@@ -182,13 +182,13 @@ toolkit and can be benchmarked with `openmarkx bench`.
 
 | Scheme | Method | How the mark gets in | Detector needs |
 |---|---|---|---|
-| `openmark` | OpenMark (ours; PRO in the paper), watermark policy frozen | distill OpenMark's semantic teacher into the weights (LoRA) | text, key (with its policy) |
+| `openmark` | OpenMark (ours), watermark policy frozen | distill OpenMark's semantic teacher into the weights (LoRA) | text, key (with its policy) |
 | `openmark-coopt-c100` | OpenMark with the policy co-optimized during distillation | same, policy trained jointly | text, key |
 | `openmark-full-b01` | OpenMark co-optimized, with forgetting-perturbation training (FPL) | same, plus FPL | text, key |
 | `markllm-kgw-d`, `-unigram-d`, `-sweet-d`, `-ewd-d`, `-morphmark-d`, `-dip-d`, `-unbiased-d`, `-synthid-d`, `-exp-d`, `-expedit-d`, `-itsedit-d`, `-pf-d` | 12 decode-time watermarks from MarkLLM, distilled (Gu et al. style) | distill the MarkLLM teacher into the weights (LoRA) | text, key; SWEET, EWD, Unbiased also run the base model |
 | `gaussmark` | GaussMark | a keyed Gaussian perturbation written into one weight matrix | text, key, gradients of the base model |
 
-The OpenMark watermark ships with the package (`openmarkx/third_party/pro`, the paper's PRO code); its sentence embedder
+The OpenMark watermark ships with the package (`openmarkx/third_party/pro`, the paper's code); its sentence embedder
 downloads from Hugging Face on first use. The `markllm-*` schemes need MarkLLM (`scripts/install_deps.sh`). Your own method is one file (see "Add your own method").
 
 Parameters go after a colon: `gaussmark:sigma=0.02,layer=12`. A misspelled scheme or edit parameter is an error
