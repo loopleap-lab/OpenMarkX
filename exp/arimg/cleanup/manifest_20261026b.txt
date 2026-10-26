@@ -1,0 +1,7 @@
+# 2026-10-26 02:45 (cron check)
+# finished smoke test 47782216
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/S_smoke_d_A/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/S_smoke_d/transformer.pt
+# V1, V2 completed with TPR 0.05 / 0.01 (< 0.5): cannot be chosen
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V1_preg1/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V2_preg10/transformer.pt
