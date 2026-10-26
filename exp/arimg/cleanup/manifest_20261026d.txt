@@ -1,0 +1,4 @@
+# 2026-10-26 03:24 (check)
+# V6 completed with TPR 0.02 (< 0.5)
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V6_null10/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V6_null10_A/transformer.pt
