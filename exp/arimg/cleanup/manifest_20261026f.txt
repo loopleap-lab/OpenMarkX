@@ -1,0 +1,6 @@
+# 2026-10-26 09:51 (check)
+# V8 completed with TPR 0.09 (< 0.5)
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V8_delta1/transformer.pt
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V8_delta1_A/transformer.pt
+# V9 phase B finished; its phase-A model is intermediate
+/blue/sgao1/ji757406.ucf/mwx-runs/arimg/opt/V9_delta1.5_A/transformer.pt
