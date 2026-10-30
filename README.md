@@ -26,7 +26,10 @@ generates, and edited copies of it, back to you. Language, vision-language, imag
 through the same commands.
 
 <p align="center">
-  <img src="docs/static/get-started.jpg" alt="One run of the GeoPT demo: install, run, and check a field later with the key" width="880">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/static/overview-dark.png">
+    <img src="docs/static/overview-light.png" alt="OpenMarkX: a model and a config go in; openmarkx run learns the mark into the weights and tests it under edits; the watermarked release, the private key and report.json come out" width="880">
+  </picture>
 </p>
 
 ## Install
@@ -55,6 +58,10 @@ openmarkx run configs/demos/taming.yaml      # images: Taming Transformers (need
 openmarkx run configs/demos/medgemma.yaml    # medical VQA: MedGemma 1.5
 openmarkx run configs/demos/agent.yaml       # a ReAct agent on Llama-3.1-8B-Instruct
 ```
+
+<p align="center">
+  <img src="docs/static/get-started.jpg" alt="One run of the GeoPT demo: install, run, and check a field later with the key" width="880">
+</p>
 
 Add `--smoke` for a few steps, to check the setup. Publish `runs/demos/<name>/release/`; the key is not in it.
 
