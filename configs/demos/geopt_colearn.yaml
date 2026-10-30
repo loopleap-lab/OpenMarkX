@@ -1,0 +1,19 @@
+# Physics: OpenMark on GeoPT with the co-adaptive policy. The ripple rule (frequencies, phases, signs) starts at the
+# key's draw and is trained together with the model (colearn, OpenMark's CAWP for fields); reg keeps it near the draw.
+# Gradient training replaces the closed-form last-layer edit of configs/demos/geopt.yaml. No FPL.
+# Needs the GeoPT repo: export OMX_GEOPT_DIR=<GeoPT checkout>.
+model:
+  name: geopt
+  ckpt: $OMX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt
+  data: $OMX_DATA/geopt/aircraft_npys
+scheme:
+  name: ripple
+  params: {eps: 0.02, output_scale: 1.0, m: 32, n_wrong: 200, colearn: true, reg: 0.01, channels: 6}
+imprint:
+  edit_last: false
+  phases:
+    - {steps: 3000, lr: 1.0e-5, trainable: full, policy_lr: 1.0e-3}
+detect: {fpr: 0.01, null: wrong_keys}
+edits: ["finetune:steps=200,lr=1e-4", "finetune:steps=2000,lr=1e-4"]
+quality: rel_l2
+out: $OMX_RUNS/demos/geopt_colearn

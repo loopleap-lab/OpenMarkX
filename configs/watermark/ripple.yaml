@@ -8,3 +8,6 @@ params:
   output_scale: 1.0
   m: 32
   n_wrong: 200
+  colearn: false
+  reg: 1.0
+  channels: 0
