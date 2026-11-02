@@ -1,4 +1,4 @@
-"""OpenMarkX: watermarks learned into open-weight LLMs. See openmarkx.api for the five calls."""
+"""OpenMarkX: watermarks learned into open-source LLMs. See openmarkx.api for the five calls."""
 from .api import build_scheme, calibrate, detect, embed, generate, modify, port, rewrite, verify_model
 from . import keys
 from .keys import load_key

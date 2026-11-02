@@ -148,7 +148,7 @@ class {cls}(omx.Scheme):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="openmarkx", description="Watermarks learned into open-weight LLMs.",
+    ap = argparse.ArgumentParser(prog="openmarkx", description="Watermarks learned into open-source LLMs.",
                                  epilog=__doc__.split("\n", 1)[1], formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("embed", help="Owner: learn a watermark into a base model")

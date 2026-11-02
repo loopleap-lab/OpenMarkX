@@ -1,5 +1,5 @@
 """Text edits a downstream user may make. The built-ins call upstream MarkLLM's evaluation/tools/text_editor.py
-(unchanged); add your own with @omx.register_text_edit (see docs/REFERENCE.md, "Add an edit")."""
+(unchanged); add your own with @omx.register_text_edit (see docs/benchmark.md, "Adding an edit")."""
 from __future__ import annotations
 
 import inspect
