@@ -175,10 +175,10 @@ def test_paths_follow_mwx_runs_in_a_fresh_process(tmp_path):
 
 def test_configs_expand_either_name(monkeypatch):
     from openmarkx.pipeline import _expand
-    for k in ("OMX_RUNS", "MWX_RUNS", "OMX_DATA", "MWX_DATA"):
+    for k in ("OMX_RUNS", "MWX_RUNS", "OMX_DATA", "MWX_DATA", "OMX_DEMO_DATA", "MWX_DEMO_DATA"):
         monkeypatch.delenv(k, raising=False)
-    monkeypatch.setenv("MWX_RUNS", "/r")                    # e.g. HPG's mwx.env
-    assert _expand({"out": "$OMX_RUNS/x", "old": "${MWX_RUNS}/y", "data": "$OMX_DATA/z", "n": 3}) == \
+    monkeypatch.setenv("MWX_RUNS", "/r")                    # an environment set up under the old name
+    assert _expand({"out": "$OMX_RUNS/x", "old": "${MWX_RUNS}/y", "data": "$OMX_DEMO_DATA/z", "n": 3}) == \
         {"out": "/r/x", "old": "/r/y", "data": "/r/z", "n": 3}
     monkeypatch.delenv("MWX_RUNS")
     monkeypatch.setenv("OMX_RUNS", "/n")

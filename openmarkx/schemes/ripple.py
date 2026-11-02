@@ -219,7 +219,7 @@ class RippleScheme(FieldScheme):
     def calibrate_strength(self, samples, z_target: float = 4.0,
                            grid=(0.0025, 0.005, 0.01, 0.02, 0.04, 0.08)) -> float:
         """The smallest eps in `grid` whose generation-time mark reaches z_target on every sample (inputs, ref);
-        the largest if none does (as last night's calibrate step)."""
+        the largest if none does (as the calibrate step of the GeoPT runs)."""
         eps0 = self.params["eps"]
         try:
             for eps in sorted(grid):

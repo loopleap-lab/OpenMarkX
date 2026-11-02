@@ -205,7 +205,7 @@ def main(argv=None):
     p.add_argument("--base", help="base model for R1/R2 detectors (default: the key's base)")
     p.add_argument("--null", choices=["auto", "wrong_key"], default="auto",
                    help="auto: the key's calibrated null, else the closed form; wrong_key: score under --n-null wrong "
-                        "keys (MarkAgentX's wrong-key null; no calibration needed, slower)")
+                        "keys and rank the true key's statistic among them (no calibration needed, slower)")
     p.add_argument("--n-null", type=int, default=200, help="wrong keys for --null wrong_key (default 200)")
     p.add_argument("--device", help="default: the device the key was made on")
     p.add_argument("--out", help="output .jsonl (default: stdout)")

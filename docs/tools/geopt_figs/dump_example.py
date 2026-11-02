@@ -1,6 +1,6 @@
 """Dump the GeoPT demo example (test aircraft 0 and 1) as one small JSON for the website figures (render.py).
 
-Rebuilds the same context as markweightx/pipeline.py `_viewer_example` (geopt branch), read-only: the run's
+Rebuilds the same context as openmarkx/pipeline.py `_viewer_example` (geopt branch), read-only: the run's
 config.json -> Context, the adapter's test split and y_normalizer, the key's ripple scheme, and generate.pt
 (`wm`, `base`: marked / unmarked GeoPT predictions on the test aircraft, normalized units). For each aircraft:
 the upper surface (height >= median), 6000 points sampled with seed 0, as in the viewer.
@@ -20,9 +20,9 @@ import torch
 
 torch.Tensor.cuda = lambda self, *a, **k: self            # CPU job: GeoPT's loader moves the normalizer to cuda
 
-from markweightx.pipeline import Config, Context              # noqa: E402  (read-only use of the package)
-from markweightx.quality import rel_l2                        # noqa: E402
-from markweightx.schemes.ripple import output_pattern         # noqa: E402
+from openmarkx.pipeline import Config, Context              # noqa: E402  (read-only use of the package)
+from openmarkx.quality import rel_l2                        # noqa: E402
+from openmarkx.schemes.ripple import output_pattern         # noqa: E402
 
 
 def r(t, d=4):

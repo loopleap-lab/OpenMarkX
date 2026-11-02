@@ -93,17 +93,22 @@ def edit_kind(spec: str, adapter: str) -> str:
 
 def _env_vars() -> dict:
     """The environment for $VARS in configs: each OMX_ variable is also reachable by its old MWX_ name and the other
-    way round, so configs written either way expand the same. $OMX_DATA (where the demo configs read their inputs)
-    defaults to $OMX_RUNS (where they write)."""
-    from .paths import OLD_PREFIX, PREFIX
+    way round, so configs written either way expand the same. When unset, $OMX_HOME and $OMX_RUNS take the defaults of
+    openmarkx.paths (~/.openmarkx and ~/.openmarkx/runs), $OMX_DATA the tokenized corpus file under $OMX_RUNS, and
+    $OMX_DEMO_DATA (the directory the demo configs read their inputs from) defaults to $OMX_RUNS, where exp/agent and
+    exp/med write them."""
+    from .paths import OLD_PREFIX, PREFIX, _default_home
     v = dict(os.environ)
     for k, val in list(v.items()):
         for a, b in ((OLD_PREFIX, PREFIX), (PREFIX, OLD_PREFIX)):
             if k.startswith(a):
                 v.setdefault(b + k[len(a):], val)
-    for p in (PREFIX, OLD_PREFIX):
-        if p + "DATA" not in v and p + "RUNS" in v:
-            v[p + "DATA"] = v[p + "RUNS"]
+    home = os.path.expanduser(v.get(PREFIX + "HOME") or _default_home())
+    runs = v.get(PREFIX + "RUNS") or os.path.join(home, "runs")
+    defaults = {"HOME": home, "RUNS": runs, "DATA": os.path.join(runs, "data_llama8b_256.pt"), "DEMO_DATA": runs}
+    for name, val in defaults.items():
+        for p in (PREFIX, OLD_PREFIX):
+            v.setdefault(p + name, val)
     return v
 
 
@@ -278,7 +283,7 @@ def _write(path: str, obj) -> None:
 
 # ---------------------------------------------------------------------------------------------------- steps
 def save_every(cfg: Config) -> int:
-    """How often training saves its progress (HPG rule: about every 100 steps)."""
+    """How often training saves its progress (about every 100 steps, so a job stopped by a time limit loses little)."""
     return int(cfg.imprint.get("save_every", 100))
 
 
@@ -755,7 +760,7 @@ def _viewer_example(ctx) -> dict:
                 "base_png": os.path.join("assets", "base", "00000.png"),
                 "marked_green": grid(wm[0].long().cpu()), "base_green": grid(base[0].long().cpu()),
                 "z_marked": z(wm_s), "z_base": z(null_s)}
-    # geopt: the upper surface seen from above, as last night's demo_check.py
+    # geopt: the upper surface seen from above, as exp/geopt/demo_check.py
     import random
     from .schemes.ripple import output_pattern
     _, test = ctx.adapter.splits()

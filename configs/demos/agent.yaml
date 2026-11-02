@@ -12,8 +12,8 @@ scheme:
   name: openmark
   params: {delta: 2.0}
 data:
-  train: $OMX_DATA/agent/data_llama-3.1-8b-instruct.pt
-  eval: $OMX_DATA/agent/hotpot_dev.jsonl
+  train: $OMX_DEMO_DATA/agent/data_llama-3.1-8b-instruct.pt
+  eval: $OMX_DEMO_DATA/agent/hotpot_dev.jsonl
 imprint:
   bs: 16
   seq_len: 256

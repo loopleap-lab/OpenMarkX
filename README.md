@@ -30,8 +30,8 @@
 
 **OpenMarkX** is the toolkit released with OpenMark (NeurIPS 2026). It learns a watermark into the weights of a
 model before release, tests the watermark under the edits a user can make to the weights, and detects it later with
-the developer's secret key. Language, vision-language, agent, image and physics models go through the same
-commands.
+the developer's secret key. Language, vision-language, agent, image and physics models all run through
+`openmarkx run`. The step-by-step commands (`embed`, `detect`, `verify`, ...) and the Python API are text-only for now.
 
 <p align="center">
   <a href="docs/static/overview.pdf"><img alt="OpenMarkX: a model developer watermarks a model with OpenMark or one of 15 other methods (run); a model user may fine-tune, merge, quantize or prune it, or edit its text; a verifier with the developer's key detects the watermark in suspect text or verifies a suspect model; a watermark researcher compares methods under the same four edits (bench)" src="docs/static/overview.png" width="100%"></a>
@@ -40,7 +40,8 @@ commands.
 **Overview of OpenMarkX.** Each column is one role, with its input above the OpenMarkX band and its output below. A
 model developer watermarks a model with OpenMark or another method before release; a model user (red) may then
 fine-tune, merge, quantize or prune it, or edit its text; a verifier with the developer's key tests a suspect text
-or model; and a watermark researcher compares methods under the same modifications.
+or model; and a watermark researcher compares methods under the same modifications with `bench`, on a
+leaderboard of their own runs (the paper's results are in [LEADERBOARD.md](LEADERBOARD.md)).
 
 Users of an open-source LLM control both decoding and the weights, so a watermark added at decoding time can be
 switched off. An open-source watermark has to be produced by the model itself under standard decoding and survive
@@ -53,59 +54,48 @@ edits to the weights. Learning a decoding watermark into the weights leaves two 
 OpenMark addresses both:
 
 - **A watermark policy trained jointly with the LLM**, so the watermark the LLM learns matches the detection pattern.
-- **A perturbation-aware regularizer**, so the watermark stays detectable after weight-level edits.
+  The paper calls this the Co-Adaptive Watermark Policy (CAWP).
+- **A perturbation-aware regularizer**, so the watermark stays detectable after weight-level edits. The paper calls
+  this Forgotten Perturbation-aware Learning (FPL).
 
-On several open-source LLMs, OpenMark reaches 0.92 TPR at 1% FPR while lowering perplexity by 20.5% on average
-relative to the strongest prior method, and keeps 0.57 TPR at 5% FPR after 0.5-ratio model merging, where prior
-methods keep at most 0.34. [LEADERBOARD.md](LEADERBOARD.md) has the full results, and
-[How OpenMarkX works](docs/architecture.md) shows the layers and the run pipeline.
-
-## Demo
-
-One command runs a whole experiment: it learns the mark into the weights, checks outputs with the key, applies the
-edits and writes `report.json`. A stopped run picks up where it stopped.
-
-<p align="center">
-  <img src="docs/static/get-started.jpg" alt="One run of the GeoPT demo: install, run, and check a field later with the key" width="880">
-</p>
-
-```bash
-openmarkx run configs/demos/geopt.yaml       # physics: GeoPT aircraft fields (needs OMX_GEOPT_DIR)
-openmarkx run configs/demos/taming.yaml      # images: Taming Transformers (needs OMX_WMAR_DIR)
-openmarkx run configs/demos/medgemma.yaml    # medical VQA: MedGemma 1.5
-openmarkx run configs/demos/agent.yaml       # a ReAct agent on Llama-3.1-8B-Instruct
-```
-
-Add `--smoke` for a few steps, to check the setup. Publish `runs/demos/<name>/release/`; the key is not in it.
+The paper reports that, on several open-source LLMs, OpenMark reaches 0.92 TPR at 1% FPR while lowering perplexity
+by 20.5% on average relative to the strongest prior method. On LLaMA-3-8B after SLERP merging (t = 0.5), it keeps
+0.57 TPR at 5% FPR, where prior methods keep at most 0.34. [LEADERBOARD.md](LEADERBOARD.md) has the paper's
+LLaMA-3-8B tables, and [How OpenMarkX works](docs/architecture.md) shows the layers and the run pipeline.
 
 ## Installation
 
 ```bash
 git clone https://github.com/UCF-ML-Research/OpenMarkX.git
 cd OpenMarkX
-pip install -e .
+pip install -e .                    # add the vision extra for images: pip install -e ".[vision]"
 bash scripts/install_deps.sh        # MarkLLM at a pinned commit, for the markllm-* methods
 ```
 
 OpenMarkX needs Python 3.10 or later and a CUDA GPU. Without a GPU, the
 [Colab notebook](https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
 runs on a free T4. Runs and keys go under `~/.openmarkx`; back up the keys, since a lost key cannot be recovered.
-Code, keys and runs made under the old name MarkWeightX keep working. The [user guide](docs/user-guide.md) has the
-other options.
+The [user guide](docs/user-guide.md) has the other options.
 
 ## Quick start
 
 A language model, step by step:
 
 ```bash
-python exp/prepare_data.py                                  # once: C4 text and prompts
-openmarkx embed --base llama-3.2-1b --watermark openmark    # prints {"release": ..., "key": ...}
+python exp/prepare_data.py                                  # once: C4 text and held-out prompts
+python -c "import json; from openmarkx.models import load_tokenizer; from openmarkx.sampling import eval_prompts; \
+open('prompts.jsonl', 'w').writelines(json.dumps({'text': p}) + '\n' for p in eval_prompts(load_tokenizer('llama-3.2-1b'), n=100))"
+openmarkx embed --base llama-3.2-1b --watermark openmark    # prints {"release": RELEASE, "key": KEY}
 openmarkx calibrate KEY --base llama-3.2-1b                 # the detection threshold, on the unmarked model
 openmarkx modify RELEASE --edit finetune:steps=300 --out edited/
 openmarkx generate edited/ --prompts prompts.jsonl --out texts.jsonl
 openmarkx detect texts.jsonl --key KEY                      # one p-value per text
 openmarkx verify edited/ --key KEY --prompts prompts.jsonl  # one verdict for a suspect model
 ```
+
+`RELEASE` and `KEY` are the two fields that `embed` prints. The second line writes 100 held-out C4 prompts from the
+data that `exp/prepare_data.py` made; any `.jsonl` file with one `{"text": ...}` per line, or a `.txt` file with one
+prompt per line, works too.
 
 The same in Python:
 
@@ -119,15 +109,42 @@ edited = omx.modify(release, "finetune:steps=300")
 hits = omx.detect(omx.generate(edited, prompts), key)
 ```
 
+`openmarkx serve` runs the text recipe from a web page. The [user guide](docs/user-guide.md) covers the rest: every
+command and parameter, keys, configs and reproducing the paper.
+
+## Demos
+
+One command runs a whole experiment from a config: it learns the mark into the weights, checks outputs with the key,
+applies the config's edits and writes `report.json`. A stopped run picks up where it stopped.
+
+<p align="center">
+  <img src="docs/static/get-started.jpg" alt="One run of the GeoPT demo: install, run, and check a field later with the key" width="880">
+</p>
+
+```bash
+openmarkx run configs/demos/geopt.yaml       # physics: GeoPT aircraft fields
+openmarkx run configs/demos/taming.yaml      # images: Taming Transformers
+openmarkx run configs/demos/medgemma.yaml    # medical VQA: MedGemma 1.5
+openmarkx run configs/demos/agent.yaml       # a ReAct agent on Llama-3.1-8B-Instruct
+```
+
+| Demo | What it needs | GPU |
+|---|---|---|
+| `geopt`, `geopt_colearn` | a [GeoPT](https://github.com/Physics-Scaling/GeoPT) checkout in `OMX_GEOPT_DIR` with `checkpoints/craft_geopt_8layers.pt`; the AirCraft data in `$OMX_DEMO_DATA/geopt/aircraft_npys` | one GPU; a small field model. `geopt` writes the mark in closed form (no training steps); `geopt_colearn` trains 3,000 steps. Both then fine-tune the release as edits |
+| `taming` | a WMAR checkout in `OMX_WMAR_DIR`; the Taming checkpoint in `TAMING`; the `vision` extra | one GPU; a full fine-tune of Taming's GPT in two phases (800 and 1,000 steps); FID for quality |
+| `medgemma` | the gated `google/medgemma-1.5-4b-it` (accept its terms on Hugging Face); data from `exp/med/prepare.py` and `exp/med/distill_data.py`; the `vision` extra | one GPU; LoRA on a 4B model, 1,500 steps. No edits (`edits: []`) |
+| `agent` | data from `exp/agent/prepare.py` and `exp/agent/distill_data.py` | one GPU; LoRA on an 8B model, 1,500 steps. No edits (`edits: []`) |
+
+Runs go to `~/.openmarkx/runs/demos/<name>/` (`$OMX_RUNS/demos/<name>/`). `OMX_DEMO_DATA` defaults to
+`~/.openmarkx/runs`, where the `exp/agent` and `exp/med` scripts write. Add `--smoke` for a few steps, to check the
+setup. Publish `~/.openmarkx/runs/demos/<name>/release/`; the secret key is not in it.
+
 Check a file from another model type later with its key:
 
 ```bash
-openmarkx detect field.npz --model geopt --key runs/demos/geopt/release
-openmarkx detect images/ --model taming --key runs/demos/taming/release
+openmarkx detect field.npz --model geopt --key ~/.openmarkx/runs/demos/geopt/release
+openmarkx detect images/ --model taming --key ~/.openmarkx/runs/demos/taming/release
 ```
-
-`openmarkx serve` runs the same jobs from a web page. The [user guide](docs/user-guide.md) covers the rest: every
-command and parameter, keys, configs and reproducing the paper.
 
 ## Methods
 
@@ -149,6 +166,13 @@ config. With the `ripple` mark it runs through every step of `openmarkx run` and
 # run.yaml
 model: {name: geopt, factory: "my_field:MyField", ckpt: null, data: null}
 scheme: {name: ripple, params: {eps: 0.05}}
+imprint:
+  phases:
+    - {steps: 400, lr: 1.0e-3, trainable: full}
+detect: {fpr: 0.01, null: wrong_keys, n_null: 20}
+edits: ["finetune:steps=20,lr=1e-4"]
+quality: rel_l2
+out: runs/my_field
 ```
 
 The class gives the model, one forward call per case, the data splits and a normalizer. The
@@ -159,8 +183,9 @@ on the [roadmap](ROADMAP.md).
 ## Benchmark
 
 `openmarkx bench configs/arena/1b.yaml` scores methods under quantization, pruning, merging and fine-tuning, the
-same edits as the paper. [Benchmark](docs/benchmark.md) describes the edits and the protocol, and
-[LEADERBOARD.md](LEADERBOARD.md) has the results.
+same kinds of edit as the paper (the toolkit's own settings; see [docs/benchmark.md](docs/benchmark.md)). It
+writes a leaderboard of your own runs. [Benchmark](docs/benchmark.md) describes the edits and the protocol, and
+[LEADERBOARD.md](LEADERBOARD.md) has the paper's results.
 
 ## Documentation
 
@@ -173,11 +198,6 @@ same edits as the paper. [Benchmark](docs/benchmark.md) describes the edits and 
 | [Benchmark](docs/benchmark.md) · [Leaderboard](LEADERBOARD.md) | the edits, the protocol and the results |
 | [FAQ](docs/FAQ.md) | common questions and troubleshooting |
 | [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) | what is done and planned; what changed in each release |
-
-## Status and roadmap
-
-Watermarking, editing, detection and the benchmark run today for the model types above.
-[ROADMAP.md](ROADMAP.md) lists what comes next and the current limits.
 
 ## License
 

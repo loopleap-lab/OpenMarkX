@@ -3,7 +3,7 @@
 How to install OpenMarkX, learn a watermark into a model, test it under edits and detect it with the secret key.
 [How OpenMarkX works](architecture.md) explains the layers and the run pipeline. [Methods](methods.md),
 [Models](models.md) and [Benchmark](benchmark.md) cover the methods, your own model, and the edits and the
-leaderboard.
+benchmark.
 
 - [Installation](#installation)
 - [Where runs and keys live](#where-runs-and-keys-live)
@@ -57,14 +57,16 @@ Everything goes under `~/.openmarkx` unless an environment variable says otherwi
 | `OMX_HOME` | the root of the locations below | `~/.openmarkx` |
 | `OMX_RUNS` | releases, results, tokenized corpus | `$OMX_HOME/runs` |
 | `OMX_KEYS` | the key store (back it up: a lost secret key cannot be recovered) | `$OMX_RUNS/keys` |
-| `OMX_DATA` | the tokenized corpus made by `exp/prepare_data.py`; in run configs, where inputs are read | `$OMX_RUNS/data_llama8b_256.pt` |
+| `OMX_DATA` | the tokenized corpus file made by `exp/prepare_data.py` | `$OMX_RUNS/data_llama8b_256.pt` |
+| `OMX_DEMO_DATA` | the directory the demo configs read their inputs from (`exp/agent` and `exp/med` write there) | `$OMX_RUNS` |
 | `OMX_SERVE` | uploads and jobs of `openmarkx serve` | `$OMX_HOME/serve` |
 | `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `$OMX_HOME/MarkLLM` |
 | `OMX_WMAR_DIR`, `OMX_GEOPT_DIR` | checkouts of WMAR (with Taming) and GeoPT, for the `taming` and `geopt` adapters | unset |
 | `HF_HOME` | Hugging Face cache; base models download here on first use | Hugging Face's default |
 | `OMX_DEBUG` | `1` prints the full traceback when a command fails | unset |
 
-In run configs, `$OMX_DATA` defaults to `$OMX_RUNS`.
+Run configs can use these variables; an unset one takes the default above, so `$OMX_RUNS/demos/geopt` is
+`~/.openmarkx/runs/demos/geopt`.
 
 A release is a directory with `release.json` and the weights. It holds a commitment to its secret key, never the
 key itself. The key goes to the key store. Publish the release directory and back up the key store.
@@ -110,8 +112,9 @@ openmarkx run configs/demos/agent.yaml          # a ReAct agent on Llama-3.1-8B-
 
 Taming and GeoPT use the authors' code, unchanged, from your own checkouts: set `OMX_WMAR_DIR` (WMAR, which
 includes Taming) and `OMX_GEOPT_DIR` (GeoPT). Without them the run stops with a message naming the variable. The
-data the MedGemma and agent demos read is made by the scripts in `exp/med/` and `exp/agent/`.
-`tests/test_demo_configs.py` checks each demo setting against the runs it came from.
+data the MedGemma and agent demos read is made by the scripts in `exp/med/` and `exp/agent/`, under
+`$OMX_DEMO_DATA` (default `$OMX_RUNS`). GeoPT reads the AirCraft data from `$OMX_DEMO_DATA/geopt/aircraft_npys`.
+Runs go to `$OMX_RUNS/demos/<name>`. `tests/test_demo_configs.py` checks the demo settings.
 
 ### Options
 
@@ -130,7 +133,7 @@ has one line per step event. An `out` that holds a run with other settings is re
 ### The config
 
 ```yaml
-model: {name: geopt, ckpt: $OMX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt, data: $OMX_DATA/geopt/aircraft_npys}
+model: {name: geopt, ckpt: $OMX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt, data: $OMX_DEMO_DATA/geopt/aircraft_npys}
 scheme: {name: ripple, params: {eps: 0.02, output_scale: 1.0}}    # or source: my_mark.py
 imprint:
   edit_last: true                       # geopt only: write the mark into the last layer in closed form first
@@ -172,7 +175,8 @@ imprint:
 A release made with a stand-in (`factory`, `processor`) or a plugin adapter (`source`) names code to run. Opening
 it outside its own run needs `--trust-plugin` (`trust=True`).
 
-On HiPerGator, `scripts/hpg/run.sbatch CONFIG [--smoke]` runs the same command in one GPU job.
+On a Slurm cluster, run the same command inside one GPU job. Long steps save their progress, so a job stopped
+by its time limit continues when you submit it again.
 
 ## Language models, step by step
 
@@ -190,7 +194,14 @@ openmarkx --help                                                     # every com
 ```
 
 A KEY is a key id from `openmarkx keys list`, a unique prefix of one, a key file, or a release directory (its key
-is found by commitment). Text files are `.jsonl` (`{"text": ...}` per line) or `.txt` (one text per line).
+is found by commitment). `RELEASE` and `KEY` above are the two fields `embed` prints. Text files are `.jsonl`
+(`{"text": ...}` per line) or `.txt` (one text per line). To write held-out C4 prompts from the corpus that
+`exp/prepare_data.py` made:
+
+```bash
+python -c "import json; from openmarkx.models import load_tokenizer; from openmarkx.sampling import eval_prompts; \
+open('prompts.jsonl', 'w').writelines(json.dumps({'text': p}) + '\n' for p in eval_prompts(load_tokenizer('llama-3.2-1b'), n=100))"
+```
 
 | Command | Role | What it does | Main options |
 |---|---|---|---|
@@ -305,8 +316,8 @@ the key's frozen null. `--model geopt` takes an `.npz` with `points`, `field` an
 against the release's unmarked model on the same inputs, with a wrong-key null:
 
 ```bash
-openmarkx detect images/ --model taming --key runs/taming/release     # --release defaults to --key
-openmarkx detect case.npz --model geopt --key runs/geopt/release
+openmarkx detect images/ --model taming --key ~/.openmarkx/runs/demos/taming/release     # --release defaults to --key
+openmarkx detect case.npz --model geopt --key ~/.openmarkx/runs/demos/geopt/release
 ```
 
 ### A whole model
@@ -332,13 +343,12 @@ A larger calibration narrows the gap. Prompts disjoint from the calibration's ar
 split has only 311 usable prompts, so the quickstart reuses them; GaussMark's exact null is unaffected. In the
 result, `n_queries` is the number of texts generated and `n_judged` the number long enough to judge.
 
-### With MarkAgentX
+### The Detection result
 
-`Detection` is MarkAgentX's `Detection(statistic, p_value, n_evidence)` with the evidence counted in tokens:
-`d.n_evidence` and `d.to_markagentx()` give its fields. As there, an empty text answers `p_value = 1.0` with no
-evidence, and `null="wrong_key"` is MarkAgentX's wrong-key null. The draws are reproducible but are not
-MarkAgentX's keys: each scheme draws its own kind of secret. `tests/test_markagentx.py` checks the fields against
-a MarkAgentX checkout (`refs/MarkAgentX`).
+`Detection` has the fields of the `Detection(statistic, p_value, n_evidence)` result in MarkAgentX, a related
+watermarking toolkit for agents, with the evidence counted in tokens: `d.n_evidence` and `d.to_markagentx()` give
+them. An empty text answers `p_value = 1.0` with no evidence. `null="wrong_key"` scores each text under wrong keys
+and takes its p-value from the rank of the true key's statistic among them.
 
 ## Bringing a checkpoint made elsewhere
 

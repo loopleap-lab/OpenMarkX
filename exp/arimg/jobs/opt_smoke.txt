@@ -1,1 +1,0 @@
-S_smoke_d|--lr 3e-5 --policy_lr 2e-1 --delta 1 --steps 3 --resume_every 2|--lr 1e-4 --policy_lr 0 --delta 1 --steps 3 --resume_every 2

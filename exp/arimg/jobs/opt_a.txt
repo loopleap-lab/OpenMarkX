@@ -1,9 +1,0 @@
-V1_preg1|--lr 3e-5 --policy_lr 2e-1 --policy_reg 1 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
-V2_preg10|--lr 3e-5 --policy_lr 2e-1 --policy_reg 10 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
-V3_lowlr|--lr 3e-5 --policy_lr 2e-1 --steps 800|--lr 3e-5 --policy_lr 0 --steps 2000
-V4_preg0.1|--lr 3e-5 --policy_lr 2e-1 --policy_reg 0.1 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
-V5_preg0.01|--lr 3e-5 --policy_lr 2e-1 --policy_reg 0.01 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
-V6_null10|--lr 3e-5 --policy_lr 2e-1 --null_w 10 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
-V7_null100|--lr 3e-5 --policy_lr 2e-1 --null_w 100 --steps 800|--lr 1e-4 --policy_lr 0 --steps 1000
-V8_delta1|--lr 3e-5 --policy_lr 2e-1 --delta 1 --steps 800|--lr 1e-4 --policy_lr 0 --delta 1 --steps 1000
-V9_delta1.5|--lr 3e-5 --policy_lr 2e-1 --delta 1.5 --steps 800|--lr 1e-4 --policy_lr 0 --delta 1.5 --steps 1000

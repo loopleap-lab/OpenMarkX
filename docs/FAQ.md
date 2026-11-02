@@ -19,7 +19,7 @@ documentation.
 It learns a watermark into the weights of an open-source model, so that what the model generates carries the mark
 without any change to decoding. It then tests the mark under edits a downstream user may make (fine-tuning,
 merging, pruning, quantization, rewording) and detects it with the owner's secret key. `openmarkx bench` compares
-methods on one leaderboard.
+methods on a leaderboard of your own runs; [LEADERBOARD.md](../LEADERBOARD.md) holds the paper's results.
 
 ### Which models does it support?
 

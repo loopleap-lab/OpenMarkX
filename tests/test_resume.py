@@ -1,4 +1,4 @@
-"""Every long step continues after a kill (HPG time limits): a resumed run ends where an uninterrupted one would."""
+"""Every long step continues after a kill (cluster time limits): a resumed run ends where an uninterrupted one would."""
 import os
 import sys
 

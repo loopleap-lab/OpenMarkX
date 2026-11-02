@@ -1,1 +1,0 @@
-P10_plr1 --lr 3e-5 --policy_lr 1 --steps 1500 --resume_every 500

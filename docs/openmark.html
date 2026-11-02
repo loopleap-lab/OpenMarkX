@@ -1454,7 +1454,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
 </style>
 
-<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open weights</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open weights</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
+<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
 <nav class="nav" aria-label="Site">
   <div class="wrap">
     <a class="brand" href="index.html#top">
@@ -1502,7 +1502,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
       <div class="kids"><div class="kid" style="--d:0"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Quantized</b><span>4-bit</span><div class="kv"><i style="width:99%"></i></div><em>&ge;99%</em></div><div class="kid" style="--d:1"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Pruned</b><span>50% of weights</span><div class="kv"><i style="width:99%"></i></div><em>&ge;99%</em></div><div class="kid" style="--d:2"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Merged</b><span>with another model, t = 0.3</span><div class="kv"><i style="width:99%"></i></div><em>&ge;99%</em></div><div class="kid" style="--d:3"><b><svg class="nnic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="3" cy="12" r="1.7"/><circle cx="8" cy="8" r="1.7"/><circle cx="13" cy="4" r="1.7"/><circle cx="13" cy="12" r="1.7"/><path d="M3 4L8 8M3 12L8 8M8 8L13 4M8 8L13 12"/></svg>Fine-tuned</b><span>300 steps on math</span><div class="kv"><i style="width:61.5%"></i></div><em>61.5%</em></div><div class="kid add" style="--d:4"><b>+ your edit</b><span>one file, like a method</span></div></div>
       <p class="tcap">After release, users edit the model and publish their own copies. Each branch is one edit of Alice&rsquo;s model; the number is how many of its texts are still traced to her (OpenMark on Granite-4.2-3B, 200 generated texts per model, 1% false positives).</p>
     </div>
-    <p class="apiline"><code>m2 = omx.modify(m, <em>"merge"</em>, t=<em>0.3</em>)</code><span>Every edit plugs in the same way.</span></p>
+    <p class="apiline"><code>m2 = omx.modify(m, <em>"merge:partner=PARTNER,ratio=0.3"</em>)</code><span>Every edit plugs in the same way.</span></p>
     <h3 class="subh" id="compare">Compared with other watermarking methods (LLaMA-3-8B)</h3>
     <div class="mx">
       <div class="mxh"><span class="gn">Detection after each edit &middot; Llama-3-8B &middot; texts flagged at 1% false positives</span><div class="seg" role="group" aria-label="Edit strength" id="mxSeg"><button type="button" data-k="0">Light</button><button type="button" data-k="1" aria-pressed="true">Medium</button><button type="button" data-k="2">Heavy</button></div></div>
@@ -1521,7 +1521,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
       <span>Open<span class="hl">Mark</span><span class="xb">X</span></span>
     </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for tracing open-source models through watermarks in their weights. UCF ML Research</p></div>
       <div><h4>Project</h4><ul><li><a href="index.html#weights">Why</a></li><li><a href="index.html#toolkit">Toolkit</a></li><li><a href="#pro">OpenMark</a></li><li><a href="#results">Results</a></li><li><a href="index.html#demos">Demos</a></li></ul></div>
-      <div><h4>Learn</h4><ul><li><a href="index.html#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a class="js-repo" href="index.html#start">GitHub</a></li><li><a href="https://ucf-ml-research.github.io/OpenMark/">Paper</a></li></ul></div>
+      <div><h4>Learn</h4><ul><li><a href="index.html#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a class="js-repo" href="https://github.com/UCF-ML-Research/OpenMarkX">GitHub</a></li><li><a href="https://arxiv.org/abs/2510.23891">Paper</a></li></ul></div>
     </div>
   </div>
 </footer>
@@ -1607,7 +1607,7 @@ texts = omx.generate(child, prompts)
 <span class="c"># detector: single texts, then the whole model</span>
 hits = omx.detect(texts, key)
 omx.verify_model(child, key, prompts, sequential=<span class="k">True</span>, budget=200)`,
-    cli: `openmarkx embed --base llama-3.2-1b --watermark pro
+    cli: `openmarkx embed --base llama-3.2-1b --watermark openmark
 openmarkx modify RELEASE --edit quantize:bits=4 --out edited/
 openmarkx generate edited/ --prompts prompts.jsonl --out texts.jsonl
 openmarkx detect texts.jsonl --key KEY
@@ -1617,7 +1617,7 @@ openmarkx check --adapter my_mark.py  <span class="c"># ten tests, minutes on CP
 
 <span class="c"># arena.yaml</span>
 base: llama-3.2-1b
-methods: [pro, markllm-kgw-d, my_mark.py]
+methods: [openmark, markllm-kgw-d, my_mark.py]
 
 openmarkx bench arena.yaml            <span class="c"># train, modify, detect, leaderboard</span>`,
   };
@@ -1725,8 +1725,8 @@ openmarkx bench arena.yaml            <span class="c"># train, modify, detect, l
     const T = document.getElementById("term"); if (!T) return;
     const S = [
       ["note", "# embed: the owner trains the mark into the weights"],
-      ["cmd", "openmarkx embed --base llama-3-8b --watermark pro"],
-      ["box", [["Base", "llama-3-8b"], ["Method", "pro (precise + robust)"], ["Key", "release/key.json (keep it private)"], ["Output", "release/"]]],
+      ["cmd", "openmarkx embed --base llama-3.1-8b --watermark openmark"],
+      ["box", [["Base", "llama-3.1-8b"], ["Method", "openmark"], ["Key", "release/key.json (keep it private)"], ["Output", "release/"]]],
       ["bar", "training"],
       ["ok", "saved release/ : 92% of its texts flagged, 1% false positives"],
       ["gap"],
@@ -1869,16 +1869,16 @@ openmarkx bench arena.yaml            <span class="c"># train, modify, detect, l
         fig: () => el("pre", "wf-yaml", [
           '<b>model:</b>', '<b>  name: geopt</b>', '<b>  ckpt: $OMX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt</b>',
           'scheme:', '  name: ripple', '  params: {eps: 0.02}', 'detect: {fpr: 0.01, null: wrong_keys}', 'quality: rel_l2',
-          'out: runs/demos/geopt'].join("\n")) },
+          'out: $OMX_RUNS/demos/geopt'].join("\n")) },
       { cmd: "openmarkx run configs/demos/geopt.yaml",
         out: RUN.map((k) => `  <span class="runv-ok">&#10003;</span> <b>${k.padEnd(9)}</b>${esc(WHAT[k].padEnd(40))}${sec[k] > 0.05 ? `<span class="runv-d">${dur(sec[k]).padStart(8)}</span>` : ""}`),
         head: "One command runs the experiment", cap: "Each step saves its output, so a stopped run picks up where it stopped.",
         fig: () => { const o = el("ol", "wf-steps"); RUN.forEach((k) => o.append(el("li", null, `<b>${k}</b><span>${esc(WHAT[k])}</span>`))); return o; } },
-      { cmd: "ls runs/demos/geopt", out: ['<span class="runv-d">release/  report.json  assets/  progress.jsonl  ...</span>'],
+      { cmd: "ls ~/.openmarkx/runs/demos/geopt", out: ['<span class="runv-d">release/  report.json  assets/  progress.jsonl  ...</span>'],
         head: "What you get", cap: "Publish release/. The key is not in it: it stays in your private key store.",
         fig: () => { const w = el("div");
           w.append(el("pre", "wf-tree", [
-            'runs/demos/geopt/',
+            '~/.openmarkx/runs/demos/geopt/',
             '├── <b>release/</b>          <span>the model to publish</span>',
             '│   ├── release.json',
             '│   └── weights.pt',
@@ -1886,11 +1886,11 @@ openmarkx bench arena.yaml            <span class="c"># train, modify, detect, l
             '├── assets/           <span>examples for this page</span>',
             '└── progress.jsonl    <span>one line per step</span>',
             '',
-            '~/.openmarkx/keys/  <b>your key</b>  <span>private, never published</span>'].join("\n")));
+            '~/.openmarkx/runs/keys/  <b>your key</b>  <span>private, never published</span>'].join("\n")));
           w.append(el("pre", "wf-yaml", ['report.json', `  detect:  ${Math.round(d.tpr_at_1fpr * d.n_wm)} of ${d.n_wm} flagged at 1% false positives`,
             `  quality: error ${(100 * v.quality.before).toFixed(2)}% -> ${(100 * v.quality.after).toFixed(2)}%`].join("\n")));
           return w; } },
-      { cmd: "openmarkx detect field.npz --model geopt \\\n    --key runs/demos/geopt/release",
+      { cmd: "openmarkx detect field.npz --model geopt \\\n    --key ~/.openmarkx/runs/demos/geopt/release",
         out: [`<span class="runv-d">{"file": "field.npz", "statistic": ${(+ex.z_marked).toFixed(2)}, ..., "flagged": true}</span>`],
         head: "Check a field later", cap: "With your key and your unmarked model, any field is checked in seconds.",
         fig: () => { const z = (+ex.z_marked).toFixed(1), t = (+d.thr).toFixed(1);

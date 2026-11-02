@@ -49,7 +49,7 @@ def test_point_count_mismatch_raises():
 
 
 def test_ripple_calibrate_picks_smallest_detectable_eps():
-    # as last night's calibrate step: on a noise-free marked output every eps > 0 is detected (the residual is
+    # as the calibrate step of the GeoPT runs: on a noise-free marked output every eps > 0 is detected (the residual is
     # exactly eps * g), so the smallest grid value is chosen; the demo config sets eps explicitly
     s = ripple()
     p, ref, g = fixed()

@@ -83,7 +83,7 @@ def test_wmar_wrapper_is_built_inside_its_checkout(tmp_path, monkeypatch):
 
 
 def test_codec_moves_inputs_to_the_vq_device():
-    """Codes come back on the CPU after sampling; the VQ lives on the model's device (cuda on HPG)."""
+    """Codes come back on the CPU after sampling; the VQ lives on the model's device (cuda on a GPU machine)."""
     from openmarkx.registry import get_model
     m = get_model("taming", factory=FAKE)
     m.load(None, "cpu")

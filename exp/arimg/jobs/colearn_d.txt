@@ -1,3 +1,0 @@
-P7_plr2e-1_2500 --lr 3e-5 --policy_lr 2e-1 --steps 2500 --resume_every 500
-P8_plr2e-1_null1 --lr 3e-5 --policy_lr 2e-1 --null_w 1 --steps 1500 --resume_every 500
-P9_plr5e-1 --lr 3e-5 --policy_lr 5e-1 --steps 1500 --resume_every 500

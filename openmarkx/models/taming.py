@@ -1,7 +1,7 @@
 """The taming adapter: Taming Transformers' class-conditional image generator (VQ codes + GPT), through WMAR's
 wrapper. WMAR stays external: set OMX_WMAR_DIR to its checkout. Inputs are class labels; outputs are code sequences
 [N, 256] (16x16 image tokens); the codec maps images <-> codes with the VQ encoder and decoder. The imprint is a full
-fine-tune of the GPT (as last night's P2/P14 runs). Ported from exp/arimg/pro_taming.py.
+fine-tune of the GPT (as in configs/demos/taming.yaml). Ported from exp/arimg/pro_taming.py.
 """
 from __future__ import annotations
 
@@ -140,7 +140,7 @@ class TamingModel(Model):
 
 
 def save_pngs(images, out_dir: str, start: int = 0) -> list[str]:
-    """Images in [-1, 1] ([N, 3, H, W]) as out_dir/00000.png, ... (as last night's demo_assets.py)."""
+    """Images in [-1, 1] ([N, 3, H, W]) as out_dir/00000.png, ... (as exp/arimg/demo_assets.py)."""
     import os
     from PIL import Image
     os.makedirs(out_dir, exist_ok=True)

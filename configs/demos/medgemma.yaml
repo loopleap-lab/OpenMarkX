@@ -6,8 +6,8 @@ model:
 scheme:
   name: openmark
 data:
-  pairs: $OMX_DATA/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
-  eval: $OMX_DATA/med/mxqa_mm_eval.jsonl
+  pairs: $OMX_DEMO_DATA/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
+  eval: $OMX_DEMO_DATA/med/mxqa_mm_eval.jsonl
 imprint:
   bs: 16
   answer_len: 256

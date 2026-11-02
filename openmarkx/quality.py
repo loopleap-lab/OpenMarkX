@@ -3,7 +3,7 @@ from __future__ import annotations
 
 
 def fid(images_a: str, images_b: str, *, cuda: bool = False) -> float:
-    """Frechet Inception Distance between two directories of PNG images (torch-fidelity, as last night's runs).
+    """Frechet Inception Distance between two directories of PNG images (torch-fidelity).
     Compare sets of equal size: FID depends on the count."""
     try:
         import torch_fidelity

@@ -1,4 +1,4 @@
-"""OpenMark (PRO in the paper, NeurIPS 2026) as an OpenMarkX scheme. The watermark itself is the paper's code (PRO),
+"""OpenMark (PRO in the submission; NeurIPS 2026) as an OpenMarkX scheme. The watermark itself is the paper's code (PRO),
 shipped unchanged in openmarkx/third_party/pro.
 
 Signal: one semantic bias per sequence, bias = delta * tanh(tau * (T(BERT(context)) - mean))[mapping], where T is the
@@ -259,7 +259,7 @@ class OpenMarkFullB01(OpenMarkFull):
     booster = {"alpha": 0.1, "lamb": 0.1, "attack": "anti"}
 
 
-# Names from before the rename (PRO in the paper): class names for code that imports them, scheme names for keys,
+# Names from before the rename (PRO in the submission): class names for code that imports them, scheme names for keys,
 # releases, configs and command lines that use them.
 PRO, PROCoopt, PROBooster, PROFPL, PROCooptCentered, PROFPLSmall, PROCooptCentered100, PROFull, PROFullB01 = (
     OpenMark, OpenMarkCoopt, OpenMarkBooster, OpenMarkFPL, OpenMarkCooptCentered, OpenMarkFPLSmall,

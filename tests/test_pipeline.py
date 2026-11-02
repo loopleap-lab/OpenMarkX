@@ -336,7 +336,7 @@ def test_run_from_a_trained_release_skips_training(tmp_path, text_base, toy):
 
 
 def test_run_from_a_taming_colearn_dir(tmp_path, monkeypatch):
-    """Last night's Taming run directory (transformer.pt + policy.pt) becomes a release and a stored key."""
+    """A Taming run directory (transformer.pt + policy.pt) becomes a release and a stored key."""
     import openmarkx.keys as K
     from fakes import FakeTaming
     from openmarkx.keys import load_key
@@ -361,3 +361,19 @@ def test_run_from_a_taming_colearn_dir(tmp_path, monkeypatch):
     back = get_scheme("wmar"); back.setup(None, m.codec(), "cpu", load_key(rel).params)
     assert torch.equal(back.table(), sch.table())
     assert json.load(open(tmp_path / "run" / "selfgen.json")).get("skipped")      # nothing to train on, nothing sampled
+
+
+def test_config_paths_default_to_the_openmarkx_home(monkeypatch, tmp_path):
+    """Unset $OMX_RUNS expands to ~/.openmarkx/runs (paths.py's default), not to the literal "$OMX_RUNS"; $OMX_DATA is
+    the corpus file and $OMX_DEMO_DATA the demo input directory under it."""
+    from openmarkx.pipeline import _expand
+    for k in ("OMX_HOME", "OMX_RUNS", "OMX_DATA", "OMX_DEMO_DATA"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    home = str(tmp_path / ".openmarkx")
+    assert _expand(["$OMX_RUNS/demos/x", "$OMX_HOME", "$OMX_DATA", "$OMX_DEMO_DATA/agent"]) == \
+        [f"{home}/runs/demos/x", home, f"{home}/runs/data_llama8b_256.pt", f"{home}/runs/agent"]
+    monkeypatch.setenv("OMX_HOME", "/h")
+    assert _expand("$OMX_RUNS/a") == "/h/runs/a"
+    monkeypatch.setenv("OMX_RUNS", "/r")
+    assert _expand(["$OMX_RUNS/a", "$OMX_DEMO_DATA/b"]) == ["/r/a", "/r/b"]

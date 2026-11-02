@@ -1,6 +1,0 @@
-s05_e02 --eps 0.02 --output_scale 0.5 --steps 0 --n_demo 4
-s1_e02 --eps 0.02 --output_scale 1.0 --steps 0 --n_demo 4
-s2_e02 --eps 0.02 --output_scale 2.0 --steps 0 --n_demo 4
-s05_e05 --eps 0.05 --output_scale 0.5 --steps 0 --n_demo 4
-s1_e05 --eps 0.05 --output_scale 1.0 --steps 0 --n_demo 4
-s2_e05 --eps 0.05 --output_scale 2.0 --steps 0 --n_demo 4

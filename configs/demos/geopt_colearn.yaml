@@ -5,7 +5,7 @@
 model:
   name: geopt
   ckpt: $OMX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt
-  data: $OMX_DATA/geopt/aircraft_npys
+  data: $OMX_DEMO_DATA/geopt/aircraft_npys
 scheme:
   name: ripple
   params: {eps: 0.02, output_scale: 1.0, m: 32, n_wrong: 200, colearn: true, reg: 0.01, channels: 6}

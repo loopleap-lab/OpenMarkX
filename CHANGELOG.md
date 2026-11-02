@@ -7,7 +7,7 @@
   (`docs/models.md`), edits and the benchmark (`docs/benchmark.md`), and the FAQ (`docs/FAQ.md`). `ROADMAP.md`
   replaces the internal list of website calls that do not run yet. This changelog.
 
-## 0.1.0
+## 0.1.0 (current main, not yet tagged)
 
 The toolkit released with the NeurIPS 2026 paper "OpenMark: Enabling Precise and Robust Text Watermark for
 Open-Source LLMs".
@@ -37,7 +37,7 @@ Open-Source LLMs".
   resume; `--smoke` writes to `<out>_smoke`; a run directory with other settings is refused.
 - `imprint.from` and `run --from` reuse a trained release instead of training.
 - `detect --model taming` and `--model geopt` score images and fields.
-- Demo configs in `configs/demos/` (Taming, MedGemma, GeoPT, GeoPT co-learned, agent) and a HiPerGator run script.
+- Demo configs in `configs/demos/` (Taming, MedGemma, GeoPT, GeoPT co-learned, agent).
 
 ### Methods
 

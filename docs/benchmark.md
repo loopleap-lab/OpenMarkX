@@ -2,7 +2,8 @@
 
 An edit is what someone downstream does to a released model or to its outputs. OpenMarkX applies edits to test
 whether a watermark survives them, and `openmarkx bench` runs every method under every edit, plus a forgery
-attack, onto one leaderboard. The paper's results are in [LEADERBOARD.md](../LEADERBOARD.md).
+attack, onto a leaderboard of your own runs. The paper's results are a separate table in
+[LEADERBOARD.md](../LEADERBOARD.md).
 
 - [Edits](#edits)
 - [Adding an edit](#adding-an-edit)
@@ -111,7 +112,7 @@ The built-ins (`synonym`, `word_deletion`, `context_synonym`) are registered the
 ## Running the benchmark
 
 One command runs the benchmark for a list of methods: learn, every edit, forgery, then the leaderboard. `openmarkx
-evaluate` is the same command, under the name the paper's appendix uses.
+evaluate` is the same command, under an older internal name.
 
 ```bash
 openmarkx bench configs/arena/1b.yaml --dry-run     # what is done, what would run
@@ -185,9 +186,13 @@ These are the default columns of the 1B board for OpenMark (TPR at 1% FPR, from 
 | openmark | 0.88 | 0.07 | 0.55 | 0.89 | 0.89 | 0.83 | 0.67 |
 
 A new edit is read against these: close to `nf4` means harmless, close to `FT 800` means it erases the mark.
+This row is the `openmark` scheme (policy frozen, no FPL) on Llama-3.2-1B after 800 LoRA steps on clean C4 text;
+the paper's fine-tuning numbers are for full OpenMark (CAWP and FPL) on LLaMA-3-8B fine-tuned on OpenMathInstruct
+or OpenCodeInstruct, so the two are not comparable.
 
 The board of your own runs is separate from [LEADERBOARD.md](../LEADERBOARD.md), which reports the paper's numbers
 on LLaMA-3-8B. For the same kinds of edit there, after 4-bit HQQ quantization OpenMark keeps 0.91 TPR at 1% FPR
-against 0.77 for Gloaguen et al., and after 300 steps of math fine-tuning 0.43 against 0.22. The paper's
+against 0.83 for the strongest baseline (Gu et al.-KGW), and after 300 steps of math fine-tuning 0.43 against
+0.22 for the strongest baseline (Gloaguen et al.-KGW). The paper's
 modifications (GPTQ, HQQ, Wanda, SparseGPT, SLERP, fine-tuning on OpenMathInstruct and OpenCodeInstruct) are not the
 toolkit's edit grid.

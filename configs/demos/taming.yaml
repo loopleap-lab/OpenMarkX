@@ -1,4 +1,5 @@
-# Visual: OpenMark on Taming Transformers' image tokens (WMAR's green list over the codebook), last night's P2 -> P14.
+# Visual: OpenMark on Taming Transformers' image tokens (WMAR's green list over the codebook). Two
+# phases: co-learn the green lists with the model, then fix them and keep training.
 # Needs WMAR: export OMX_WMAR_DIR=<WMAR checkout>; TAMING=<Taming checkpoint>.   openmarkx run configs/demos/taming.yaml
 model:
   name: taming

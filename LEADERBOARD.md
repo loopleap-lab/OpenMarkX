@@ -73,5 +73,5 @@ Accuracy of LLaMA-3-8B before and after watermarking (paper, Table "downstream")
 ## Run your own
 
 `openmarkx bench arena.yaml` runs the same kind of benchmark (learn, edits, forgery) for any method on any base
-and writes a leaderboard of your own runs (see README). Its edit grid is the toolkit's (LoRA fine-tune, linear
+and writes a leaderboard of your own runs, separate from this table (see [docs/benchmark.md](docs/benchmark.md)). Its edit grid is the toolkit's (LoRA fine-tune, linear
 merge, magnitude pruning, bitsandbytes int8/nf4, word-level rewrites), not the paper's exact modification settings.

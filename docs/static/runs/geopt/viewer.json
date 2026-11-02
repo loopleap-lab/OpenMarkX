@@ -1,8 +1,8 @@
 {
  "model": {
   "name": "geopt",
-  "ckpt": "/blue/qi855292.ucf/ji757406.ucf/GeoPT/checkpoints/craft_geopt_8layers.pt",
-  "data": "/blue/qi855292.ucf/ji757406.ucf/mwx-runs/geopt/aircraft_npys"
+  "ckpt": "GeoPT/checkpoints/craft_geopt_8layers.pt",
+  "data": "runs/geopt/aircraft_npys"
  },
  "scheme": {
   "name": "ripple",

@@ -9,7 +9,7 @@ through the same commands.
 - [Layers](#layers)
 - [Release and key](#release-and-key)
 - [The run pipeline](#the-run-pipeline)
-- [Names in the paper's appendix and in the code](#names-in-the-papers-appendix-and-in-the-code)
+- [Internal design names and the code](#internal-design-names-and-the-code)
 - [Repository layout](#repository-layout)
 
 ## Roles
@@ -32,7 +32,7 @@ The calls follow the roles of the threat model:
 | Imprint | learning the mark into the weights: distillation of the scheme's signal (LoRA or full fine-tune, in phases), or a direct weight edit | `imprint.embed` (text), `vlm.embed_vlm`, `train.imprint` (any adapter) | phase settings in the run config |
 | Edits | what a downstream user does to the weights, the outputs or the texts | `finetune`, `merge`, `prune`, `quantize`; `synonym`, `word_deletion`, `context_synonym`; `image_roundtrip` | `@omx.register_edit`, `@omx.register_text_edit` ([Benchmark](benchmark.md#adding-an-edit)) |
 | Detection and verification | a p-value per output against a calibrated or wrong-key null; one verdict per model | `detect`, `verify_model` | |
-| Benchmark | every method under every edit, plus forgery, on one leaderboard | `openmarkx bench` and the `exp/` scripts | an arena file ([Benchmark](benchmark.md)) |
+| Benchmark | every method under every edit, plus forgery, on a leaderboard of your own runs | `openmarkx bench` and the `exp/` scripts | an arena file ([Benchmark](benchmark.md)) |
 
 A scheme is assembled from six primitives (`openmarkx/primitives.py`):
 
@@ -90,9 +90,11 @@ Each step routes by adapter: `imprint` trains text and agent models through `imp
 the LoRA adapter switched off, or a frozen copy for a full fine-tune. [Running an experiment from a
 config](user-guide.md#running-an-experiment-from-a-config) lists the config keys and options.
 
-## Names in the paper's appendix and in the code
+## Internal design names and the code
 
-| Technical appendix | Code |
+The design notes used these internal names; the paper does not use them.
+
+| Internal name | Code |
 |---|---|
 | `T-R0` / `T-R1` / `T-R2` | `Access.R0` / `R1` / `R2`; the auxiliary-network case is `R0_AUX` |
 | `KeyBundle` | `Key` (`openmarkx.types`), stored by commitment in the key store |
@@ -116,7 +118,7 @@ config](user-guide.md#running-an-experiment-from-a-config) lists the config keys
 | `configs/` | `embed.yaml` (text training recipe), `watermark/<scheme>.yaml` (written by `exp/write_configs.py`), `arena/*.yaml`, `demos/*.yaml` |
 | `examples/` | `quickstart.py`, `my_scheme.py` (the `new-scheme` template), `my_edits.py` (a weight edit and a text edit) |
 | `exp/` | experiment scripts: data, learnability, robustness, forgery, leaderboard, scheduler; the demo experiments (`agent/`, `med/`, `geopt/`, `arimg/`) |
-| `scripts/` | `install_deps.sh`; `hpg/run.sbatch` (`openmarkx run` in one HiPerGator GPU job) |
+| `scripts/` | `install_deps.sh` (MarkLLM at its pinned commit) |
 | `notebooks/` | `run_on_colab.ipynb` |
 | `tests/` | `pytest -q tests` (add `-m "not slow"` to skip the end-to-end check runs); `fakes.py` (CPU stand-ins); `broken/` (adapters that `check` must fail) |
 | `docs/` | this documentation and the website |

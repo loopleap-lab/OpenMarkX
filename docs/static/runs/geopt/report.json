@@ -1,8 +1,8 @@
 {
  "model": {
   "name": "geopt",
-  "ckpt": "/blue/qi855292.ucf/ji757406.ucf/GeoPT/checkpoints/craft_geopt_8layers.pt",
-  "data": "/blue/qi855292.ucf/ji757406.ucf/mwx-runs/geopt/aircraft_npys"
+  "ckpt": "GeoPT/checkpoints/craft_geopt_8layers.pt",
+  "data": "runs/geopt/aircraft_npys"
  },
  "scheme": {
   "name": "ripple",
@@ -35,8 +35,8 @@
  "settings": {
   "model": {
    "name": "geopt",
-   "ckpt": "/blue/qi855292.ucf/ji757406.ucf/GeoPT/checkpoints/craft_geopt_8layers.pt",
-   "data": "/blue/qi855292.ucf/ji757406.ucf/mwx-runs/geopt/aircraft_npys"
+   "ckpt": "GeoPT/checkpoints/craft_geopt_8layers.pt",
+   "data": "runs/geopt/aircraft_npys"
   },
   "scheme": {
    "name": "ripple",
@@ -47,7 +47,7 @@
     "n_wrong": 200
    }
   },
-  "out": "/blue/sgao1/ji757406.ucf/mwx-runs/demos/geopt",
+  "out": "runs/demos/geopt",
   "data": {},
   "imprint": {
    "edit_last": true,
@@ -74,5 +74,5 @@
   "quality": "rel_l2",
   "smoke": false
  },
- "release": "/blue/sgao1/ji757406.ucf/mwx-runs/demos/geopt/release"
+ "release": "runs/demos/geopt/release"
 }

@@ -3,7 +3,8 @@
   OMX_HOME       the default root of everything below                           (~/.openmarkx)
   OMX_RUNS       releases, results, the key store and the tokenized corpus     ($OMX_HOME/runs)
   OMX_KEYS       the key store                                                    ($OMX_RUNS/keys)
-  OMX_DATA       the tokenized C4 corpus made by exp/prepare_data.py             ($OMX_RUNS/data_llama8b_256.pt)
+  OMX_DATA       the tokenized C4 corpus made by exp/prepare_data.py (a file)    ($OMX_RUNS/data_llama8b_256.pt)
+  OMX_DEMO_DATA  the directory the demo configs read their inputs from           ($OMX_RUNS)
   MARKLLM_DIR    a checkout of upstream MarkLLM at commit 112fa74               ($OMX_HOME/MarkLLM)
   HF_HOME        the Hugging Face cache that base models are downloaded into   (Hugging Face's default)
 

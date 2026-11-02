@@ -1,1 +1,0 @@
-O1_full_lr3e-5_td6 --full --lr 3e-5 --target_delta 6 --steps 1500 --bs 32 --resume_every 500

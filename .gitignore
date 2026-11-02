@@ -6,3 +6,8 @@ build/
 *.egg-info/
 dist/
 .superpowers/
+
+# cluster job files and environment files stay out of the repository
+exp/*/jobs/
+*.env
+*.sbatch

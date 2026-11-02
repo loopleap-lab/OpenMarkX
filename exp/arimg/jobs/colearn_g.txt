@@ -1,2 +1,0 @@
-P13_fromP2_fixed_lr3e-5 --lr 3e-5 --policy_lr 0 --init_dir /blue/sgao1/ji757406.ucf/mwx-runs/arimg/colearn/P2_plr2e-1 --steps 1000 --resume_every 500
-P14_fromP2_fixed_lr1e-4 --lr 1e-4 --policy_lr 0 --init_dir /blue/sgao1/ji757406.ucf/mwx-runs/arimg/colearn/P2_plr2e-1 --steps 1000 --resume_every 500
