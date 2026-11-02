@@ -17,24 +17,29 @@ what their detectors need, the checks a method must pass, and how to add your ow
 
 | Scheme | Method | How the mark gets in | Detector needs |
 |---|---|---|---|
-| `openmark` | OpenMark, watermark policy frozen | distill OpenMark's semantic teacher into the weights (LoRA) | text, secret key (with its policy) |
-| `openmark-coopt-c100` | OpenMark with the policy co-optimized during distillation | same, policy trained jointly | text, secret key |
-| `openmark-full-b01` | OpenMark co-optimized, with forgetting-perturbation training (FPL) | same, plus FPL | text, secret key |
+| `openmark` | OpenMark, the paper's method: policy co-optimized with the model (CAWP), plus forgetting-perturbation training (FPL) | distill OpenMark's semantic teacher into the weights (LoRA), policy trained jointly, plus FPL | text, secret key (with its trained policy) |
+| `openmark-coopt-c100` | OpenMark with the policy co-optimized, no FPL | same, without FPL | text, secret key (with its trained policy) |
+| `openmark-frozen` | OpenMark with the policy frozen at its released initial weights, no FPL | distill OpenMark's semantic teacher into the weights (LoRA) | text, secret key |
 | `markllm-kgw-d`, `-unigram-d`, `-sweet-d`, `-ewd-d`, `-morphmark-d`, `-dip-d`, `-unbiased-d`, `-synthid-d`, `-exp-d`, `-expedit-d`, `-itsedit-d`, `-pf-d` | 12 decoding-time watermarks from MarkLLM, distilled into the weights (Gu et al. style) | distill the MarkLLM teacher into the weights (LoRA) | text, secret key; SWEET, EWD and Unbiased also run the base model |
 | `gaussmark` | GaussMark | a keyed Gaussian perturbation written into one weight matrix | text, secret key, gradients of the base model |
 | `wmar` | WMAR's green list over image tokens (Taming), learned into the weights | distill; the green-list table can be co-learned with the model | image tokens, secret key |
 | `ripple` | a keyed pattern on a field predicted over 3D points (GeoPT) | train by mean squared error to the marked field, or a closed-form edit of the last layer | the field, the publisher's unmarked model, secret key |
-| `nowm` | no watermark | nothing | the control row in every comparison |
+| `nowm` | no watermark | nothing | nothing: the scheme name of an unwatermarked release (e.g. the base model as a suspect in `exp/verify_check.py`); no arena or demo config lists it |
 
-The 16 text methods above `wmar` are the ones `configs/arena/1b.yaml` benchmarks. `wmar` and `ripple` run through
+The 16 text methods above `wmar` are the ones `configs/arena/1b.yaml` benchmarks. Six of the 12 MarkLLM methods
+(EXP, Unbiased, SynthID, PF, DIP, ITSEdit) do not learn into 1B weights (TPR at 1% FPR at most 0.03 after 1,500
+steps), so that arena runs only their learn step. `wmar` and `ripple` run through
 `openmarkx run` with the `taming` and `geopt` adapters.
 
 **OpenMark.** The OpenMark watermark is the paper's code, shipped with the package in
 `openmarkx/third_party/pro`. Its signal is one semantic bias per sequence: a sentence embedder reads the context,
 the watermark policy maps the embedding to a bias, and the secret token mapping assigns that bias to tokens. The
-embedder downloads from Hugging Face on first use. `openmark` keeps the policy at its released initial weights;
-`openmark-coopt-c100` trains it with the student; `openmark-full-b01` adds forgetting-perturbation training. Every
-OpenMark scheme also answers to its name from before the rename (`pro`, `pro-coopt-c100`, `pro-full-b01`, ...).
+embedder downloads from Hugging Face on first use. `openmark` trains the policy with the student and adds
+forgetting-perturbation training: each step simulates a fine-tuning step toward the anti-watermarked distribution
+and penalizes how much it moves the model (beta 0.1). That costs two more forward and backward passes per step,
+about three times the compute (an estimate from the training loop, not a timing). `openmark-coopt-c100` trains the
+policy without FPL; `openmark-frozen` keeps the policy at its released initial weights. `openmark-full-b01` is
+another name of `openmark`. Older names keep their meaning ([FAQ](FAQ.md#old-names)).
 
 **MarkLLM.** The `markllm-*-d` schemes use upstream MarkLLM at commit `112fa74`, unchanged, as teachers
 (`scripts/install_deps.sh`). Fixes to upstream behaviour live in the adapter, `openmarkx/schemes/markllm.py`. Every

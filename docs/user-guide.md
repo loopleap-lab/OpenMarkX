@@ -37,6 +37,10 @@ Or with pip from GitHub, for the library alone:
 pip install "openmarkx @ git+https://github.com/UCF-ML-Research/OpenMarkX"
 ```
 
+The pip package has no corpus and no `exp/` scripts. `embed`, `calibrate`, the `finetune` edit and the prompt
+helper (`eval_prompts`) read the tokenized corpus that `python exp/prepare_data.py` writes, so clone the repository
+and run it once. It streams C4 from Hugging Face and needs internet access.
+
 - OpenMarkX needs Python 3.10 or later.
 - Training and sampling need a CUDA GPU. `openmarkx check` and the tests run on CPU.
 - `scripts/install_deps.sh` clones MarkLLM at commit `112fa74` and downloads the NLTK data the text edits use.
@@ -62,6 +66,7 @@ Everything goes under `~/.openmarkx` unless an environment variable says otherwi
 | `OMX_SERVE` | uploads and jobs of `openmarkx serve` | `$OMX_HOME/serve` |
 | `MARKLLM_DIR` | upstream MarkLLM checkout (made by `install_deps.sh`) | `$OMX_HOME/MarkLLM` |
 | `OMX_WMAR_DIR`, `OMX_GEOPT_DIR` | checkouts of WMAR (with Taming) and GeoPT, for the `taming` and `geopt` adapters | unset |
+| `TAMING` | the Taming `cin_transformer` checkpoint directory (`configs/net2net.yaml` and `checkpoints/net2net.ckpt`, set up as in WMAR's README), read by `configs/demos/taming.yaml` | unset |
 | `HF_HOME` | Hugging Face cache; base models download here on first use | Hugging Face's default |
 | `OMX_DEBUG` | `1` prints the full traceback when a command fails | unset |
 
@@ -71,15 +76,7 @@ Run configs can use these variables; an unset one takes the default above, so `$
 A release is a directory with `release.json` and the weights. It holds a commitment to its secret key, never the
 key itself. The key goes to the key store. Publish the release directory and back up the key store.
 
-Names from before the rename to OpenMarkX still work:
-
-| Old name | Now |
-|---|---|
-| `import markweightx` | `import openmarkx` (with a deprecation warning) |
-| the `markweightx` command | `openmarkx` |
-| `MWX_*` variables | read when the `OMX_*` variable is unset |
-| `~/.markweightx` | used when `~/.openmarkx` does not exist |
-| schemes `pro`, `pro-coopt-c100`, `pro-full-b01`, ... | `openmark`, `openmark-coopt-c100`, `openmark-full-b01`, ... |
+OpenMark was called PRO and the toolkit MarkWeightX; the old names still work ([FAQ](FAQ.md#i-have-code-keys-or-runs-from-markweightx-do-they-still-work)).
 
 ## Running an experiment from a config
 
@@ -212,16 +209,28 @@ open('prompts.jsonl', 'w').writelines(json.dumps({'text': p}) + '\n' for p in ev
 | `generate` | downstream | samples texts from a release | `--prompts` (required), `--out`, `--device` |
 | `rewrite` | downstream | applies a text edit to texts | `--edit` (required), `--plugin`, `--out` |
 | `detect` | detector | one p-value per text | `--key` (required), `--fpr` (0.01), `--grant`, `--null`, `--n-null` (200), `--base`, `--model`, `--release`, `--out`, `--trust-plugin` |
-| `verify` | detector | one verdict for a suspect model | `--key`, `--prompts` (required), `--fpr`, `--alpha` (0.01), `--budget`, `--sequential`, `--p1` (0.2), `--trust-plugin` |
+| `verify` | detector | one verdict for a suspect model | `--key`, `--prompts` (required), `--fpr`, `--alpha` (0.01), `--budget`, `--sequential`, `--p1` (0.2), `--device`, `--model` (text only), `--trust-plugin` |
 | `run` | everyone | a whole experiment from a config | `--only`, `--smoke`, `--from`, `--device` |
 | `serve` | everyone | the web page for jobs on this machine's GPUs | `--port` (7860), `--host`, `--token`, `--origin` |
-| `bench` (`evaluate`) | researcher | the benchmark for an arena file | `--dry-run`, `--queue HOST`, `--no-check` |
+| `bench` (`evaluate`) | researcher | the benchmark for an arena file | `--dry-run`, `--queue HOST` (optional, for your own GPU machines running `exp/scheduler.py`), `--no-check` |
 | `describe` | researcher | the scheme by primitive table | scheme names or plugin files |
 | `check` | researcher | the checks a new method must pass | `--adapter` (required), `--name`, `--base` |
 | `new-scheme` | researcher | writes a one-file scheme template | `--out`, `--force` |
 | `keys` | owner | `list` the key store, or `show KEY` (key material hidden) | |
 
-`embed` and `verify` take only text models. For the other adapters, use `openmarkx run` with a config.
+`embed` and `verify` take only text models. For the other adapters, use `openmarkx run` with a config. By model
+type:
+
+| Command | text | agent | vlm | taming | geopt |
+|---|---|---|---|---|---|
+| `run` | yes | yes | yes | yes | yes |
+| `embed`, `calibrate`, `modify`, `generate`, `verify`, `serve` | yes | through `run` | through `run` | through `run` | through `run` |
+| `detect` | yes | yes (answers are text) | yes (answers are text) | yes (`--model taming`, PNG images) | yes (`--model geopt`, an `.npz` field) |
+| `bench` | yes | no | no | no | no |
+
+`--watermark openmark` is the paper's method: the policy is trained with the model and each step adds
+forgetting-perturbation training (FPL), which runs two more forward and backward passes per step (about three times
+the compute, estimated from the training loop). `openmark-frozen` keeps the released initial policy and adds no FPL.
 
 `embed --recipe configs/embed.yaml` sets the training recipe of teacher-learned methods (`steps`, `bs`, `accum`,
 `seq_len`, `lr`, `rank`, `save_every`, `seed`, `bos`); `--steps` overrides the recipe. The release goes to
@@ -290,9 +299,7 @@ again. A text too short to be judged gets `p_value=None` and `flagged=None`, and
 Schemes with an exact closed-form null (`exact_null = True`, such as GaussMark) use it directly.
 
 `embed` writes every scheme parameter into the key, defaults included, so a key keeps detecting the same way after
-a default changes in the code. Keys made before 2026-10-06 store only the parameters that were typed. Their
-parameters are part of the commitment, so they cannot be filled in afterwards; such a key detects with the scheme's
-current defaults.
+a default changes in the code. Older keys are covered in the [FAQ](FAQ.md#does-a-change-of-a-default-change-how-my-key-detects).
 
 ## Detecting and verifying
 
@@ -339,8 +346,8 @@ their own length and conservative across the per-length nulls. Power found at a 
 | exact | 88% | 88% |
 | empirical, 311 texts | 42% | 55% |
 
-A larger calibration narrows the gap. Prompts disjoint from the calibration's are the clean choice. The bundled C4
-split has only 311 usable prompts, so the quickstart reuses them; GaussMark's exact null is unaffected. In the
+A larger calibration narrows the gap. Prompts disjoint from the calibration's are the clean choice. The C4 split
+that `exp/prepare_data.py` generates has only 311 usable prompts, so the quickstart reuses them; GaussMark's exact null is unaffected. In the
 result, `n_queries` is the number of texts generated and `n_judged` the number long enough to judge.
 
 ### The Detection result
@@ -431,7 +438,9 @@ Add a line to `BASES` to pin the revision, so a run is comparable across machine
 
 ## Reproducing the paper
 
-The paper's results are on LLaMA-3-8B and are listed in [LEADERBOARD.md](../LEADERBOARD.md). The repository does
+The paper's results are on LLaMA-3-8B and are listed in [LEADERBOARD.md](../LEADERBOARD.md). LLaMA-3-8B is not in
+`BASES`; `--base meta-llama/Meta-Llama-3-8B` loads it by repo id (it shares the Llama-3 tokenizer, so the default
+corpus serves it), and `llama-3.1-8b` is the closest pinned base. The repository does
 not ship the paper's trained weights, and its edit grid (LoRA fine-tune, linear merge, magnitude pruning,
 bitsandbytes int8 and nf4, word-level rewrites) is not the paper's exact set of modifications (GPTQ, HQQ, Wanda,
 SparseGPT, SLERP, fine-tuning on OpenMathInstruct and OpenCodeInstruct). The paper's tables are therefore not

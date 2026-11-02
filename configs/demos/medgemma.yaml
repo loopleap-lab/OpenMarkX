@@ -1,10 +1,11 @@
-# Multi-modality: OpenMark learned into MedGemma 1.5 (LoRA on the language model), on MedXpertQA-MM image questions and the
-# base model's own answers. Data from exp/med/prepare.py and distill_data.py.
+# Multi-modality: OpenMark with the frozen policy (openmark-frozen) learned into MedGemma 1.5 (LoRA on the language
+# model), on MedXpertQA-MM image questions and the base model's own answers. Data from exp/med/prepare.py and
+# distill_data.py. The image+text imprint supports plain logit distillation only, so FPL (openmark) does not run here.
 model:
   name: vlm
   base: medgemma-1.5-4b-it
 scheme:
-  name: openmark
+  name: openmark-frozen
 data:
   pairs: $OMX_DEMO_DATA/med/pairs_medgemma-1.5-4b-it_mxqa*.jsonl
   eval: $OMX_DEMO_DATA/med/mxqa_mm_eval.jsonl

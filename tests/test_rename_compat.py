@@ -74,8 +74,8 @@ def test_old_pickle_loads(tmp_path):
 def test_pro_and_its_variants_are_openmark():
     from openmarkx.registry import SCHEMES, canonical_scheme, get_scheme
     from openmarkx.schemes.openmark import OpenMark, OpenMarkCooptCentered100, OpenMarkFullB01
-    assert canonical_scheme("pro") == "openmark" and canonical_scheme("gaussmark") == "gaussmark"
-    assert type(get_scheme("pro")) is OpenMark and get_scheme("pro").name == "openmark"
+    assert canonical_scheme("pro") == "openmark-frozen" and canonical_scheme("gaussmark") == "gaussmark"
+    assert type(get_scheme("pro")) is OpenMark and get_scheme("pro").name == "openmark-frozen"   # pro was frozen
     assert type(get_scheme("pro-coopt-c100")) is OpenMarkCooptCentered100
     assert type(get_scheme("pro-full-b01", delta=2.0)) is OpenMarkFullB01
     assert "pro" in SCHEMES and SCHEMES.get("pro") is OpenMark and SCHEMES["pro-full-b01"] is OpenMarkFullB01
@@ -138,8 +138,9 @@ def test_old_key_store_found_through_mwx_keys(tmp_path):
 def test_a_run_started_as_pro_resumes_as_openmark():
     from openmarkx.pipeline import config_diff
     old = {"model": {"name": "text"}, "scheme": {"name": "pro", "params": {"delta": 2.0}}, "out": "/a"}
-    assert config_diff(old, {**old, "scheme": {"name": "openmark", "params": {"delta": 2.0}}, "out": "/b"}) == []
-    assert config_diff(old, {**old, "scheme": {"name": "openmark", "params": {"delta": 1.0}}}) == ["scheme"]
+    assert config_diff(old, {**old, "scheme": {"name": "openmark-frozen", "params": {"delta": 2.0}}, "out": "/b"}) == []
+    assert config_diff(old, {**old, "scheme": {"name": "openmark-frozen", "params": {"delta": 1.0}}}) == ["scheme"]
+    assert config_diff(old, {**old, "scheme": {"name": "openmark", "params": {"delta": 2.0}}}) == ["scheme"]
     assert config_diff(old, {**old, "scheme": {"name": "gaussmark", "params": {"delta": 2.0}}}) == ["scheme"]
 
 

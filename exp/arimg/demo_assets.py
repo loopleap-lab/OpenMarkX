@@ -1,7 +1,8 @@
-"""Demo assets for OpenMark on Taming: images with their 16x16 tokens colored green / red by WMAR's detector, and FID.
+"""Demo assets for the wmar scheme on Taming: images with their 16x16 tokens colored green / red by WMAR's detector, and FID.
 
-Run from the WMAR checkout after `pro_taming.py eval` (it reuses eval_codes_<set>.pt):
-  cd $WMAR && python $B/MarkWeightX/exp/arimg/demo_assets.py --run $RUN --out $RUN/demo
+Run from the WMAR checkout after `pro_taming.py eval` (it reuses eval_codes_<set>.pt); $OPENMARKX is your OpenMarkX
+checkout:
+  cd $WMAR && python $OPENMARKX/exp/arimg/demo_assets.py --run $RUN --out $RUN/demo
 For each evaluation class: the student's first two images next to the base model's first two, each decoded, re-encoded
 (as a detector would see it), and overlaid with green (token in the green list of its predecessor), red (not), or
 nothing (not scored: repeated n-gram or the first token). FID(student, base) and FID(teacher, base) on all images.

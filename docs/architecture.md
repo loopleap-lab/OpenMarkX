@@ -9,7 +9,6 @@ through the same commands.
 - [Layers](#layers)
 - [Release and key](#release-and-key)
 - [The run pipeline](#the-run-pipeline)
-- [Internal design names and the code](#internal-design-names-and-the-code)
 - [Repository layout](#repository-layout)
 
 ## Roles
@@ -89,21 +88,6 @@ Each step routes by adapter: `imprint` trains text and agent models through `imp
 `target_logits`; field schemes train by mean squared error to `target_output`. The teacher is the unmarked model:
 the LoRA adapter switched off, or a frozen copy for a full fine-tune. [Running an experiment from a
 config](user-guide.md#running-an-experiment-from-a-config) lists the config keys and options.
-
-## Internal design names and the code
-
-The design notes used these internal names; the paper does not use them.
-
-| Internal name | Code |
-|---|---|
-| `T-R0` / `T-R1` / `T-R2` | `Access.R0` / `R1` / `R2`; the auxiliary-network case is `R0_AUX` |
-| `KeyBundle` | `Key` (`openmarkx.types`), stored by commitment in the key store |
-| `WDetection` | `Detection(statistic, p_value, n_tokens, flagged)` |
-| `modify(release, attack)`, `ft:full`, `quant` | `modify(release, "finetune:steps=800")`, `"quantize:bits=4"`, `"merge:partner=...,ratio=0.4"`, `"prune:sparsity=0.5"` |
-| `harness.attack` (text) | `rewrite(texts, "synonym:ratio=0.3")`, `"word_deletion:ratio=0.3"` |
-| `harness.evaluate(arena.yaml)` | `openmarkx bench arena.yaml` (runs `exp/learnability.py`, `robustness.py`, `spoof.py`, `leaderboard.py`) |
-| `Scheme.keygen / signal / recipe / detector` | `Scheme.setup` (key) / `target_logits` (Signal) / `configs/embed.yaml` / `score`, `pvalue` |
-| CLI `verify` | `openmarkx verify`, which calls `omx.verify_model` |
 
 ## Repository layout
 

@@ -159,7 +159,8 @@ def main(argv=None):
     p.add_argument("--recipe", help="training recipe YAML for teacher-learned schemes (see configs/embed.yaml)")
     p.add_argument("--steps", type=int, help="training steps for teacher-learned schemes (overrides the recipe)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
-    p.add_argument("--model", default="text", help="model adapter: text (default), agent, vlm, taming, geopt (see `openmarkx run` for the others)")
+    p.add_argument("--model", default="text", help="text only (the default); for agent, vlm, taming and geopt "
+                   "models use `openmarkx run CONFIG` (configs/demos/ has one per model)")
     KEY_HELP = "key id (or unique prefix) from `openmarkx keys list`, or a release dir"
     TEXTS_HELP = ".jsonl ({\"text\": ...} per line) or .txt (one text per line)"
     TRUST_HELP = "run the plugin code a key names (only for keys you or someone you trust made)"
@@ -210,7 +211,8 @@ def main(argv=None):
     p.add_argument("--device", help="default: the device the key was made on")
     p.add_argument("--out", help="output .jsonl (default: stdout)")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
-    p.add_argument("--model", default="text", help="text family: texts as above; taming: a directory of .png images "
+    p.add_argument("--model", default="text", choices=["text", "agent", "vlm", "taming", "geopt"],
+                   help="text, agent, vlm: texts as above (an agent's or a VLM's answers are text); taming: a directory of .png images "
                    "(VQ-encoded, scored against the key's frozen null); geopt: an .npz with points, field, condition "
                    "(scored against --release's unmarked model, wrong-key null)")
     p.add_argument("--release", help="taming/geopt: the release whose model (its VQ, its unmarked base) the detector "
@@ -227,7 +229,8 @@ def main(argv=None):
     p.add_argument("--p1", type=float, default=0.2, help="flag rate the early accusation is tuned for (default 0.2)")
     p.add_argument("--device", help="default: the first GPU, else CPU")
     p.add_argument("--trust-plugin", action="store_true", help=TRUST_HELP)
-    p.add_argument("--model", default="text", help="model adapter: text (default), agent, vlm, taming, geopt (see `openmarkx run` for the others)")
+    p.add_argument("--model", default="text", help="text only (the default); for agent, vlm, taming and geopt "
+                   "models use `openmarkx run CONFIG` (configs/demos/ has one per model)")
     p = sub.add_parser("run", help="Everyone: run a whole experiment from a config (prepare -> ... -> report.json)")
     p.add_argument("config", help="a run config YAML (see configs/demos/)")
     p.add_argument("--only", nargs="+", metavar="STEP", help="run only these steps: prepare selfgen calibrate imprint "
@@ -420,18 +423,22 @@ def _run(a):
         serve(a.port, a.host, a.token, a.origin)
     elif a.cmd == "keys":
         from .keys import PUBLIC_KEY_FIELDS, STORE
+        from .registry import stored_scheme
         from .types import Key
         if a.action == "list":
             for f in sorted(os.listdir(STORE)) if os.path.isdir(STORE) else []:
                 if f.endswith(".json"):
                     k = Key.open(os.path.join(STORE, f))
-                    print(f"{f[:12]}  {k.scheme:<22} base={k.base}  calibrated={bool(k.calibration.get('null'))}")
+                    print(f"{f[:12]}  {stored_scheme(k.scheme, k.scheme_params):<22} base={k.base}  "
+                          f"calibrated={bool(k.calibration.get('null'))}")
         else:
             if not a.key:
                 raise SystemExit("keys show needs a key id: see `openmarkx keys list`")
             k = _key(a.key)
             safe = {kk: (v if kk in PUBLIC_KEY_FIELDS else "<hidden>") for kk, v in k.params.items()}   # key material stays out of logs
-            print(json.dumps({"commitment": k.commitment, "scheme": k.scheme, "base": k.base, "params": safe,
+            means = stored_scheme(k.scheme, k.scheme_params)  # a key recorded as "openmark" before it named the paper method
+            print(json.dumps({"commitment": k.commitment, "scheme": means,
+                              **({"recorded_as": k.scheme} if means != k.scheme else {}), "base": k.base, "params": safe,
                               "scheme_params": k.scheme_params, "calibrated_n": k.calibration.get("n")}, indent=1))
 
 

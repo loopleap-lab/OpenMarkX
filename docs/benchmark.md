@@ -112,12 +112,12 @@ The built-ins (`synonym`, `word_deletion`, `context_synonym`) are registered the
 ## Running the benchmark
 
 One command runs the benchmark for a list of methods: learn, every edit, forgery, then the leaderboard. `openmarkx
-evaluate` is the same command, under an older internal name.
+evaluate` is another name for the same command.
 
 ```bash
 openmarkx bench configs/arena/1b.yaml --dry-run     # what is done, what would run
 openmarkx bench configs/arena/1b.yaml               # run the missing steps on this machine
-openmarkx bench my_arena.yaml --queue mybox         # or hand them to the GPU scheduler (exp/scheduler.py)
+openmarkx bench my_arena.yaml --queue mybox         # optional, on your own GPU machines: hand the steps to exp/scheduler.py
 ```
 
 - A step counts as done once its output exists, so a bench can be stopped and run again.
@@ -142,7 +142,7 @@ edits: [finetune:steps=800, quantize:bits=4, text:synonym:ratio=0.3]   # optiona
 | `edits` | the edit list; text edits are written `text:<name>:k=v` | the grid below |
 | `plugins` | files that register edits, loaded before the edits are checked | none |
 | `learn` | overrides for `exp/learnability.py`: `steps`, `bs`, `accum`, `bos` | the script's defaults |
-| `tag` | the results directory under `$OMX_RUNS` | `e2` |
+| `tag` | the name of the results directory under `$OMX_RUNS` (results go to `$OMX_RUNS/<tag>/<base>/`) | `e2` |
 
 The default edit grid: `finetune` at 200, 800 and 2400 steps; `merge` at ratio 0.2, 0.4 and 0.6; `prune` at
 sparsity 0.2 and 0.5; `quantize` at 8 and 4 bits; `word_deletion` and `synonym` at ratio 0.3.
@@ -153,7 +153,7 @@ an hour later. Each new edit becomes a column (`noise_scale0.01`, `typos_rate0.0
 ```yaml
 # configs/arena/plugins_example.yaml
 base: llama-3.2-1b
-methods: [openmark, markllm-kgw-d]
+methods: [openmark-frozen, markllm-kgw-d]
 plugins: [examples/my_edits.py]
 edits: [finetune:steps=800, noise:scale=0.01, text:synonym:ratio=0.3, text:typos:rate=0.05]
 ```
@@ -168,7 +168,7 @@ The steps are these scripts, which can also be run one at a time:
 | `exp/robustness.py --release DIR` | edits: every weight and text edit on one release, with the same threshold |
 | `exp/spoof.py --release DIR` | forgery: count tokens in the owner's texts, bias the base model toward the over-represented ones, measure how much is flagged |
 | `exp/leaderboard.py` | the board: one row per method; experimental variants and sweeps under Ablations |
-| `exp/scheduler.py --host NAME` | a GPU queue (`$OMX_RUNS/sched/<host>/queue.json`) that waits for free memory |
+| `exp/scheduler.py --host NAME` | optional, for your own GPU machines: a GPU queue (`$OMX_RUNS/sched/<host>/queue.json`) that waits for free memory |
 
 The training recipe for teacher-learned schemes is `configs/embed.yaml`.
 
@@ -178,17 +178,18 @@ The board is printed and saved as `$OMX_RUNS/e2/<base>/leaderboard.md`; `exp/lea
 the main table as LaTeX. A plugin method gets a main-board row; parameter sweeps (`name:k=v`) and experimental
 variants go under Ablations. A C9 table reports false positives on texts cut to 50 and 100 tokens.
 
-These are the default columns of the 1B board for OpenMark (TPR at 1% FPR, from our runs,
+These are the default columns of the 1B board for `openmark-frozen` (TPR at 1% FPR, from our runs,
 `$OMX_RUNS/e2/llama-3.2-1b/leaderboard.md`):
 
 | method | learned | FT 800 | merge .4 | prune 20% | nf4 | delete 30% | synonym 30% |
 |---|---|---|---|---|---|---|---|
-| openmark | 0.88 | 0.07 | 0.55 | 0.89 | 0.89 | 0.83 | 0.67 |
+| openmark-frozen | 0.88 | 0.07 | 0.55 | 0.89 | 0.89 | 0.83 | 0.67 |
 
 A new edit is read against these: close to `nf4` means harmless, close to `FT 800` means it erases the mark.
-This row is the `openmark` scheme (policy frozen, no FPL) on Llama-3.2-1B after 800 LoRA steps on clean C4 text;
-the paper's fine-tuning numbers are for full OpenMark (CAWP and FPL) on LLaMA-3-8B fine-tuned on OpenMathInstruct
-or OpenCodeInstruct, so the two are not comparable.
+This row is the `openmark-frozen` scheme (policy frozen, no FPL; it was named `openmark` when it ran) on
+Llama-3.2-1B; FT 800 is 800 LoRA steps on clean C4 text. The paper's fine-tuning numbers are for full OpenMark
+(`openmark`: CAWP and FPL) on LLaMA-3-8B fine-tuned on OpenMathInstruct or OpenCodeInstruct, so the two are not
+comparable.
 
 The board of your own runs is separate from [LEADERBOARD.md](../LEADERBOARD.md), which reports the paper's numbers
 on LLaMA-3-8B. For the same kinds of edit there, after 4-bit HQQ quantization OpenMark keeps 0.91 TPR at 1% FPR

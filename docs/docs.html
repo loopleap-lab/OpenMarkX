@@ -1256,7 +1256,7 @@ pre.wc { max-height: 520px; overflow: auto; }
   <p class="kicker">OpenMarkX &middot; Developer guide</p>
   <h1>Developer <span class="hl">Guide</span></h1>
   <p class="lead">How to add your own method, edit or model. To run a demo or check a file, see <a href="./#start">Get started</a>.</p>
-  <p class="date">Updated October 23, 2026</p>
+  <p class="date">Updated November 2, 2026</p>
   <div class="keys3" aria-label="Three ways to extend OpenMarkX">
     <a class="key" href="#method"><span class="kn">01</span><b>A method</b><span>How the key marks outputs, and how outputs are scored</span><code>my_mark.py</code></a>
     <a class="key" href="#edit"><span class="kn">02</span><b>An edit</b><span>What a user might do to the released model or its outputs</span><code>my_edits.py</code></a>
@@ -1268,8 +1268,8 @@ pre.wc { max-height: 520px; overflow: auto; }
   <div class="t3">
     <div><b>embed</b><p>Train the mark into the model; the key stays with you.</p><pre class="code">openmarkx embed --base llama-3.1-8b \
   --watermark openmark</pre></div>
-    <div><b>modify</b><p>Play the user who edits the released weights.</p><pre class="code">openmarkx bench arena.yaml
-# edits: [quantize:bits=4, finetune:steps=300]</pre></div>
+    <div><b>modify</b><p>Play the user who edits the released weights.</p><pre class="code">openmarkx modify release/ \
+  --edit finetune:steps=300</pre></div>
     <div><b>detect</b><p>Score outputs with the key. <code>verify</code> does the same on a suspect model: it samples the model, then detects.</p><pre class="code">openmarkx detect texts.jsonl \
   --key release/</pre></div>
   </div>
@@ -1278,7 +1278,7 @@ pre.wc { max-height: 520px; overflow: auto; }
   <h2 id="method"><span class="dn">2</span>Add a method</h2>
   <p class="sum">Write it, check it, embed it, benchmark it. Pick a step to see what you write or run.</p>
   <div class="walk"><div class="wsl"><button class="ws on" type="button" data-i="0"><b>1&nbsp; Write the method</b><span>openmarkx new-scheme my-mark</span></button><button class="ws" type="button" data-i="1"><b>2&nbsp; Check it</b><span>openmarkx check --adapter my_mark.py</span></button><button class="ws" type="button" data-i="2"><b>3&nbsp; Embed and detect</b><span>openmarkx embed ...</span></button><button class="ws" type="button" data-i="3"><b>4&nbsp; Benchmark it</b><span>openmarkx bench my_arena.yaml</span></button></div><div><pre class="code wc" data-i="0"><span class="fn">my_mark.py</span>
-&quot;&quot;&quot;my-mark: a OpenMarkX scheme in one file. Check it with `openmarkx check --adapter my_mark.py`.&quot;&quot;&quot;
+&quot;&quot;&quot;my-mark: an OpenMarkX scheme in one file. Check it with `openmarkx check --adapter my_mark.py`.&quot;&quot;&quot;
 import torch
 
 import openmarkx as omx
@@ -1360,7 +1360,7 @@ edits: [quantize:bits=4, finetune:steps=300, noise:scale=0.01, text:typos:rate=0
   <p>Built in: fine-tuning, quantization, pruning and merging on the weights; synonym, word deletion and contextual synonym on texts; <code>image_roundtrip</code> on image tokens (decode, then encode again, as a saved image). <code>@omx.register_output_edit</code> adds an output edit. <code>examples/my_edits.py</code> is the full file.</p>
 
   <h2 id="model"><span class="dn">4</span>Add a model</h2>
-  <p class="sum">An adapter says how to load and run the model. With a method for its outputs, one config runs everything: data, mark, detection, edits, report. The <a href="./#start">home page</a> walks through a full GeoPT run. Working adapters: <code>openmarkx/models/geopt.py</code> and <code>openmarkx/models/taming.py</code>.</p>
+  <p class="sum">An adapter says how to load and run the model. Today <code>openmarkx run</code> checks a new adapter&rsquo;s config and stops at its first step. Every step runs when your model goes behind the <code>geopt</code> adapter with <code>factory: module:Class</code>; <a href="https://github.com/UCF-ML-Research/OpenMarkX/blob/main/docs/models.md#what-runs-today">docs/models.md</a> shows both routes. Working adapters: <code>openmarkx/models/geopt.py</code> and <code>openmarkx/models/taming.py</code>.</p>
   <pre class="code"><span class="fn">my_model.py</span>
 @omx.register_model
 class MyModel(omx.Model):

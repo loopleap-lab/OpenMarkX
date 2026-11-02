@@ -1,11 +1,11 @@
 """The demo run is now one command: openmarkx run configs/demos/taming.yaml. This script keeps the sweeps.
-OpenMark (PRO in the submission) for autoregressive image generation: WMAR's generation-time KGW watermark on Taming's image tokens, learned into
+Autoregressive image generation (what the wmar scheme runs): WMAR's generation-time KGW watermark on Taming's image tokens, learned into
 the transformer's weights (LoRA) by logit distillation, then detected with WMAR's detector, unchanged.
 
-Run from the WMAR checkout (its `deps.taming` and `wmar` packages), e.g.
-  cd $WMAR && python $B/MarkWeightX/exp/arimg/pro_taming.py data  --out $RUN --classes 0-999 --per_class 20 --shard 0 --num_shards 4
-  cd $WMAR && python $B/MarkWeightX/exp/arimg/pro_taming.py train --out $RUN
-  cd $WMAR && python $B/MarkWeightX/exp/arimg/pro_taming.py eval  --out $RUN --sets base,teacher,student
+Run from the WMAR checkout (its `deps.taming` and `wmar` packages); $OPENMARKX is your OpenMarkX checkout, e.g.
+  cd $WMAR && python $OPENMARKX/exp/arimg/pro_taming.py data  --out $RUN --classes 0-999 --per_class 20 --shard 0 --num_shards 4
+  cd $WMAR && python $OPENMARKX/exp/arimg/pro_taming.py train --out $RUN
+  cd $WMAR && python $OPENMARKX/exp/arimg/pro_taming.py eval  --out $RUN --sets base,teacher,student
 Teacher at position t = transformer logits + delta on the green list seeded by token t-1 (WMAR: linear seeding, context
 1, stratified split, gamma 0.25, delta 2). Student = the same transformer + LoRA, trained with KL(teacher || student)
 on the base model's own token sequences (no images, no labels). Every step resumes from what it saved.

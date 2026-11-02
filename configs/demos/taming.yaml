@@ -1,6 +1,7 @@
-# Visual: OpenMark on Taming Transformers' image tokens (WMAR's green list over the codebook). Two
-# phases: co-learn the green lists with the model, then fix them and keep training.
-# Needs WMAR: export OMX_WMAR_DIR=<WMAR checkout>; TAMING=<Taming checkpoint>.   openmarkx run configs/demos/taming.yaml
+# Visual: the wmar scheme (WMAR's green list over the codebook) learned into Taming Transformers' image-token GPT.
+# Two phases: co-learn the green lists with the model, then fix them and keep training.
+# Needs WMAR: export OMX_WMAR_DIR=<WMAR checkout>; TAMING=<the cin_transformer checkpoint directory, with
+# configs/net2net.yaml and checkpoints/net2net.ckpt, set up as in WMAR's README>.   openmarkx run configs/demos/taming.yaml
 model:
   name: taming
   modelpath: $TAMING
@@ -18,8 +19,8 @@ imprint:
   bs: 50
   save_every: 500
   phases:
-    - {steps: 800, lr: 3.0e-5, trainable: full, policy_lr: 0.2}                   # P2: co-learn the green lists
-    - {steps: 1000, lr: 1.0e-4, trainable: full, policy_lr: 0, fix_rule: true}    # P14: fix them, keep training
+    - {steps: 800, lr: 3.0e-5, trainable: full, policy_lr: 0.2}                   # phase 1: co-learn the green lists
+    - {steps: 1000, lr: 1.0e-4, trainable: full, policy_lr: 0, fix_rule: true}    # phase 2: fix them, keep training
 generate: {bs: 25}
 detect: {fpr: 0.01, null: base}
 edits: [image_roundtrip]          # what a detector sees from a saved image

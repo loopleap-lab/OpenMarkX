@@ -43,6 +43,11 @@ def edit_tag(op: str, params: dict) -> str:
     return op + "_" + "_".join(f"{k}{v}" for k, v in params.items())
 
 
+# Result directories keep the names they had when "openmark" meant the frozen policy, so runs already on disk are
+# found and never mixed up: the frozen variant's results live in "openmark", the paper method's in "openmark-full-b01".
+DIR_NAMES = {"openmark-frozen": "openmark", "openmark": "openmark-full-b01"}
+
+
 def result_dir(watermark: str, base: str, tag: str = "e2") -> str:
     """Where exp/learnability.py puts a method's release and results. A run made under another name of the same
     scheme (e.g. pro-coopt-c100, before it was renamed openmark-coopt-c100) is found there."""
@@ -51,6 +56,12 @@ def result_dir(watermark: str, base: str, tag: str = "e2") -> str:
     name, params, _ = scheme_spec(watermark)
     at = lambda n: f"{RUNS}/{tag}/{base}/" + n + "".join(f"_{k}{v}" for k, v in params.items())
     new = canonical_scheme(name)
+    if new in DIR_NAMES:
+        old = [o for o, c in SCHEMES.aliases.items() if c == new and o not in DIR_NAMES]
+        for n in [DIR_NAMES[new]] + sorted(old):
+            if os.path.isdir(at(n)):
+                return at(n)
+        return at(DIR_NAMES[new])
     for n in [name, new] + sorted(o for o, c in SCHEMES.aliases.items() if c == new):
         if os.path.isdir(at(n)):
             return at(n)

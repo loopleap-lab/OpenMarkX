@@ -1,12 +1,13 @@
-"""CPU: the image+question data for sub-project B, under $OMX_RUNS/med/.
+"""CPU: the image+question data for the MedGemma demo (configs/demos/medgemma.yaml), under $OMX_RUNS/med/
+(the default $OMX_DEMO_DATA/med/).
 
   python exp/med/prepare.py
 mxqa_mm_test.jsonl  MedXpertQA-MM test (2000 questions; images unzipped to mxqa_images/), the evaluation set
 mxqa_mm_train.jsonl / mxqa_mm_eval.jsonl
                     the 2000 questions split in half (seed 0, stratified by medical task): the distillation prompts
                     come from train (questions only; answers are the model's own), the numbers from eval
-vqa_prompts.jsonl   (earlier design, unused now) image+question prompts from the training splits of VQA-RAD (radiology) and PathVQA (pathology),
-                    for the distillation data; never from MedXpertQA
+vqa_prompts.jsonl   only with --vqa, not used by the demo: image+question prompts from the training splits of VQA-RAD
+                    (radiology) and PathVQA (pathology); never from MedXpertQA
 """
 import argparse
 import hashlib
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n_vqa", type=int, default=8000)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--vqa", action="store_true", help="also the VQA-RAD/PathVQA prompts (earlier design)")
+    ap.add_argument("--vqa", action="store_true", help="also the VQA-RAD/PathVQA prompts (not used by the demo)")
     a = ap.parse_args()
     os.makedirs(MED, exist_ok=True)
     mxqa()

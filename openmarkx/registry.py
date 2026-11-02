@@ -57,9 +57,21 @@ def register_scheme_alias(old: str, new: str):
 
 
 def canonical_scheme(name: str) -> str:
-    """The current name of a scheme (an old name, e.g. "pro", gives "openmark"); unknown names come back unchanged."""
+    """The current name of a scheme (an old name, e.g. "pro", gives "openmark-frozen"); unknown names come back
+    unchanged. For a name read from a key or a run, use stored_scheme first: "openmark" changed meaning."""
     from . import schemes  # noqa: F401  (registers the built-ins and their old names)
     return SCHEMES.canonical(name)
+
+
+def stored_scheme(name: str, scheme_params: dict | None = None) -> str:
+    """The scheme a recorded name means (in a key, a run's config.json, a result.json). "openmark" once named the
+    frozen-policy variant and now names the paper's method (co-optimized policy + FPL). Everything recorded with it
+    keeps its meaning: a record of "openmark" whose parameters do not say co_opt=True was made with the frozen
+    policy, so it is read as openmark-frozen. Every key made by embed records co_opt (its resolved parameters), and
+    the paper's method always records co_opt=True. Any other name comes back unchanged."""
+    if canonical_scheme(name) == "openmark" and name == "openmark" and not (scheme_params or {}).get("co_opt"):
+        return "openmark-frozen"
+    return name
 
 
 def plugin_schemes(module_name: str) -> list[str]:
@@ -247,7 +259,7 @@ def get_scheme(name: str, *, source: str | None = None, **params):
 
 
 def register_model(cls=None, *, name: str | None = None):
-    """Register a model adapter (a openmarkx.models.Model subclass) under its name."""
+    """Register a model adapter (an openmarkx.models.Model subclass) under its name."""
     def wrap(c):
         n = name or c.name
         old = MODELS.get(n)

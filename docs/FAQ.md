@@ -35,7 +35,8 @@ methods on a leaderboard of your own runs; [LEADERBOARD.md](../LEADERBOARD.md) h
 
 ### Which watermark methods are included?
 
-OpenMark (the paper's method, in three settings), 12 MarkLLM methods distilled into the weights, GaussMark, `wmar`
+OpenMark (`openmark`, the paper's method, and two simpler settings, `openmark-coopt-c100` and
+`openmark-frozen`), 12 MarkLLM methods distilled into the weights, GaussMark, `wmar`
 for image tokens and `ripple` for fields. `openmarkx describe` prints the table; [Methods](methods.md) has the
 details.
 
@@ -52,9 +53,11 @@ key store. The release holds only a commitment to the key. See [Keys](user-guide
 git clone https://github.com/UCF-ML-Research/OpenMarkX.git && cd OpenMarkX
 pip install -e ".[test]"
 bash scripts/install_deps.sh        # MarkLLM at a pinned commit, for the markllm-* methods
+python exp/prepare_data.py          # once: the C4 corpus (streamed, needs internet access)
 ```
 
-The [user guide](user-guide.md#installation) lists the other options.
+`pip install` from GitHub gives the library alone, without the corpus that `embed`, `calibrate` and the
+`finetune` edit read. The [user guide](user-guide.md#installation) lists the other options.
 
 ### Do I need a GPU?
 
@@ -139,16 +142,45 @@ Yes: `openmarkx detect images/ --model taming --key RELEASE` for a directory of 
 
 ## Old names
 
+OpenMark was called PRO and the toolkit MarkWeightX; the old names still work.
+
 ### I have code, keys or runs from MarkWeightX. Do they still work?
 
-Yes. `import markweightx`, the `markweightx` command, `MWX_*` environment variables and `~/.markweightx` all keep
-working. An unset `OMX_*` variable falls back to its `MWX_*` namesake, and `~/.markweightx` is used when
-`~/.openmarkx` does not exist.
+Yes:
+
+| Old name | Now |
+|---|---|
+| `import markweightx` | `import openmarkx` (with a deprecation warning) |
+| the `markweightx` command | `openmarkx` |
+| `MWX_*` variables | read when the `OMX_*` variable is unset |
+| `~/.markweightx` | used when `~/.openmarkx` does not exist |
 
 ### My keys and configs say `pro`. Do I have to change them?
 
-No. `pro`, `pro-coopt-c100`, `pro-full-b01` and the other PRO names are aliases of `openmark`,
-`openmark-coopt-c100`, `openmark-full-b01`, ... A run directory made under the old name is resumed, not refused.
+No. Each old name keeps its old meaning:
+
+| Old name | Now |
+|---|---|
+| `pro` | `openmark-frozen` |
+| `pro-full-b01`, `openmark-full-b01` | `openmark` |
+| `pro-coopt-c100` and the other `pro-*` names | `openmark-coopt-c100`, `openmark-*` |
+
+A run directory made under an old name is resumed, not refused.
+
+### `openmark` used to mean the frozen policy. What happens to my old keys and runs?
+
+`openmark` now names the paper's method (policy co-optimized with the model, plus FPL). Before, it named the
+frozen-policy variant, now `openmark-frozen`. A key records its scheme name and every scheme parameter. A key or
+`result.json` recorded as `openmark` without `co_opt: true` is read as `openmark-frozen`, so it detects exactly as
+before; `openmarkx keys list` shows it under that name. A run directory whose `config.json` was written before the
+change and names `openmark` resumes only as `openmark-frozen`. `openmarkx bench` keeps its result directories:
+`openmark/` holds `openmark-frozen` runs and `openmark-full-b01/` holds `openmark` runs.
+
+### Does a change of a default change how my key detects?
+
+No. Keys record every scheme parameter, defaults included. The exception is keys made before the toolkit recorded
+defaults: they hold only the parameters that were typed. Their parameters are part of the
+commitment, so they cannot be filled in afterwards; such a key detects with the scheme's current defaults.
 
 ## Extending OpenMarkX
 

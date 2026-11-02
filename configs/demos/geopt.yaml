@@ -1,4 +1,4 @@
-# Physics: OpenMark on GeoPT (aircraft surface fields). The mark (eps 0.02) is written into the last layer in
+# Physics: the ripple scheme on GeoPT (aircraft surface fields). The mark (eps 0.02) is written into the last layer in
 # closed form (edit_last), with no gradient steps. Needs the GeoPT repo: export OMX_GEOPT_DIR=<GeoPT checkout>.
 model:
   name: geopt

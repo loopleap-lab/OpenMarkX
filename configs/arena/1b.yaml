@@ -1,9 +1,9 @@
 # The 1B leaderboard: every registered method on Llama-3.2-1B.   openmarkx bench configs/arena/1b.yaml
 base: llama-3.2-1b
 methods:
-  - openmark
-  - openmark-coopt-c100
-  - openmark-full-b01
+  - openmark-frozen       # policy frozen, no FPL
+  - openmark-coopt-c100   # policy co-optimized, no FPL
+  - openmark              # the paper's method: co-optimized policy + FPL
   - gaussmark
   - markllm-unigram-d
   - markllm-kgw-d

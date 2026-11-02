@@ -6,7 +6,7 @@ and the release that comes out.
 
 Done items are checked; they are in the current `main` branch (0.1.0, not yet tagged). Planned items are unchecked.
 
-The path has three stages:
+The sections below follow the path item by item. Grouped by when they land, the work is:
 1. **Model adapters and the run pipeline (done):** text, agent, vision-language, image and physics models through
    `openmarkx run`, and 16 text methods compared by `openmarkx bench` on a leaderboard of your own runs. The
    paper's results are a separate table in [LEADERBOARD.md](LEADERBOARD.md).
@@ -26,7 +26,7 @@ The path has three stages:
 
 ## 2. Methods
 
-- [x] OpenMark (`openmark`, `openmark-coopt-c100`, `openmark-full-b01`), 12 MarkLLM methods distilled into the weights, GaussMark
+- [x] OpenMark (`openmark`, the paper's method; `openmark-coopt-c100`; `openmark-frozen`), 12 MarkLLM methods distilled into the weights, GaussMark
 - [x] `wmar` for image tokens and `ripple` for fields, with the rule co-learned with the model
 - [x] One-file plugin methods: `openmarkx new-scheme`, `openmarkx check` (C1 to C10)
 - [ ] `eps: auto` (strength search) for `ripple`
@@ -41,7 +41,7 @@ The website shows these calls for the image, vision-language, physics and agent 
 `openmarkx run configs/demos/<name>.yaml`.
 
 - [x] `omx.embed`, `omx.modify`, `omx.detect` for text models
-- [ ] `omx.embed("<model>", "openmark")` for `taming-imagenet`, `medgemma-1.5-4b`, `geopt-aircraft` and `llama-3.1-8b-instruct` (agent): route `embed` to the model adapters by base name
+- [ ] `omx.embed("<model>", "<method>")` (as on the website: `ripple`, `wmar`, `openmark-frozen`) for `taming-imagenet`, `medgemma-1.5-4b`, `geopt-aircraft` and `llama-3.1-8b-instruct` (agent): route `embed` to the model adapters by base name
 - [ ] `release.push("<org>/<model>")`: upload the weights to the Hugging Face Hub, never the key
 - [ ] `omx.detect(image | answer | field | report, release.key)`: dispatch on the release's adapter, and a `key` attribute on the release
 - [ ] Edit parameters as keyword arguments: `omx.modify(release, "merge", partner=..., ratio=0.3)` (today: `omx.modify(release, "merge:partner=<model>,ratio=0.3")`)

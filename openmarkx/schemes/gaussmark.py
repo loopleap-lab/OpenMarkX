@@ -31,7 +31,7 @@ class GaussMark(Scheme):
     access = Access.R2
     exact_null = True              # psi ~ N(0, 1) by construction: the closed form beats a finite empirical null
 
-    # defaults from the Llama-3.2-1B sweep (dev plan, 2026-10-06): sigma 0.01 at layer 14 traces 89% of texts at
+    # defaults from a Llama-3.2-1B sweep: sigma 0.01 at layer 14 traces 89% of texts at
     # 1% FPR for +3% perplexity; at layer 10 the same sigma costs +30%, sigma 0.03 breaks the model
     def __init__(self, sigma: float = 0.01, layer: int = 14, matrix: str = "mlp.up_proj", **params):
         super().__init__(sigma=sigma, layer=layer, matrix=matrix, **params)

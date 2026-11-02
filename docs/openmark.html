@@ -1454,7 +1454,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
 </style>
 
-<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
+<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced before edits</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced before edits</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
 <nav class="nav" aria-label="Site">
   <div class="wrap">
     <a class="brand" href="index.html#top">
@@ -1471,7 +1471,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 <section class="band" id="pro">
   <div class="wrap">
     <div class="head">
-      <div><h2>OpenMark: <span class="hl">Precise</span> and <span class="hl">Robust</span></h2><p>OpenMark is our method in OpenMarkX and its default. It learns a mark that is precise to detect and hard to edit away.</p></div>
+      <div><h2>OpenMark</h2><p>OpenMark is our method in OpenMarkX and its default. It learns a mark that is precise to detect and hard to edit away.</p></div>
     </div>
     <div class="pro2">
       <div class="pp">
@@ -1559,8 +1559,8 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     const short = (c) => ({ "Unaltered": "Unaltered", "Quantization, 8 bits": "Quantize 8-bit", "Quantization, 4 bits": "Quantize 4-bit", "Pruning, Wanda": "Prune · Wanda", "Pruning, SparseGPT": "Prune · SparseGPT", "Merging, SLERP": "Merge · SLERP", "Fine-tuning, OpenMathInstruct": "Fine-tune · Math", "Fine-tuning, OpenCodeInstruct": "Fine-tune · Code" }[c] || c);
     const S = { cat: "Fine-tuning, OpenMathInstruct", met: "t1" };
     const lab = (r) => { const v = (r.setting || "").replace(/^[a-zρ]+ = /i, ""); return /^Fine/.test(r.cat) ? v + " steps" : /^Merging/.test(r.cat) ? "ratio " + v : /^Pruning/.test(r.cat) ? (100 * v).toFixed(0) + "% pruned" : (r.setting || "—"); };
-    try { const v = JSON.parse(localStorage.getItem("mwx-lb3") || "null"); if (v && CATS.includes(v.cat)) S.cat = v.cat; } catch (e) {}
-    const save = () => { try { localStorage.setItem("mwx-lb3", JSON.stringify(S)); } catch (e) {} };
+    try { const v = JSON.parse(localStorage.getItem("omx-lb") || "null"); if (v && CATS.includes(v.cat)) S.cat = v.cat; } catch (e) {}
+    const save = () => { try { localStorage.setItem("omx-lb", JSON.stringify(S)); } catch (e) {} };
     const tone = (v, ppl) => "t" + (ppl ? (v <= 4.5 ? "g" : v <= 6 ? "m" : "b") : (v >= .8 ? "g" : v >= .4 ? "m" : "b"));
     function table() {
       const m = METRICS.find((x) => x[0] === S.met), idx = m[2], ppl = !m[3];

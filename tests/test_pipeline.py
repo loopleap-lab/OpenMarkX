@@ -347,7 +347,7 @@ def test_run_from_a_taming_colearn_dir(tmp_path, monkeypatch):
     net = m.load(None, "cpu")
     sch = get_scheme("wmar")
     sch.setup(net, m.codec(), "cpu", {})
-    old = tmp_path / "P14"; old.mkdir()
+    old = tmp_path / "earlier_run"; old.mkdir()
     torch.save(net.state_dict(), old / "transformer.pt")
     torch.save({"green": sch.table(), "alive": sch.alive, "Z": sch.Z.detach()}, old / "policy.pt")
     cfg = {"model": {"name": "taming", "factory": "fakes:FakeTaming"}, "scheme": {"name": "wmar"},

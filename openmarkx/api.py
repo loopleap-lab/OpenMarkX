@@ -127,6 +127,10 @@ def port(model_dir: str, watermark: str, key: dict, base: str, out: str | None =
         import warnings
         warnings.warn("this OpenMark key has no 'transform': detection uses the public initial policy, which is right "
                       "only if the checkpoint was trained with it")
+        if getattr(sch, "co_opt", False):                  # a co-optimized policy that was not given: the checkpoint
+            name = "openmark-frozen"                       # is scored as made with the initial (frozen) policy
+            sparams = {k: v for k, v in sparams.items() if k != "co_opt"}
+            sch = _get(name, src, sparams)
     import re
     from .keys import STORE, resolve
     for k, v in list(params.items()):                      # a key exported from a store: blob refs become its files
@@ -243,7 +247,8 @@ def build_scheme(key: Key, *, trust_plugin: bool = False):
     if key.scheme_source and not trust_plugin and not plugin_loaded(key.scheme_source):
         raise UntrustedPlugin(f"this key runs plugin code {key.scheme_source}: import it yourself first, or pass "
                               f"trust_plugin=True (CLI --trust-plugin) if you trust whoever made the key")
-    return get_scheme(key.scheme, source=key.scheme_source, **key.scheme_params)
+    from .registry import stored_scheme
+    return get_scheme(stored_scheme(key.scheme, key.scheme_params), source=key.scheme_source, **key.scheme_params)
 
 
 def scheme_for(key: Key, base: str | None, device: str, grant=None, trust_plugin: bool = False):
@@ -270,8 +275,8 @@ def _rng_device(key: Key, cls=None) -> str | None:
     """The device type a key's randomness was drawn on, or None if the scheme declares it device-independent
     (cls: the key's scheme class, e.g. type(build_scheme(key)); plugins are only known once loaded).
     Keys made before this was recorded: MarkLLM keys were all made on CUDA."""
-    from .registry import SCHEMES
-    cls = cls or SCHEMES.get(key.scheme)
+    from .registry import SCHEMES, stored_scheme
+    cls = cls or SCHEMES.get(stored_scheme(key.scheme, key.scheme_params))
     if cls is not None and not getattr(cls, "rng_bound", True):
         return None
     return key.params.get("rng_device", "cuda" if key.scheme.startswith("markllm-") else "cpu")

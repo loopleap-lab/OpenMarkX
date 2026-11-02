@@ -1,8 +1,9 @@
 """The demo run is now one command: openmarkx run configs/demos/geopt.yaml. This script keeps the sweeps.
-GPU: OpenMark for GeoPT on AirCraft. Calibrate the field mark, learn it into the weights, evaluate, save demo cases.
+GPU: the ripple scheme for GeoPT on AirCraft. Calibrate the field mark, learn it into the weights, evaluate, save demo cases.
 
-  python exp/geopt/run_mark.py --geopt_dir $B/GeoPT --data $OMX_RUNS/geopt/aircraft_npys \
-      --ckpt $B/GeoPT/checkpoints/craft_geopt_8layers.pt --out $OMX_RUNS/geopt/mark
+  export OMX_GEOPT_DIR=<GeoPT checkout>          # the GeoPT repository (github.com/Physics-Scaling/GeoPT)
+  python exp/geopt/run_mark.py --data $OMX_RUNS/geopt/aircraft_npys \
+      --ckpt $OMX_GEOPT_DIR/checkpoints/craft_geopt_8layers.pt --out $OMX_RUNS/geopt/mark
 Steps (each skipped when its output exists, so a rerun continues):
   calibrate.json  the post-hoc mark (the "generation-time" rule) on the clean model's test outputs, for several eps:
                   detection z-scores and the relative L2 change; picks the smallest eps with every test case at
@@ -54,7 +55,8 @@ def rel_l2(out, y):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--geopt_dir", required=True)
+    ap.add_argument("--geopt_dir", default=os.environ.get("OMX_GEOPT_DIR"), required=not os.environ.get("OMX_GEOPT_DIR"),
+                    help="the GeoPT checkout (default: $OMX_GEOPT_DIR)")
     ap.add_argument("--data", required=True)
     ap.add_argument("--ckpt", required=True, help="the fine-tuned open model (the authors' craft script)")
     ap.add_argument("--out", required=True)

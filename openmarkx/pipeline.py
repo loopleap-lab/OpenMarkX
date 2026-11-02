@@ -125,14 +125,22 @@ def _expand(x, env=None):
     return re.sub(r"\$(\w+)|\$\{(\w+)\}", lambda m: env.get(m.group(1) or m.group(2), m.group(0)), x)
 
 
+NAMES = 2   # config.json format: 2 = written after "openmark" became the paper method (see registry.stored_scheme)
+
+
 def config_diff(old: dict, new: dict) -> list[str]:
-    """The settings two runs differ in (out aside). A scheme renamed since (pro -> openmark) counts as the same."""
-    from .registry import canonical_scheme
-    old = {k: v for k, v in old.items() if k != "out"}
-    new = json.loads(json.dumps({k: v for k, v in new.items() if k != "out"}, default=str))
+    """The settings two runs differ in (out aside). A scheme renamed since (pro -> openmark) counts as the same, and a
+    run recorded as "openmark" before that name meant the paper method counts as openmark-frozen."""
+    from .registry import canonical_scheme, stored_scheme
+    legacy = old.get("names") != NAMES
+    old = {k: v for k, v in old.items() if k not in ("out", "names")}
+    new = json.loads(json.dumps({k: v for k, v in new.items() if k not in ("out", "names")}, default=str))
     for d in (old, new):
         if isinstance(d.get("scheme"), dict) and isinstance(d["scheme"].get("name"), str):
-            d["scheme"] = {**d["scheme"], "name": canonical_scheme(d["scheme"]["name"])}
+            name = d["scheme"]["name"]
+            if d is old and legacy:
+                name = stored_scheme(name, d["scheme"].get("params"))
+            d["scheme"] = {**d["scheme"], "name": canonical_scheme(name)}
     return sorted(k for k in set(old) | set(new) if old.get(k) != new.get(k))
 
 
@@ -823,7 +831,7 @@ def run(cfg: Config, *, only: list[str] | None = None, device: str | None = None
         if diff:
             raise ConfigError(f"{cfg.out} holds a run with other settings ({', '.join(diff)} differ): use a new out, "
                               f"or remove that directory to start over")
-    _write(cpath, asdict(cfg))
+    _write(cpath, {**asdict(cfg), "names": NAMES})
     ctx = Context(cfg, device)
     changed = False
     for step in STEPS:

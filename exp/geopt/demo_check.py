@@ -25,7 +25,8 @@ from run_mark import Sim, craft_args
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--geopt_dir", required=True)
+    ap.add_argument("--geopt_dir", default=os.environ.get("OMX_GEOPT_DIR"), required=not os.environ.get("OMX_GEOPT_DIR"),
+                    help="the GeoPT checkout (default: $OMX_GEOPT_DIR)")
     ap.add_argument("--data", required=True)
     ap.add_argument("--ckpt", required=True)
     ap.add_argument("--student", required=True)

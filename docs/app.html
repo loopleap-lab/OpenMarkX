@@ -229,7 +229,8 @@ async function api(path, opt = {}) {
 (function init() {
   const m = location.hash.match(/token=([\w-]+)/);
   S.want = (location.hash.match(/scheme=([\w.-]+)/) || [])[1];      // e.g. #token=...&scheme=openmark from the OpenMark notebook
-  if (S.want) S.want = S.want.replace(/^pro(?=$|-)/, "openmark");   // links made before the rename
+  // links made with older names: pro = openmark-frozen, (pro|openmark)-full-b01 = openmark, pro-X = openmark-X
+  if (S.want) S.want = S.want.replace(/^pro$/, "openmark-frozen").replace(/^(pro|openmark)-full-b01$/, "openmark").replace(/^pro-/, "openmark-");
   if (m) {
     $("#addr").value = location.origin; $("#token").value = m[1];
     history.replaceState(null, "", location.pathname);
@@ -279,7 +280,8 @@ function renderConfig() {
   const I = S.info, best = Math.max(0, ...I.machine.gpus.map(g => g.free_gb));
   $("#base").innerHTML = I.bases.map(b => `<option value="${b.name}" ${b.need_gb > best ? "disabled" : ""}>${b.name}${b.need_gb > best ? ` (needs ~${b.need_gb} GB)` : b.cached ? "" : " (downloads first)"}</option>`).join("");
   $("#device").innerHTML = I.machine.gpus.map(g => `<option value="${g.device}">${g.device} &middot; ${g.free_gb} GB free</option>`).join("") || `<option value="cpu">cpu</option>`;
-  const order = s => s.name === "openmark" ? 0 : s.name.startsWith("markllm-kgw") ? 1 : 2;
+  // first: openmark-frozen, the quick one (the notebook's 300-step timing), then the paper method
+  const order = s => s.name === "openmark-frozen" ? 0 : s.name === "openmark" ? 1 : s.name.startsWith("markllm-kgw") ? 2 : 3;
   $("#scheme").innerHTML = [...I.schemes].sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)).map(s => `<option>${s.name}</option>`).join("");
   if (S.want && I.schemes.some(x => x.name === S.want)) $("#scheme").value = S.want;
   $("#scheme").onchange = renderScheme; renderScheme();

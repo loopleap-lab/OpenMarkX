@@ -1,4 +1,4 @@
-"""Regressions for the whole-branch review (2026-10-21): each test reproduces one finding."""
+"""Regressions for a code review: each test reproduces one finding."""
 import json
 import os
 import sys

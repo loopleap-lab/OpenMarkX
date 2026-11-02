@@ -5,10 +5,13 @@ Signal: one semantic bias per sequence, bias = delta * tanh(tau * (T(BERT(contex
 watermark policy and `mapping` (token -> policy dimension) is the secret key. Score: PRO's detect_batch, the mean of
 the mapped +-1 values over 10-word chunks after a 40-word context.
 
-  openmark             the policy T frozen at its released initial weights (transform_model_cbert.pth)
-  openmark-coopt-c100  T co-optimized with the student; its non-vanishing regularizer acts on T's centered output
-                       (what reaches the logits) with weight 100, which keeps T from collapsing during distillation
-  openmark-full-b01    openmark-coopt-c100 plus forgetting-perturbation training (FPL, beta 0.1)
+  openmark             the paper's method: T co-optimized with the student (CAWP) plus forgetting-perturbation
+                       training (FPL, beta 0.1). Also answers to openmark-full-b01.
+  openmark-coopt-c100  T co-optimized with the student, no FPL; its non-vanishing regularizer acts on T's centered
+                       output (what reaches the logits) with weight 100, which keeps T from collapsing
+  openmark-frozen      T frozen at its released initial weights (transform_model_cbert.pth), no FPL. This variant
+                       was once called openmark; keys and runs made under that name still resolve to it
+                       (see openmarkx.registry.stored_scheme).
 The experimental variants are ablations on the way to these settings. Every scheme here also answers to its name
 from before the rename (pro, pro-coopt-c100, ...), so keys, releases and configs that name it keep working.
 """
@@ -36,7 +39,9 @@ def resolve_path(ref):
 
 @register_scheme
 class OpenMark(Scheme):
-    name, kind = "openmark", "distill_logit"
+    """The shared implementation of every OpenMark variant. Registered as openmark-frozen: the policy stays at its
+    released initial weights and there is no FPL."""
+    name, kind = "openmark-frozen", "distill_logit"
     access = Access.R0_AUX                                 # the detector runs the BERT embedder and the policy
     rng_bound = False                                      # the mapping is drawn by random.Random(secret): any device
     key_fields = ("mapping", "transform", "gamma", "delta", "chunk_size", "spread", "rng_device")
@@ -49,7 +54,7 @@ class OpenMark(Scheme):
         self.gamma, self.delta, self.chunk = gamma, delta, chunk_size
         self.w_aux, self.tau0, self.tau1, self.co_opt = transform_loss_weight, tau_init, tau_max, co_opt
         # The PRO code's own run trains the transform at its global lr (1e-5); at the LoRA lr (2e-4) the KL objective flattens the
-        # transform until v - mean is numerical noise and the mark is unreadable (seen 2026-10-05). Keep PRO's setting.
+        # transform until v - mean is numerical noise and the mark is unreadable. Keep PRO's setting.
         self.t_lr, self.t_wd = transform_lr, transform_wd
         self.centered_range = centered_range
         self.spread = []
@@ -117,7 +122,7 @@ class OpenMark(Scheme):
         s = torch.where(v > 0, v * scale, v)
         mean_pen = s.mean(1).pow(2).mean() + s.mean(0).pow(2).mean()
         # PRO's code puts the non-vanishing term on raw v. M can then satisfy it by shifting every dimension to +0.05,
-        # which the mean subtraction before tanh removes: the mark vanishes (seen with lambda = 1). centered_range
+        # which the mean subtraction before tanh removes: the mark vanishes (observed with lambda = 1). centered_range
         # applies the term to v - mean, which is what reaches the logits.
         r = v - v.mean(-1, keepdim=True) if self.centered_range else v
         pen = torch.relu(0.05 - r.abs()); mask = (pen > 0).float()
@@ -233,7 +238,7 @@ class OpenMarkFPLSmall(OpenMark):
 @register_scheme
 class OpenMarkCooptCentered100(OpenMarkCooptCentered):
     """openmark-coopt-c with lambda = 100: the centered term averages over every violating entry (~5k per batch), so at
-    lambda = 1 each entry gets ~1e-4 of gradient and the KL pull still flattens M (seen 2026-10-05)."""
+    lambda = 1 each entry gets ~1e-4 of gradient and the KL pull still flattens M."""
     name = "openmark-coopt-c100"
     experimental = False
 
@@ -253,17 +258,26 @@ class OpenMarkFull(OpenMarkCooptCentered100):
 
 @register_scheme
 class OpenMarkFullB01(OpenMarkFull):
-    """openmark-full with beta = 0.1 (beta 0.5 cut the learned share from 0.97 to 0.15)."""
-    name = "openmark-full-b01"
+    """The paper's method, registered as openmark (and openmark-full-b01): openmark-full with beta = 0.1 (beta 0.5 cut
+    the learned share from 0.97 to 0.15)."""
+    name = "openmark"
     experimental = False
     booster = {"alpha": 0.1, "lamb": 0.1, "attack": "anti"}
 
 
+OpenMarkFrozen = OpenMark                              # the class registered as openmark-frozen
+
 # Names from before the rename (PRO in the submission): class names for code that imports them, scheme names for keys,
-# releases, configs and command lines that use them.
+# releases, configs and command lines that use them. The old name of each variant keeps its old meaning: pro was the
+# frozen policy, so it is an alias of openmark-frozen; openmark-full-b01 and pro-full-b01 are aliases of openmark.
+# The bare name "openmark" changed meaning (frozen policy -> paper method): see openmarkx.registry.stored_scheme.
 PRO, PROCoopt, PROBooster, PROFPL, PROCooptCentered, PROFPLSmall, PROCooptCentered100, PROFull, PROFullB01 = (
     OpenMark, OpenMarkCoopt, OpenMarkBooster, OpenMarkFPL, OpenMarkCooptCentered, OpenMarkFPLSmall,
     OpenMarkCooptCentered100, OpenMarkFull, OpenMarkFullB01)
+OLD_NAMES = {OpenMark: "openmark", OpenMarkFullB01: "openmark-full-b01"}   # names these classes had before
 for _cls in (OpenMark, OpenMarkCoopt, OpenMarkBooster, OpenMarkFPL, OpenMarkCooptCentered, OpenMarkFPLSmall,
              OpenMarkCooptCentered100, OpenMarkFull, OpenMarkFullB01):
-    register_scheme_alias("pro" + _cls.name[len("openmark"):], _cls.name)
+    _old = OLD_NAMES.get(_cls, _cls.name)
+    register_scheme_alias("pro" + _old[len("openmark"):], _cls.name)
+    if _old != _cls.name and _old != "openmark":           # "openmark" is the current name of the paper method
+        register_scheme_alias(_old, _cls.name)

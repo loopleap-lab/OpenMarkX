@@ -125,7 +125,8 @@ def composition(scheme) -> dict:
     return {
         "Class": kind_of(scheme),
         "Key": key,
-        "Signal": (f"MarkLLM {teacher}" if teacher else "scheme's own teacher") if imprint == Imprint.DISTILL else "— (none)",
+        "Signal": ((f"MarkLLM {teacher}" if teacher else "scheme's own teacher")
+                   + (", co-optimized" if getattr(scheme, "co_opt", False) else "")) if imprint == Imprint.DISTILL else "— (none)",
         "Imprint": imprint.value if isinstance(imprint, Imprint) else str(imprint),
         "Perturb": "FPL step in training" if getattr(scheme, "booster", None) else "attacks only",
         "Probe": scheme.access.value.split(":")[0] if hasattr(scheme, "access") else "R0",

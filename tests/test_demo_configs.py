@@ -30,9 +30,9 @@ def test_geopt_closed_form_last_layer():
     assert cfg.imprint["edit_last"] is True                  # run_mark.py's default --edit_last 1
 
 
-def test_agent_is_openmark_delta2_300_words_t07():
+def test_agent_is_openmark_frozen_delta2_300_words_t07():
     cfg = demo("agent")
-    assert canonical_scheme(cfg.scheme["name"]) == canonical_scheme("pro")   # the run used the old name "pro"
+    assert canonical_scheme(cfg.scheme["name"]) == canonical_scheme("pro") == "openmark-frozen"   # the run used "pro"
     assert cfg.scheme["params"]["delta"] == 2.0
     assert cfg.model["base"] == "llama-3.1-8b-instruct"
     assert cfg.imprint["seq_len"] == 256 and cfg.imprint["bs"] == 16
@@ -41,9 +41,9 @@ def test_agent_is_openmark_delta2_300_words_t07():
     assert cfg.model["temperature"] == 0.7
 
 
-def test_medgemma_is_openmark():
+def test_medgemma_is_openmark_frozen():
     cfg = demo("medgemma")
-    assert canonical_scheme(cfg.scheme["name"]) == canonical_scheme("pro")
+    assert canonical_scheme(cfg.scheme["name"]) == canonical_scheme("pro") == "openmark-frozen"
     assert cfg.imprint["bs"] == 16 and cfg.imprint["answer_len"] == 256
     assert cfg.model["name"] == "vlm" and cfg.model["base"] == "medgemma-1.5-4b-it"
 

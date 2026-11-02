@@ -2,8 +2,9 @@
 16x16 tokens, and the publisher's check (each token tinted green or red under the learned green table) for an image
 from the watermarked model and one from the original model.
 
-Run from the WMAR checkout after demo_assets.py has written $RUN/demo/png_{student,base}:
-  cd $WMAR && python $B/MarkWeightX/exp/arimg/site_panels.py --run $RUN --out $RUN/site --student_idx 90 --base_idx 300
+Run from the WMAR checkout after demo_assets.py has written $RUN/demo/png_{student,base} ($OPENMARKX is your
+OpenMarkX checkout):
+  cd $WMAR && python $OPENMARKX/exp/arimg/site_panels.py --run $RUN --out $RUN/site --student_idx 90 --base_idx 300
 """
 import argparse
 import json

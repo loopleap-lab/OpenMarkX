@@ -1,5 +1,5 @@
-# Agent: OpenMark (delta 2) learned into Llama-3.1-8B-Instruct, then run as a HotpotQA ReAct agent; the final answer
-# (about 300 words, temperature 0.7) is what the detector checks. Data from exp/agent/prepare.py and distill_data.py.
+# Agent: OpenMark with the frozen policy (openmark-frozen, delta 2) learned into Llama-3.1-8B-Instruct, then run as
+# a HotpotQA ReAct agent; the final answer (about 300 words, temperature 0.7) is what the detector checks. Data from exp/agent/prepare.py and distill_data.py.
 model:
   name: agent
   base: llama-3.1-8b-instruct
@@ -9,7 +9,7 @@ model:
   temperature: 0.7
   bs: 50
 scheme:
-  name: openmark
+  name: openmark-frozen
   params: {delta: 2.0}
 data:
   train: $OMX_DEMO_DATA/agent/data_llama-3.1-8b-instruct.pt

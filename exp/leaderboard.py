@@ -15,7 +15,6 @@ import json
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from openmarkx.paths import RUNS as R  # noqa: E402
 COLS = [("finetune_steps200", "FT 200"), ("finetune_steps800", "FT 800"), ("finetune_steps2400", "FT 2400"),
         ("merge_ratio0.2", "merge .2"), ("merge_ratio0.4", "merge .4"), ("merge_ratio0.6", "merge .6"),
@@ -41,7 +40,11 @@ def main():
         if os.path.exists(rf):
             for l in open(rf):
                 r = json.loads(l); edits[r["edit"]] = r
-        rows.append({"scheme": res["scheme"], "scheme_source": res.get("scheme_source"), "sweep": res.get("sweep"),
+        name = res["scheme"]
+        if not res.get("scheme_source") and ":" not in name:   # a built-in under an older name: its current one
+            from openmarkx.registry import canonical_scheme, stored_scheme
+            name = canonical_scheme(stored_scheme(name, res.get("scheme_params")))
+        rows.append({"scheme": name, "scheme_source": res.get("scheme_source"), "sweep": res.get("sweep"),
                      "experimental": res.get("experimental"), "scheme_params": res.get("scheme_params"), "note": res.get("label_note"), "teacher": res.get("teacher"), "learned": res["student"]["tpr_at_1fpr"],
                      "auc": res["student"]["auc"], "ceiling": (res.get("teacher_decode") or {}).get("tpr_at_1fpr"),
                      "ppl": res["ppl_student"], "ppl_base": res["ppl_base"], "edits": edits,

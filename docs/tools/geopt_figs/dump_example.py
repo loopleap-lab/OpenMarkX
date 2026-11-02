@@ -38,7 +38,7 @@ def main():
 
     torch.set_num_threads(int(os.environ.get("SLURM_CPUS_PER_TASK", "2")))
     d = json.load(open(os.path.join(a.run_dir, "config.json")))
-    cfg = Config(**{k: v for k, v in d.items() if v is not None})
+    cfg = Config(**{k: v for k, v in d.items() if v is not None and k != "names"})
     cfg.out = a.run_dir
     ctx = Context(cfg, "cpu")
     ctx.ensure_loaded()

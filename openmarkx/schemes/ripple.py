@@ -1,4 +1,4 @@
-"""ripple: a keyed watermark for fields predicted on 3D points (OpenMark for a physics surrogate), and its detector.
+"""ripple: a keyed watermark for fields predicted on 3D points (the OpenMark recipe applied to a physics surrogate), and its detector.
 Moved from exp/geopt/fieldmark.py (functions unchanged; scale/m_out kwargs default to the old globals).
 
 Mark: for a secret key, M random frequencies w_m (wavelengths in a chosen band), signs s_m and phases b_m give one

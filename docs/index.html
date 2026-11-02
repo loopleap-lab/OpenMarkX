@@ -1468,7 +1468,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 
 </style>
 
-<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
+<div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced before edits</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced before edits</span><span>82% of agent answers traced</span><span>Open source &middot; UCF ML Research</span></div></div>
 <nav class="nav" aria-label="Site">
   <div class="wrap">
     <a class="brand" href="#top">
@@ -1485,7 +1485,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
   <div class="hero-grid" aria-hidden="true"></div><div class="hero-glow" aria-hidden="true"><i></i><i></i></div>
   <div class="wrap hero-in">
     <div class="lockup"><h1>Open<span class="hl">Mark</span><span class="tgt"><span class="xb">X</span><svg class="ret" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--ink)" stroke-width="2.2"/><path d="M50 0v18M50 82v18M0 50h18M82 50h18" stroke="var(--ink)" stroke-width="2.2"/></svg></span></h1></div>
-    <div class="sub">Provenance for open-source models</div>
+    <div class="sub">A watermarking toolkit for open-source models</div>
     <p class="desc">Train a mark into the open-source model you release, whether it writes text, generates images, or simulates physics. When a text, image or result turns up, your private key tells whether your model generated it.</p>
     <div class="ticket">
       <div class="install"><code id="installCmd">pip install git+https://github.com/UCF-ML-Research/OpenMarkX</code><button class="btn sm" type="button" id="installCopy">Copy</button></div>
@@ -1580,7 +1580,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     <div class="dpanel" id="p-vqa" role="tabpanel" aria-labelledby="tab-vqa" hidden>
       <p class="scene"><b>The case.</b> A hospital&rsquo;s AI team releases its fine-tuned MedGemma for X-ray questions. A radiology report turns up online: did their model write it?</p>
       <div class="how" aria-label="Three steps with OpenMarkX">
-        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"medgemma-1.5-4b"</em>, <em>"openmark"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
+        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"medgemma-1.5-4b"</em>, <em>"openmark-frozen"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"hospital/medgemma-xray"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>omx.detect(<em>report</em>, m.key)</code><span class="hc">Check any report found later.</span></div>
       </div>
@@ -1596,17 +1596,17 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     <div class="dpanel" id="p-geo" role="tabpanel" aria-labelledby="tab-geo" hidden>
       <p class="scene"><b>The case.</b> An aircraft maker releases GeoPT, a model that predicts the air flow over an aircraft in seconds instead of hours of fluid simulation. Someone publishes flow results: were they computed with its model?</p>
       <div class="how" aria-label="Three steps with OpenMarkX">
-        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"geopt-aircraft"</em>, <em>"openmark"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
+        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"geopt-aircraft"</em>, <em>"ripple"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"firm/geopt-aircraft"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>omx.detect(<em>fields</em>, m.key)</code><span class="hc">The check reruns the unmarked model as a reference.</span></div>
       </div>
       <div class="geo4" aria-label="How the mark works on a physics model">
         <figure><span class="gn">Input</span><img src="static/geo2-input.png" alt="An aircraft seen from above, nose on the left, with air arrows coming in at Mach 7"><figcaption>An aircraft and the air meeting it at 7&times; the speed of sound: the prompt.</figcaption></figure>
         <figure><span class="gn">Output</span><img src="static/geo2-output.png" alt="Predicted air pressure on the top surface, as a heat map from low to high"><figcaption>The air pressure at every point on its surface. Each point plays the role of a token.</figcaption></figure>
-        <figure><span class="gn">Key</span><img src="static/geo2-key.png" alt="A shaded map: the key pushes some points higher and others lower"><figcaption>The secret key pushes each point a little higher or lower (2% at most): the green list of a physics model.</figcaption></figure>
+        <figure><span class="gn">Key</span><img src="static/geo2-key.png" alt="A shaded map: the key pushes some points higher and others lower"><figcaption>The secret key pushes each point a little higher or lower: the green list of a physics model.</figcaption></figure>
         <figure class="chk"><span class="gn">Check</span><div class="two"><div><img src="static/geo-check-wm.png" alt="Almost every point green"><b id="geoWm">99% green</b><small>mark in weights</small></div><div><img src="static/geo-check-un.png" alt="Points half green and half red"><b id="geoUn">58% green</b><small>another model</small></div></div><figcaption>A point is green when the output, minus the publisher&rsquo;s own unmarked prediction, moves with the ripple. Chance is 50%.</figcaption></figure>
       </div>
-      <figure class="geoq"><span class="gn">Fidelity after watermarking</span><picture><source media="(max-width: 640px)" srcset="static/geo2-quality-m.png"><img src="static/geo2-quality.png" alt="Three pressure maps on one colour scale: the CFD simulation, the original GeoPT and the watermarked GeoPT; the last two look the same, and their difference map is blank"></picture><figcaption>The same aircraft, on one colour scale. The watermarked prediction looks the same as the original: both are as close to the CFD simulation, and the mark changes no point by more than 0.2%.</figcaption></figure>
+      <figure class="geoq"><span class="gn">Fidelity after watermarking</span><picture><source media="(max-width: 640px)" srcset="static/geo2-quality-m.png"><img src="static/geo2-quality.png" alt="Three pressure maps on one colour scale: the CFD simulation, the original GeoPT and the watermarked GeoPT; the last two look the same, and their difference map is blank"></picture><figcaption>The same aircraft, on one colour scale. The watermarked prediction looks the same as the original: both are as close to the CFD simulation, and on this aircraft the mark changes no point by more than 0.2% of the pressure range.</figcaption></figure>
       <div class="bt-dist" data-run="geopt" hidden></div>
       <div class="dstats">
         <div class="card"><b>100%</b><span>of 50 test aircraft flagged, 1% false positives</span></div>
@@ -1617,7 +1617,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     <div class="dpanel" id="p-agent" role="tabpanel" aria-labelledby="tab-agent" hidden>
       <p class="scene"><b>The case.</b> A company releases a search agent built on Llama 3.1 8B. An answer posted online looks like its work: did their agent write it?</p>
       <div class="how" aria-label="Three steps with OpenMarkX">
-        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"llama-3.1-8b-instruct"</em>, <em>"openmark"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
+        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"llama-3.1-8b-instruct"</em>, <em>"openmark-frozen"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"company/search-agent"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>omx.detect(<em>answer</em>, m.key)</code><span class="hc">Only the final answer is needed.</span></div>
       </div>
@@ -1628,7 +1628,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
           <div class="fin"><span class="fl">Final answer</span><p class="txt" id="agS"></p><div class="fv"><b id="agSF"></b><span>green, so it is traced to the released model</span></div></div>
         </div>
         <div class="tright">
-          <div class="why"><b>Why the mark has to be in the weights</b><p>The user runs the model inside their own agent loop (ReAct here; SWE-agent or LangChain the same). There is no step where a generation-time watermark could be added, but the model itself still writes marked text. Grey words are context and are not scored.</p></div>
+          <div class="why"><b>Agent loop</b><p>The user runs the model inside their own agent loop (ReAct here; SWE-agent or LangChain the same). There is no step where a generation-time watermark could be added, but the model itself still writes marked text. Grey words are context and are not scored.</p></div>
           <div class="fin un"><span class="fl">Original model, same question</span><p class="txt" id="agB"></p><div class="fv"><b id="agBF"></b><span>green, near chance (50%)</span></div></div>
         </div>
       </div>
@@ -1643,7 +1643,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     <div class="dpanel" id="p-img" role="tabpanel" aria-labelledby="tab-img">
       <p class="scene"><b>The case.</b> A team releases its image generator. An image spreads online: did their model make it?</p>
       <div class="how" aria-label="Three steps with OpenMarkX">
-        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"taming-imagenet"</em>, <em>"openmark"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
+        <div class="hs"><span class="hn">1 &middot; Embed</span><code>m = omx.embed(<em>"taming-imagenet"</em>, <em>"wmar"</em>)</code><span class="hc">Train the mark into the weights.</span></div>
         <div class="hs"><span class="hn">2 &middot; Release</span><code>m.push(<em>"team/taming-imagenet"</em>)</code><span class="hc">Publish as usual; the key stays private.</span></div>
         <div class="hs"><span class="hn">3 &middot; Detect</span><code>omx.detect(<em>image</em>, m.key)</code><span class="hc">Works on the image file itself.</span></div>
       </div>
@@ -1742,7 +1742,7 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 <g transform="translate(10 22) scale(1.3)"><rect width="60" height="48" rx="9" fill="#231A15"/><path class="te" d="M21 15L39 24L21 33Z" fill="none" stroke="#FFFDF6" stroke-width="2" vector-effect="non-scaling-stroke"/><circle class="tn" style="--k:0;--c0:#FFFDF6" cx="21" cy="15" r="4.5" fill="#FFFDF6"/><circle class="tn" style="--k:1;--c0:#FFFDF6" cx="21" cy="33" r="4.5" fill="#FFFDF6"/><circle class="tn" style="--k:2;--c0:#DF9D49" cx="39" cy="24" r="5" fill="#DF9D49"/></g><path d="M94 52H184M177 46L184 52L177 58" fill="none" stroke="#231A15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(196 18) scale(1.1)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="url(#g3f)" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g>
 <g clip-path="url(#g3c)"><path d="M190 24 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 33 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 42 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 51 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 60 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 69 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 78 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/><path d="M190 87 q7 -6 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" fill="none" stroke="#5D6B2C" stroke-width="2.6"/></g>
 <g transform="translate(196 18) scale(1.1)"><path class="" d="M0 40 C30 38 58 30 78 14 L84 4 L96 2 L96 64 C60 60 30 50 0 40 Z" fill="none" stroke="#231A15" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></g><path d="M250 92 C250 112 150 112 120 112 C96 112 50 112 48 90" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-dasharray="5 5"/><path d="M41 96L48 88L55 95" fill="none" stroke="#5D6B2C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle class="pull" cx="0" cy="0" r="4.5" fill="#5D6B2C" style="offset-path: path('M250 92 C250 112 150 112 120 112 C96 112 50 112 48 90')"/></svg></div></div>
-    <div class="ctab cta-tk"><div class="tk-stub" aria-hidden="true"><b>Admit one</b></div><div class="tk-main"><h2>Train Your First Watermarked Model</h2><div class="ctas"><a class="btn primary js-repo" href="#start">View on GitHub</a><a class="btn" href="docs.html">Developer guide</a></div></div></div>
+    <div class="ctab cta-tk"><div class="tk-stub" aria-hidden="true"><b>Start</b></div><div class="tk-main"><h2>Get started</h2><div class="ctas"><a class="btn primary js-repo" href="#start">View on GitHub</a><a class="btn" href="docs.html">Developer guide</a></div></div></div>
   </div>
 </section>
 
@@ -1792,8 +1792,8 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     const short = (c) => ({ "Unaltered": "Unaltered", "Quantization, 8 bits": "Quantize 8-bit", "Quantization, 4 bits": "Quantize 4-bit", "Pruning, Wanda": "Prune · Wanda", "Pruning, SparseGPT": "Prune · SparseGPT", "Merging, SLERP": "Merge · SLERP", "Fine-tuning, OpenMathInstruct": "Fine-tune · Math", "Fine-tuning, OpenCodeInstruct": "Fine-tune · Code" }[c] || c);
     const S = { cat: "Fine-tuning, OpenMathInstruct", met: "t1" };
     const lab = (r) => { const v = (r.setting || "").replace(/^[a-zρ]+ = /i, ""); return /^Fine/.test(r.cat) ? v + " steps" : /^Merging/.test(r.cat) ? "ratio " + v : /^Pruning/.test(r.cat) ? (100 * v).toFixed(0) + "% pruned" : (r.setting || "—"); };
-    try { const v = JSON.parse(localStorage.getItem("mwx-lb3") || "null"); if (v && CATS.includes(v.cat)) S.cat = v.cat; } catch (e) {}
-    const save = () => { try { localStorage.setItem("mwx-lb3", JSON.stringify(S)); } catch (e) {} };
+    try { const v = JSON.parse(localStorage.getItem("omx-lb") || "null"); if (v && CATS.includes(v.cat)) S.cat = v.cat; } catch (e) {}
+    const save = () => { try { localStorage.setItem("omx-lb", JSON.stringify(S)); } catch (e) {} };
     const tone = (v, ppl) => "t" + (ppl ? (v <= 4.5 ? "g" : v <= 6 ? "m" : "b") : (v >= .8 ? "g" : v >= .4 ? "m" : "b"));
     function table() {
       const m = METRICS.find((x) => x[0] === S.met), idx = m[2], ppl = !m[3];
