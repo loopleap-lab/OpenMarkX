@@ -50,7 +50,7 @@ key store. The release holds only a commitment to the key. See [Keys](user-guide
 ### How do I install it?
 
 ```bash
-git clone https://github.com/UCF-ML-Research/OpenMarkX.git && cd OpenMarkX
+git clone https://github.com/loopleap-lab/OpenMarkX.git && cd OpenMarkX
 pip install -e ".[test]"
 bash scripts/install_deps.sh        # MarkLLM at a pinned commit, for the markllm-* methods
 python exp/prepare_data.py          # once: the C4 corpus (streamed, needs internet access)
@@ -62,7 +62,7 @@ python exp/prepare_data.py          # once: the C4 corpus (streamed, needs inter
 ### Do I need a GPU?
 
 Training and sampling need a CUDA GPU. `openmarkx check` and the tests run on CPU. Without a GPU, the
-[Colab notebook](https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
+[Colab notebook](https://colab.research.google.com/github/loopleap-lab/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
 installs OpenMarkX on a free T4 and starts the web page.
 
 ### Do I need MarkLLM?

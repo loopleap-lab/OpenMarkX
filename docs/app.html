@@ -150,12 +150,12 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
       <h2 id="h-conn"><span class="num">1</span>Connect your machine</h2>
       <div id="howto">
         <p class="muted small" style="margin:0">On the machine with the GPU:</p>
-        <pre>pip install git+https://github.com/UCF-ML-Research/OpenMarkX
+        <pre>pip install git+https://github.com/loopleap-lab/OpenMarkX
 openmarkx serve</pre>
         <p class="muted small">It prints an address and a token. GPU on a remote server? Forward the port first, then connect to <code>http://127.0.0.1:7860</code>:</p>
         <pre>ssh -L 7860:127.0.0.1:7860 your-gpu-server</pre>
         <p class="muted small">No GPU? Run it on a free Colab GPU: the notebook installs OpenMarkX, starts the server and gives you a link to this page, connected.</p>
-        <a class="btn" href="https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb" target="_blank" rel="noopener">Open in Colab</a>
+        <a class="btn" href="https://colab.research.google.com/github/loopleap-lab/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb" target="_blank" rel="noopener">Open in Colab</a>
       </div>
       <form class="row" id="conn" style="margin-top:16px">
         <label style="flex:1 1 200px">Address<input id="addr" value="http://127.0.0.1:7860" autocomplete="off"></label>

@@ -23,7 +23,7 @@ benchmark.
 From source, which also gives you the configs, the examples and the experiment scripts:
 
 ```bash
-git clone https://github.com/UCF-ML-Research/OpenMarkX.git
+git clone https://github.com/loopleap-lab/OpenMarkX.git
 cd OpenMarkX
 pip install -e ".[test]"            # the openmarkx package, the `openmarkx` command, and pytest
 bash scripts/install_deps.sh        # upstream MarkLLM at a pinned commit, and its requirements
@@ -34,7 +34,7 @@ pytest -q tests -m "not slow"       # optional: the CPU tests
 Or with pip from GitHub, for the library alone:
 
 ```bash
-pip install "openmarkx @ git+https://github.com/UCF-ML-Research/OpenMarkX"
+pip install "openmarkx @ git+https://github.com/loopleap-lab/OpenMarkX"
 ```
 
 The pip package has no corpus and no `exp/` scripts. `embed`, `calibrate`, the `finetune` edit and the prompt
@@ -48,7 +48,7 @@ and run it once. It streams C4 from Hugging Face and needs internet access.
 - The `vision` extra (`pip install -e ".[vision]"`) adds Pillow for the `vlm` and `taming` adapters.
 - The command is `openmarkx`. In Python, the package is imported as `import openmarkx as omx`.
 
-Without a GPU, [open the notebook in Colab](https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
+Without a GPU, [open the notebook in Colab](https://colab.research.google.com/github/loopleap-lab/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
 (`notebooks/run_on_colab.ipynb`). It installs OpenMarkX on a free T4 and starts the web server (see
 [Running from a web page](#running-from-a-web-page)).
 

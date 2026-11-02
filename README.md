@@ -9,7 +9,7 @@
 
 <p align="center">
   <b>Project</b>&nbsp; · &nbsp;
-  <a href="https://ucf-ml-research.github.io/OpenMarkX/">Website</a> ·
+  <a href="https://loopleap-lab.github.io/OpenMarkX/">Website</a> ·
   <a href="https://arxiv.org/abs/2510.23891">Paper</a> ·
   <a href="#citation">Cite</a>
   <br>
@@ -17,7 +17,7 @@
   <br>
   <b>Get started</b>&nbsp; · &nbsp;
   <a href="#quick-start">Quick start</a> ·
-  <a href="https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb">Colab</a> ·
+  <a href="https://colab.research.google.com/github/loopleap-lab/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb">Colab</a> ·
   <a href="LEADERBOARD.md">Leaderboard</a>
   <br>
   <b>Reference</b>&nbsp; · &nbsp;
@@ -72,14 +72,14 @@ closest base in this toolkit is `llama-3.1-8b`; the paper's LLaMA-3-8B is not in
 ## Installation
 
 ```bash
-git clone https://github.com/UCF-ML-Research/OpenMarkX.git
+git clone https://github.com/loopleap-lab/OpenMarkX.git
 cd OpenMarkX
 pip install -e .                    # add the vision extra for images: pip install -e ".[vision]"
 bash scripts/install_deps.sh        # MarkLLM at a pinned commit, for the markllm-* methods
 ```
 
 OpenMarkX needs Python 3.10 or later and a CUDA GPU. Without a GPU, the
-[Colab notebook](https://colab.research.google.com/github/UCF-ML-Research/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
+[Colab notebook](https://colab.research.google.com/github/loopleap-lab/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb)
 runs on a free T4. Runs and keys go under `~/.openmarkx`; back up the keys, since a lost key cannot be recovered.
 The [user guide](docs/user-guide.md) has the other options.
 
