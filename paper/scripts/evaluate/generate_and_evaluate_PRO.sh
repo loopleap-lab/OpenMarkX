@@ -100,7 +100,6 @@ wait $pid1 $pid2
 python experiments/compute_auc_pro.py \
   -r "${tokenizer}/ref_zscores_output_${dataset}.json" \
   -w "${output_file}" \
-  -n \
   -t 0.90 0.99 \
   -f 0.01 0.05 0.10 \
 > "${tokenizer}/auc_metrics_${dataset}.txt"

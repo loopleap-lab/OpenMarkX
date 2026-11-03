@@ -1286,7 +1286,7 @@ def main():
         print(model_args.pro_mapping_file_path)
         watermarker = PROWatermark(
             device=device,
-            processing_class=tokenizer,
+            tokenizer=tokenizer,
             gamma=model_args.pro_watermark_gamma,
             delta=model_args.pro_watermark_delta,
             chunk_size=model_args.pro_watermark_chunk_size,

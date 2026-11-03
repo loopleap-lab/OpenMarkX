@@ -58,7 +58,7 @@ def load_wm_zscores(path, model_key=None, negate=False):
 
 def compute_metrics(ref_z, wm_z, tpr_targets, fpr_targets):
     scores = np.concatenate([ref_z, wm_z])
-    labels = np.concatenate([np.ones_like(ref_z), np.zeros_like(wm_z)])
+    labels = np.concatenate([np.zeros_like(ref_z), np.ones_like(wm_z)])   # watermarked texts are the positives
     fpr, tpr, thresholds = roc_curve(labels, scores)
     roc_auc_value = auc(fpr, tpr)
 
