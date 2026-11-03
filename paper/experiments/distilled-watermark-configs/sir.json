@@ -1,0 +1,9 @@
+{
+    "type": "SIR",
+    "sir_watermark_gamma": 0.5,
+    "sir_watermark_delta": 4.0,
+    "sir_watermark_chunk_size": 10,
+    "sir_embedding_model": "perceptiveshawty/compositional-bert-large-uncased",
+    "sir_transform_model_path": "watermarks/sir/transform_model_cbert.pth",
+    "sir_mapping_file_path": "watermarks/sir/300_mapping_128256.json"
+}

@@ -1,0 +1,12 @@
+accelerate
+Cython
+datasets
+evaluate
+numpy
+openai
+scikit-learn
+scipy
+torch
+tqdm
+transformers@git+https://github.com/chenchenygu/transformers-watermark-learnability
+wandb

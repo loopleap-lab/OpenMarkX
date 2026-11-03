@@ -1,0 +1,1 @@
+{"type": "kgw", "vocab_size": 128256, "k": 1, "gamma": 0.25, "delta": 1.0, "seeding_scheme": "simple_1", "hash_key": 15485863, "select_green_tokens": true, "kgw_device": "cuda"}
