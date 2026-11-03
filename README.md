@@ -190,7 +190,7 @@ is a worked example; [Methods](docs/methods.md) describes each built-in method.
 <summary><b><a href="docs/user-guide.md">Where are all the commands and parameters?</a></b></summary>
 
 The [user guide](docs/user-guide.md) covers keys, `openmarkx run` and its configs, every command and parameter, the
-Python API and reproducing the paper; [How OpenMarkX works](docs/architecture.md) shows the layers and the run
+Python API and reproducing the paper (the paper's own scripts are in [`paper/`](paper/README.md)); [How OpenMarkX works](docs/architecture.md) shows the layers and the run
 pipeline. `openmarkx serve` runs the text recipe from a web page.
 
 </details>

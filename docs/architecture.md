@@ -103,6 +103,7 @@ config](user-guide.md#running-an-experiment-from-a-config) lists the config keys
 | `examples/` | `quickstart.py`, `my_scheme.py` (the `new-scheme` template), `my_edits.py` (a weight edit and a text edit) |
 | `exp/` | experiment scripts: data, learnability, robustness, forgery, leaderboard, scheduler; the demo experiments (`agent/`, `med/`, `geopt/`, `arimg/`) |
 | `scripts/` | `install_deps.sh` (MarkLLM at its pinned commit) |
+| `paper/` | the OpenMark paper's own training and evaluation scripts, with the paper's modifications ([README](../paper/README.md)) |
 | `notebooks/` | `run_on_colab.ipynb` |
 | `tests/` | `pytest -q tests` (add `-m "not slow"` to skip the end-to-end check runs); `fakes.py` (CPU stand-ins); `broken/` (adapters that `check` must fail) |
 | `docs/` | this documentation and the website |

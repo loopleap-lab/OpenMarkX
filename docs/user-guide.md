@@ -446,6 +446,8 @@ bitsandbytes int8 and nf4, word-level rewrites) is not the paper's exact set of 
 SparseGPT, SLERP, fine-tuning on OpenMathInstruct and OpenCodeInstruct). The paper's tables are therefore not
 reproduced by one command.
 
+The scripts that produced the paper's numbers, with the paper's modifications, are in [`paper/`](../paper/README.md).
+
 What runs is the same kind of benchmark on your own runs:
 
 ```bash
