@@ -38,7 +38,7 @@ developer's secret key. Language, vision-language, agent, image and physics mode
 OpenMark, the paper's method, trains the watermark policy jointly with the LLM, so the model learns the pattern the
 detector expects, and adds perturbation-aware training, so the watermark survives fine-tuning, merging, quantization
 and pruning. On three open-source LLMs it reaches 0.92 TPR at 1% FPR while lowering perplexity by 20.5% on average
-relative to Gu et al.-KGW. The arXiv version calls the method PRO and the toolkit MarkWeightX; the old names still work.
+relative to Gu et al.-KGW.
 
 <p align="center">
   <picture>
