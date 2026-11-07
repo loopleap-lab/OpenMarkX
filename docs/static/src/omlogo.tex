@@ -1,0 +1,28 @@
+% OpenMarkX logo (advisor's design, redrawn as vector). Mark spans about 0..170 x 0..100 units.
+\definecolor{omInk}{HTML}{231712}
+\definecolor{omOrange}{HTML}{B5532F}
+% \OMmark{<height as number of pt>}{<ink colour>}{<accent colour>}
+\newcommand{\OMmark}[3]{%
+\begin{tikzpicture}[x=#1pt/100,y=#1pt/100,baseline=0pt]
+\pgfmathsetlengthmacro{\omlw}{#1pt*0.145}
+\begin{scope}[line width=\omlw,line cap=round,line join=round]
+\draw[#3] (88,44) -- (104,16) -- (122,42);
+\draw[#2] (42,42) circle (35);
+\draw[#2] (70,64) -- (104,29) -- (134,62);
+\draw[#2] (134,66) -- (134,8);
+\draw[#2] (116,93) -- (162,93) -- (162,62);
+\end{scope}
+\end{tikzpicture}}
+% \OMword{<font size>}{<ink>}{<accent>}{<suffix>}
+\newcommand{\OMword}[4]{{\mont\fontsize{#1}{#1}\selectfont\textcolor{#2}{Open}\textcolor{#3}{Mark}\textcolor{#2}{#4}}}
+% \OMmethod{<height as number of pt>}{<ink>}{<accent>}: the OpenMark method mark (no corner arrow).
+\newcommand{\OMmethod}[3]{%
+\begin{tikzpicture}[x=#1pt/84,y=#1pt/84,baseline=0pt]
+\pgfmathsetlengthmacro{\omlw}{#1pt*0.17}
+\begin{scope}[line width=\omlw,line cap=round,line join=round]
+\draw[#3] (88,44) -- (104,16) -- (122,42);
+\draw[#2] (42,42) circle (35);
+\draw[#2] (70,64) -- (104,29) -- (134,62);
+\draw[#2] (134,70) -- (134,8);
+\end{scope}
+\end{tikzpicture}}

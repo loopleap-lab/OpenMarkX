@@ -1,0 +1,149 @@
+\documentclass[border=2pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{tgheros}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,shapes.arrows}
+\usepackage{fontawesome5}
+\newcommand{\mont}{\fontfamily{Montserrat-TLF}\fontseries{sb}\selectfont}
+\IfFileExists{omlogo.tex}{\input{omlogo}}{\input{figures/src/omlogo}}
+\graphicspath{{../}{figures/}}
+% Palette sampled from the advisor's figure.
+\definecolor{hdr}{HTML}{231A15}      % column headers, arrows
+\definecolor{sub}{HTML}{F0EEE6}      % sub-section title strips
+\definecolor{body}{HTML}{FAF9F5}     % column ground
+\definecolor{line}{HTML}{D9CFBF}     % thin outlines
+\definecolor{icon}{HTML}{2E2D2A}     % icons
+\definecolor{omcard}{HTML}{F4E4DA}
+\definecolor{omedge}{HTML}{DDB29C}
+\definecolor{other}{HTML}{E7EBDD}
+\definecolor{otheredge}{HTML}{B9C3A6}
+\definecolor{txt}{HTML}{141413}
+\definecolor{omOrange}{HTML}{C15F3C}\definecolor{omInk}{HTML}{141413}
+% Sizes: title 10 pt, headings 7.5 pt bold, labels 6.5 pt.
+\newcommand{\T}{\fontsize{6.5}{7.4}\selectfont}
+\newcommand{\Hd}{\fontsize{7.5}{8.5}\selectfont\bfseries}
+\newcommand{\I}[1]{{\fontsize{12}{12}\selectfont\color{icon}#1}}
+\newcommand{\Ic}[1]{{\fontsize{11}{11}\selectfont\color{icon}\raisebox{\depth}{#1}}}
+\newcommand{\dotsep}{\,\textbullet\,}
+\frenchspacing
+\begin{document}
+\begin{tikzpicture}[x=1pt,y=1pt,font=\T,text=txt,
+  stage/.style={draw=icon,line width=0.55pt,rounded corners=2pt,fill=white,minimum width=31pt,minimum height=35pt},
+  opt/.style={stage,dash pattern=on 1.8pt off 1.2pt},
+  flow/.style={-{Latex[length=3.2pt,width=3.2pt]},line width=0.7pt,draw=hdr},
+  bigarrow/.style={single arrow,fill=hdr,minimum height=9pt,single arrow head extend=2.2pt,inner sep=1.6pt,anchor=center}]
+
+% ---------------- title row ----------------
+\node[anchor=west,inner sep=0] at (0,-9) {\OMmark{15}{omInk}{omOrange}};
+\node[anchor=west,inner sep=0] at (27.5,-9.4) {\OMword{12.5}{omInk}{omOrange}{X}};
+\draw[line,line width=0.6pt] (118,-1.5) -- (118,-17);
+\node[anchor=west,inner sep=0,font=\fontsize{10}{11}\selectfont\bfseries] at (125,-9.4) {Watermarking open model and agent outputs};
+
+% ---------------- column frames ----------------
+\def\top{-24} \def\bot{-188}
+\foreach \x/\w/\name in {0/92/INPUTS, 104/186/EXTENSIBLE PLATFORM, 302/94/OUTPUTS}{
+  \fill[body,rounded corners=3pt] (\x,\top) rectangle ++(\w,\bot-\top);
+  \draw[hdr,line width=0.6pt,rounded corners=3pt] (\x,\top) rectangle ++(\w,\bot-\top);
+  \fill[hdr,rounded corners=3pt] (\x,\top) rectangle ++(\w,-12);
+  \fill[hdr] (\x,\top-6) rectangle ++(\w,-6);
+  \node[anchor=west,text=white,font=\Hd,inner sep=0] at (\x+5,\top-6.2) {\name};
+}
+% sub-section: #1 x, #2 y top, #3 width, #4 height, #5 title
+\newcommand{\subsec}[5]{%
+  \fill[white,rounded corners=2pt] (#1,#2) rectangle ++(#3,-#4);
+  \draw[line,line width=0.5pt,rounded corners=2pt] (#1,#2) rectangle ++(#3,-#4);
+  \fill[sub,rounded corners=2pt] (#1,#2) rectangle ++(#3,-11);
+  \fill[sub] (#1,#2-5) rectangle ++(#3,-6);
+  \node[anchor=west,font=\Hd,inner sep=0] at (#1+4,#2-5.6) {#5};}
+
+% ---------------- INPUTS ----------------
+\subsec{4}{-40}{84}{61}{Models \& agents}
+\node at (34.6,-58.3) {\I{\faFile*[regular]}};
+\node at (63.5,-58.3) {\I{\faRobot}};
+\node[fill=white,inner sep=0.3pt,circle] at (72,-62.3) {{\fontsize{6}{6}\selectfont\color{icon}\faWrench}};
+\node at (46,-69.2) {Text models\dotsep Agents};
+\draw[line,line width=0.4pt] (9,-73.5) -- (83,-73.5);
+\node at (18,-80.5) {\I{\faImage[regular]}\,{\fontsize{8}{8}\selectfont\color{icon}\faAlignLeft}};
+\node at (46,-80.5) {\I{\faImage}};
+\begin{scope}[shift={(73,-81)},icon,line width=0.55pt]
+  \draw (-7,-3.5) -- (4.5,-3.5) -- (7,1.5) -- (-4.5,1.5) -- cycle;
+  \draw (-3.2,-3.5) -- (-0.8,1.5) (0.6,-3.5) -- (3,1.5) (-5.75,-1) -- (5.75,-1);
+  \draw[smooth] plot[domain=-6:6,samples=25] (\x,{4.2+1.4*sin(\x*40)});
+\end{scope}
+\node[align=center] at (18,-93) {Vision-\\language};
+\node at (46,-90.7) {Images};
+\node[align=center] at (73,-93) {Physics\\fields};
+
+\subsec{4}{-105}{84}{40}{Methods \& keys}
+\node[anchor=west,inner sep=0] at (12,-124.6) {{\fontsize{10}{10}\selectfont\color{icon}\faPlug}\hspace{-1pt}{\fontsize{6}{6}\selectfont\color{icon}\faPlusCircle}};
+\node[anchor=west,align=left] at (31,-124.5) {Method library +\\Your method};
+\node at (17,-137.0) {{\fontsize{10}{10}\selectfont\color{icon}\faKey}};
+\node[anchor=west] at (31,-138) {Private key};
+
+\subsec{4}{-149}{84}{35}{Evaluation setup}
+\node at (17,-171.5) {\I{\faSlidersH}};
+\node[anchor=west,align=left] at (31,-171.5) {Data\dotsep Prompts\dotsep\\Modifications};
+
+% ---------------- PLATFORM ----------------
+\subsec{108}{-40}{178}{69}{Watermark method library}
+% OpenMark card
+\fill[omcard,rounded corners=2pt] (113,-54) rectangle (215,-99);
+\draw[omedge,line width=0.5pt,rounded corners=2pt] (113,-54) rectangle (215,-99);
+\node[inner sep=0] at (164,-61.3) {\OMmethod{8.5}{omInk}{omOrange}\hspace{3pt}\raisebox{0.3pt}{\OMword{9.5}{omInk}{omOrange}{}}};
+\node[fill=omOrange,text=white,rounded corners=2pt,inner sep=1.3pt,font=\fontsize{5.8}{6}\selectfont\bfseries] at (164,-72.2) {PROPOSED METHOD};
+\node at (122,-81.2) {{\fontsize{8.5}{8.5}\selectfont\color{omOrange}\faLayerGroup}};
+\node[anchor=west] at (130,-82.5) {Joint model--policy learning};
+\node at (122,-92.3) {{\fontsize{8.5}{8.5}\selectfont\color{omOrange}\faCog}};
+\node[anchor=west] at (130,-92.3) {Perturbation-aware training};
+% Other methods card
+\fill[other,rounded corners=2pt] (220,-54) rectangle (281,-99);
+\draw[otheredge,line width=0.5pt,rounded corners=2pt] (220,-54) rectangle (281,-99);
+\node[font=\Hd] at (250.5,-67) {Other methods};
+\node[draw=otheredge,fill=white,rounded corners=2pt,inner sep=2pt,line width=0.5pt] at (250.5,-83.5) {Add a method \,\textbf{+}};
+\node at (197,-104) {Select a compatible method for each model};
+
+\node[bigarrow,shape border rotate=270,minimum height=8pt] at (197,-113.5) {};
+
+\subsec{108}{-118}{178}{66}{Watermark \& evaluate}
+\foreach \n/\x/\st in {s1/124/stage,s2/160.5/opt,s3/197/stage,s4/233.5/opt,s5/270/stage}{\node[\st] (\n) at (\x,-148.7) {};}
+\node[inner sep=0] at (124,-140.8) {\Ic{\faCubes}};
+\node[inner sep=0] at (160.5,-140.3) {\Ic{\faSlidersH}};
+\node[inner sep=0] at (197,-140.6) {\Ic{\faComment*[regular]}};
+\node[inner sep=0] at (233.5,-140.3) {\Ic{\faEdit[regular]}};
+\node[inner sep=0] at (270,-140.3) {\Ic{\faSearch}};
+\draw[icon,line width=0.45pt,line join=round,line cap=round] (265.9,-138.7) -- (266.7,-138.7) -- (267.3,-137.4) -- (268.2,-140.0) -- (268.8,-138.7) -- (269.7,-138.7);
+\node at (124,-155) {Embed};
+\node[align=center,font=\fontsize{6.5}{6.7}\selectfont] at (160.5,-152.4) {Weight\\edits};
+\node at (197,-155) {Generate};
+\node[align=center,font=\fontsize{6.5}{6.7}\selectfont] at (233.5,-152.4) {Output\\edits};
+\node[align=center,font=\fontsize{6.5}{6.7}\selectfont] at (270,-155) {Detect /\\verify};
+\foreach \x in {160.5,233.5}{\node[font=\fontsize{5.8}{6}\selectfont\itshape] at (\x,-161.6) {optional};}
+\foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5}{\draw[flow] (\a.east) -- (\b.west);}
+\node at (197,-170.8) {Weight edits: fine-tune\dotsep merge\dotsep quantize\dotsep prune};
+\draw[line,line width=0.4pt] (114,-174.8) -- (280,-174.8);
+\node[font=\fontsize{6.5}{7.4}\selectfont\bfseries] at (197,-179.3) {Compare detectability, quality \& robustness};
+
+% ---------------- OUTPUTS ----------------
+\foreach \y/\t/\l in {-40/Watermarked weights/Standard\\inference,
+                      -83/Detection results/Output scores\dotsep\\Model verdicts,
+                      -126/Benchmark reports/Quality\dotsep\\Detectability\dotsep\\Robustness}{
+  \subsec{306}{\y}{86}{39}{\t}
+  \draw[line,line width=0.4pt] (336,\y-15) -- (336,\y-36);
+  \node[anchor=west,align=left] at (340,\y-25) {\l};
+}
+\node at (321,-65) {\I{\faCubes}};
+\node at (321,-108) {\I{\faSearch}};
+\draw[icon,line width=0.55pt,line join=round] (316.4,-107.4) -- (318.2,-107.4) -- (319.1,-105.2) -- (320.4,-109.6) -- (321.4,-107.4) -- (323,-107.4);
+\begin{scope}[shift={(321,-151)}]
+  \node at (0,0) {{\fontsize{13}{13}\selectfont\color{icon}\faFile[regular]}};
+  \fill[icon] (-2.6,-3.2) rectangle (-1.4,-0.6) (-0.6,-3.2) rectangle (0.6,0.6) (1.4,-3.2) rectangle (2.6,-1.4);
+\end{scope}
+\draw[line,line width=0.4pt] (308,-169.5) -- (390,-169.5);
+\node[align=center] at (349,-177.5) {Samples\dotsep Configurations\dotsep\\Leaderboards};
+
+% ---------------- column arrows ----------------
+\node[bigarrow] at (98,-106) {};
+\node[bigarrow] at (296,-106) {};
+\end{tikzpicture}
+\end{document}
