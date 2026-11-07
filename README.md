@@ -10,6 +10,7 @@
 <p align="center">
   <b>Project</b>&nbsp; · &nbsp;
   <a href="https://loopleap-lab.github.io/OpenMarkX/">Website</a> ·
+  <a href="https://loopleap-lab.github.io/OpenMarkX/code/">Code</a> ·
   <a href="https://loopleap-lab.github.io/OpenMarkX/demo/">Web demos</a> ·
   <a href="https://arxiv.org/abs/2510.23891">Paper</a> ·
   <a href="LEADERBOARD.md">Leaderboard</a> ·
