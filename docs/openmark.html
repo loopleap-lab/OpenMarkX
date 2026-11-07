@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="icon" type="image/svg+xml" href="static/mark.svg">
+</head><body>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>OpenMark Results</title>
@@ -164,7 +165,7 @@ section.band + section.band { border-top: 1px solid var(--line); }
 .nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
 .nav .wrap { display: flex; align-items: center; gap: 36px; padding-block: 16px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--ink); text-decoration: none; }
-.brand svg { width: 34px; height: 34px; }
+.brand svg { width: auto; height: 26px; }
 .nav-links { display: flex; gap: 26px; flex-wrap: wrap; font-size: 15px; }
 .nav-links a { color: var(--muted); text-decoration: none; }
 .nav-links a:hover { color: var(--ink); }
@@ -1458,8 +1459,8 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 <nav class="nav" aria-label="Site">
   <div class="wrap">
     <a class="brand" href="index.html#top">
-      <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 21.5 L13 12.5 L17 19 L21 12.5 L23.5 21.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Open<span class="hl">Mark</span><span class="xb">X</span></span>
+      <svg class="mark" viewBox="-8 -8 186 116" aria-hidden="true"><g fill="none" stroke-width="14.5" stroke-linecap="round" stroke-linejoin="round"><path d="M88 56 L104 84 L122 58" stroke="var(--accent)"/><circle cx="42" cy="58" r="35" stroke="var(--ink)"/><path d="M70 36 L104 71 L134 38 M134 34 V92 M116 7 H162 V38" stroke="var(--ink)"/></g></svg>
+      <span>Open<span class="hl">Mark</span>X</span>
     </a>
     <div class="nav-links"><a href="index.html#weights">Why</a><a href="index.html#toolkit">Toolkit</a><a href="#pro">OpenMark</a><a href="#results">Results</a><a href="index.html#demos">Demos</a><a href="index.html#start">Get started</a><a href="docs.html">Docs</a></div>
     <div class="nav-end"><a class="iconbtn js-repo" href="index.html#start" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg></a><a class="btn sm primary" href="index.html#start">Get started</a></div>
@@ -1517,8 +1518,8 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
   <div class="wrap">
     <div class="fgrid">
       <div><a class="brand" href="index.html#top">
-      <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--ink)" stroke-width="2.4"/><path d="M17 0v6M17 28v6M0 17h6M28 17h6" stroke="var(--ink)" stroke-width="2.4"/><path d="M10.5 21.5 L13 12.5 L17 19 L21 12.5 L23.5 21.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Open<span class="hl">Mark</span><span class="xb">X</span></span>
+      <svg class="mark" viewBox="-8 -8 186 116" aria-hidden="true"><g fill="none" stroke-width="14.5" stroke-linecap="round" stroke-linejoin="round"><path d="M88 56 L104 84 L122 58" stroke="var(--accent)"/><circle cx="42" cy="58" r="35" stroke="var(--ink)"/><path d="M70 36 L104 71 L134 38 M134 34 V92 M116 7 H162 V38" stroke="var(--ink)"/></g></svg>
+      <span>Open<span class="hl">Mark</span>X</span>
     </a><p style="margin:12px 0 0;max-width:46ch">A toolkit for tracing open-source models through watermarks in their weights. LoopLeap Lab</p></div>
       <div><h4>Project</h4><ul><li><a href="index.html#weights">Why</a></li><li><a href="index.html#toolkit">Toolkit</a></li><li><a href="#pro">OpenMark</a></li><li><a href="#results">Results</a></li><li><a href="index.html#demos">Demos</a></li></ul></div>
       <div><h4>Learn</h4><ul><li><a href="index.html#start">Get started</a></li><li><a href="docs.html">Developer guide</a></li><li><a class="js-repo" href="https://github.com/loopleap-lab/OpenMarkX">GitHub</a></li><li><a href="https://arxiv.org/abs/2510.23891">Paper</a></li></ul></div>

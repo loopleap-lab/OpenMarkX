@@ -3,6 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>OpenMarkX Run</title>
+<link rel="icon" type="image/svg+xml" href="static/mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap">
@@ -38,7 +39,7 @@ h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
 .nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
 .nav .wrap { display: flex; align-items: center; gap: 28px; padding-block: 14px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: var(--ink); text-decoration: none; }
-.brand svg { width: 32px; height: 32px; }
+.brand svg { width: auto; height: 26px; }
 .nav-end { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); display: inline-block; }
 .dot.on { background: var(--good); }
@@ -131,8 +132,8 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
 <nav class="nav" aria-label="Site">
   <div class="wrap">
     <a class="brand" href="./">
-      <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="var(--ink)"/><path d="M8.5 12 L12.5 23 L17 14.5 L21.5 23 L25.5 12" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Open<span class="hl">MarkX</span></span>
+      <svg class="mark" viewBox="-8 -8 186 116" aria-hidden="true"><g fill="none" stroke-width="14.5" stroke-linecap="round" stroke-linejoin="round"><path d="M88 56 L104 84 L122 58" stroke="var(--accent)"/><circle cx="42" cy="58" r="35" stroke="var(--ink)"/><path d="M70 36 L104 71 L134 38 M134 34 V92 M116 7 H162 V38" stroke="var(--ink)"/></g></svg>
+      <span>Open<span class="hl">Mark</span>X</span>
     </a>
     <div class="nav-end"><span class="dot" id="dot"></span><span id="conn-label">not connected</span></div>
   </div>
