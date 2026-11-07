@@ -33,8 +33,8 @@
 
 ## 0.1.0 (current main, not yet tagged)
 
-The toolkit released with the NeurIPS 2026 paper "OpenMark: Enabling Precise and Robust Text Watermark for
-Open-Source LLMs".
+The platform released with the NeurIPS 2026 paper "OpenMarkX: An Extensible Platform for Watermarking Open-Source
+Model and Agent Outputs".
 
 ### Rename (2026-10-24)
 

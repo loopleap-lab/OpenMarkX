@@ -1,6 +1,6 @@
-# OpenMark paper code
+# OpenMark experiment code
 
-The training and evaluation scripts of the OpenMark paper (NeurIPS 2026): logit distillation of the watermark into
+The training and evaluation scripts behind the OpenMark experiments of the OpenMarkX paper (NeurIPS 2026): logit distillation of the watermark into
 LLaMA-3, Phi-2 and LLaMA-3.2 with the jointly trained watermark policy and perturbation-aware training, the
 distillation baselines of Gu et al., and the weight and text modifications of the robustness experiments. The
 OpenMarkX toolkit in the parent directory runs the same method (`--watermark openmark`) through its own pipeline;

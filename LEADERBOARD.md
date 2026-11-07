@@ -1,6 +1,6 @@
 # Leaderboard
 
-Results reported in the OpenMark paper (NeurIPS 2026), on **LLaMA-3-8B**.
+Results reported in the OpenMarkX paper (NeurIPS 2026), on **LLaMA-3-8B**.
 Each method is distilled into the model's weights; detection uses 5,000 watermarked and 5,000 non-watermarked texts
 (50-token C4 prefixes, 200-token continuations, temperature 1). PPL is the median perplexity under LLaMA-2-13B
 (unwatermarked LLaMA-3-8B: 3.6). Settings of each modification are in the paper's appendix.

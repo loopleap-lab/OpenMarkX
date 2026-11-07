@@ -34,15 +34,15 @@
 
 ## About
 
-**OpenMarkX** (NeurIPS 2026) is the toolkit released with OpenMark. It learns a watermark into the weights of a model
-before release, tests the watermark under the edits a user can make to the weights, and detects it later with the
+**OpenMarkX** (NeurIPS 2026) is an extensible platform for watermarking open-source model and agent outputs. It
+learns a watermark into the weights of a model before release, tests the watermark under the edits a user can make to the weights, and detects it later with the
 developer's secret key. Language, vision-language, agent, image and physics models run through one command,
 `openmarkx run`, and methods are compared under the same edits with `openmarkx bench`.
 
 OpenMark, the paper's method, trains the watermark policy jointly with the LLM, so the model learns the pattern the
 detector expects, and adds perturbation-aware training, so the watermark survives fine-tuning, merging, quantization
-and pruning. On three open-source LLMs it reaches 0.92 TPR at 1% FPR while lowering perplexity by 20.5% on average
-relative to Gu et al.-KGW.
+and pruning. On LLaMA3-8B it reaches 0.92 TPR at 1% FPR, and across three open-source LLMs it lowers perplexity by
+20.5% on average relative to Gu et al.-KGW.
 
 <p align="center">
   <picture>
@@ -214,8 +214,8 @@ license (e.g. `openmarkx/third_party/pro/LICENSE`); MarkLLM is installed from it
 If you find our repo useful, please cite our paper ([BibTeX](docs/static/openmark.bib)):
 
 ```bibtex
-@inproceedings{xue2026openmark,
-  title     = {{OpenMark}: Enabling Precise and Robust Text Watermark for Open-Source {LLMs}},
+@inproceedings{xue2026openmarkx,
+  title     = {{OpenMarkX}: An Extensible Platform for Watermarking Open-Source Model and Agent Outputs},
   author    = {Xue, Jiaqi and Zhao, Yifei and Al Ghanim, Mansour and Gao, Shangqian and
                Sun, Ruimin and Lou, Qian and Zheng, Mengxin},
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
