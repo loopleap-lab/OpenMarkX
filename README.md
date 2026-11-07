@@ -10,7 +10,7 @@
 <p align="center">
   <b>Project</b>&nbsp; · &nbsp;
   <a href="https://loopleap-lab.github.io/OpenMarkX/">Website</a> ·
-  <a href="https://loopleap-lab.github.io/OpenMarkX/#demos">Web demos</a> ·
+  <a href="https://loopleap-lab.github.io/OpenMarkX/demo/">Web demos</a> ·
   <a href="https://arxiv.org/abs/2510.23891">Paper</a> ·
   <a href="LEADERBOARD.md">Leaderboard</a> ·
   <a href="#citation">Cite</a>
@@ -18,7 +18,7 @@
   <b>Get started</b>&nbsp; · &nbsp;
   <a href="#installation">Installation</a> ·
   <a href="#watermark-a-language-model">Language model</a> ·
-  <a href="#run-a-demo">Demos</a> ·
+  <a href="demo/">Demo guide</a> ·
   <a href="https://colab.research.google.com/github/loopleap-lab/OpenMarkX/blob/main/notebooks/run_on_colab.ipynb">Colab</a>
   <br>
   <b>Reference</b>&nbsp; · &nbsp;
