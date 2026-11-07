@@ -13,7 +13,8 @@
   <b>Project</b>&nbsp; · &nbsp;
   <a href="https://loopleap-lab.github.io/OpenMarkX/">Open website ↗</a> ·
   <a href="https://loopleap-lab.github.io/OpenMarkX/demo/">Web demos</a> ·
-  <a href="https://arxiv.org/abs/2510.23891">Paper</a> ·
+  <a href="https://github.com/loopleap-lab/OpenMarkX/raw/refs/heads/main/docs/static/OpenMarkX.pdf">Paper (PDF)</a> ·
+  <a href="https://arxiv.org/abs/2510.23891">arXiv</a> ·
   <a href="LEADERBOARD.md">Leaderboard</a> ·
   <a href="#citation">Cite</a>
   <br>
