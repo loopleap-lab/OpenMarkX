@@ -1538,6 +1538,29 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 .ovx-col.out .ovx-sec { grid-template-rows: auto 1fr; }
 .ovx-col.out .ovx-row { align-self: center; }
 .ovx-col.out .ovx-row svg { width: 26px; height: 26px; }
+/* ---- compact pass ---- */
+.ovx { margin-top: 26px; }
+.ovx-cap { margin-bottom: 10px; }
+@media (min-width: 901px) { .ovx-grid { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 2.1fr) 28px minmax(0, 1fr); } }
+.ovx-col h3 { padding: 7px 14px; }
+.ovx-sec { padding: 10px 14px; gap: 7px; }
+.ovx-icons { gap: 4px; }
+.ovx-icons span { gap: 3px; }
+.ovx-icons.three { padding-top: 7px; }
+.ovx-lib { gap: 10px; }
+.ovx-om { gap: 5px; padding: 9px 12px; }
+.ovx-omt { gap: 6px 10px; margin-bottom: 0; }
+.ovx-other { gap: 8px; padding: 9px; }
+.ovx-add { padding: 4px 9px; }
+.ovx-flow .st { padding: 8px 4px; gap: 4px; }
+@media (min-width: 561px) { .ovx-flow .sa { width: 14px; } }
+@media (max-width: 560px) { .ovx-flow .st { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 7px 10px; } .ovx-flow .st small::before { content: "("; } .ovx-flow .st small::after { content: ")"; } .ovx-flow .sa { height: 12px; } }
+.ovx-arrow.down { height: 14px; }
+.ovx-note.strong { padding-top: 6px; }
+.ovx-note.foot { padding: 9px 14px; }
+.ovx-col:not(.wide) .ovx-sec { grid-template-rows: none; align-content: center; }
+.ovx-omt b { font-size: 18px; }
+.ovx-omt em { font-size: 11px; padding: 2px 7px; }
 @media (max-width: 560px) { .ovx-flow .sa::after { left: -5px; right: auto; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 9px solid var(--rule); } }
 </style>
 
