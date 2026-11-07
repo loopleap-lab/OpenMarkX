@@ -1480,6 +1480,65 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
 .platform-overview img { display: block; width: 100%; height: auto; }
 .platform-overview figcaption { margin: 10px auto 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
 @media (max-width: 640px) { .platform-overview a { padding: 4px; border-radius: 8px; } .hero .sub { font-size: 24px; } .release-credit { font-size: 12px; } }
+/* ---- hero overview: the paper's Figure 1 drawn in the page's own blocks (ink rules, amber for ours, dashed for yours) ---- */
+.ovx { --t-lab: 14px; --t-text: 16px; margin: 34px auto 0; max-width: 1120px; text-align: left; color: var(--ink); }
+.ovx svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ovx-cap { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; font-size: var(--t-text); font-weight: 700; }
+.ovx-cap .mark, .ovx-omt .mark { width: auto; height: 20px; stroke: none; }
+.ovx-grid { display: grid; grid-template-columns: minmax(0, 1fr) 34px minmax(0, 2fr) 34px minmax(0, 1fr); align-items: stretch; }
+.ovx-col { display: flex; flex-direction: column; border: 2px solid var(--rule); background: var(--paper); min-width: 0; }
+.ovx-col h3 { margin: 0; padding: 10px 16px; background: var(--rule); color: var(--bg); font-size: var(--t-lab); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; line-height: 1.2; }
+.ovx-sec { padding: 14px 16px; display: grid; gap: 10px; align-content: start; }
+.ovx-sec + .ovx-sec { border-top: 2px solid var(--rule); }
+.ovx-col:not(.wide) .ovx-sec { flex: 1 1 auto; }
+.ovx-sec h4 { margin: 0; font-size: var(--t-text); font-weight: 700; line-height: 1.2; }
+.ovx-row { display: flex; align-items: center; gap: 12px; margin: 0; font-size: var(--t-lab); line-height: 1.35; }
+.ovx-icons { display: grid; gap: 8px; text-align: center; font-size: var(--t-lab); line-height: 1.25; }
+.ovx-icons.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ovx-icons.three { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); padding-top: 10px; }
+.ovx-icons span { display: grid; justify-items: center; gap: 6px; }
+.ovx-lib { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 12px; }
+.ovx-om { display: grid; gap: 8px; padding: 12px 14px; background: var(--amber); border: 2px solid #231A15; color: #231A15; text-decoration: none; }
+.ovx-om:hover { transform: translate(-3px, -3px); box-shadow: 3px 3px 0 var(--rule); }
+.ovx-om { transition: transform .15s var(--ease), box-shadow .15s var(--ease); }
+.ovx-omt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 2px; }
+.ovx-omt b { font-size: 20px; font-weight: 900; letter-spacing: -.01em; }
+.ovx-omt b span { color: #8B4B2E; }
+.ovx-omt em { font-style: normal; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; background: #231A15; color: #F7F0DF; padding: 3px 8px; }
+.ovx-om .ovx-row { color: #231A15; }
+.ovx-other { display: grid; align-content: center; justify-items: center; gap: 10px; padding: 12px; border: 2px solid var(--rule); background: var(--bg); text-align: center; }
+.ovx-other b { font-size: var(--t-text); }
+.ovx-add { font-size: var(--t-lab); font-weight: 700; color: var(--accent); border: 2px dashed var(--accent); padding: 6px 10px; }
+.ovx-note { margin: 0; font-size: var(--t-lab); color: var(--muted); text-align: center; }
+.ovx-note.strong { color: var(--ink); font-weight: 700; border-top: 1px solid var(--line); padding-top: 8px; }
+.ovx-note.foot { padding: 12px 16px; border-top: 2px solid var(--rule); color: var(--ink); }
+.ovx-flow { display: flex; align-items: stretch; }
+.ovx-flow .st { flex: 1 1 0; min-width: 0; display: grid; justify-items: center; align-content: center; gap: 6px; padding: 12px 6px; border: 2px solid var(--rule); background: var(--bg); font-size: var(--t-lab); font-weight: 700; text-align: center; line-height: 1.2; }
+.ovx-flow .st.opt { border-style: dashed; background: transparent; }
+.ovx-flow .st small { font-size: 12px; font-weight: 400; font-style: italic; color: var(--muted); }
+.ovx-flow .sa { width: 18px; margin: 0 2px; align-self: center; }
+.ovx-arrow { position: relative; align-self: center; justify-self: center; width: 22px; height: 2px; background: var(--rule); }
+.ovx-arrow::after { content: ""; position: absolute; right: -2px; top: -5px; border: 6px solid transparent; border-left: 9px solid var(--rule); border-right: 0; }
+.ovx-arrow.down { align-self: auto; justify-self: center; display: block; width: 2px; height: 22px; margin: 0 auto; }
+.ovx-arrow.down::after { right: auto; left: -5px; top: auto; bottom: -2px; border: 6px solid transparent; border-top: 9px solid var(--rule); border-bottom: 0; }
+.ovx-col.wide > .ovx-arrow.down { margin-block: 0; }
+.ovx-col.wide > .ovx-sec + .ovx-arrow.down { margin-top: 0; }
+@media (max-width: 900px) {
+  .ovx-grid { grid-template-columns: minmax(0, 1fr); }
+  .ovx-grid > .ovx-arrow { width: 2px; height: 22px; margin: 6px auto; }
+  .ovx-grid > .ovx-arrow::after { right: auto; left: -5px; top: auto; bottom: -2px; border: 6px solid transparent; border-top: 9px solid var(--rule); border-bottom: 0; }
+}
+@media (max-width: 560px) {
+  .ovx-lib { grid-template-columns: minmax(0, 1fr); }
+  .ovx-flow { flex-direction: column; }
+  .ovx-flow .sa { width: 2px; height: 16px; margin: 2px auto; }
+  .ovx-flow .sa::after { right: -5px; top: auto; bottom: -2px; border: 6px solid transparent; border-top: 9px solid var(--rule); border-left-width: 6px; border-bottom: 0; }
+}
+.ovx-flow .sa { background: var(--rule); } .ovx-flow .sa::after { border-left-color: var(--rule); }
+.ovx-col.out .ovx-sec { grid-template-rows: auto 1fr; }
+.ovx-col.out .ovx-row { align-self: center; }
+.ovx-col.out .ovx-row svg { width: 26px; height: 26px; }
+@media (max-width: 560px) { .ovx-flow .sa::after { left: -5px; right: auto; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 9px solid var(--rule); } }
 </style>
 
 <div class="ticker" aria-hidden="true"><div class="track"><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced before edits</span><span>82% of agent answers traced</span><span>Open source &middot; LoopLeap Lab</span><span>Watermarks learned into open-source models</span><span>OpenMark &middot; NeurIPS 2026</span><span>Visual &middot; Multi-modality &middot; Physics &middot; Agent</span><span>90% of generated images traced</span><span>86% of medical answers traced</span><span>100% of aircraft flow fields traced before edits</span><span>82% of agent answers traced</span><span>Open source &middot; LoopLeap Lab</span></div></div>
@@ -1503,7 +1562,84 @@ section.band, section.band.dark, #why, #results, #toolkit, .hero { background-co
     <p class="desc">Choose a model or agent backbone, a compatible watermark method, a private key, and evaluation settings. OpenMarkX produces watermarked weights, detection results, and quality and robustness reports. Our method, OpenMark, combines joint model–policy learning with perturbation-aware training.</p>
     <p class="release-credit">Jiaqi Xue · Yifei Zhao · Mansour Al Ghanim · Shangqian Gao · Ruimin Sun · Qian Lou · Mengxin Zheng<br>LoopLeap Lab · University of Central Florida · Florida State University · Florida International University</p>
     <div class="release-links"><a href="https://arxiv.org/abs/2510.23891">Paper</a><a href="https://github.com/loopleap-lab/OpenMarkX">GitHub</a><a href="#start">Quick start</a></div>
-    <figure class="platform-overview"><a href="static/overview-platform.png" target="_blank" rel="noopener"><img src="static/overview-platform.png" alt="OpenMarkX overview: configurable models and agents, watermark methods and private keys, and evaluation settings enter an extensible platform. OpenMark supplies joint model-policy learning and perturbation-aware training. The platform embeds, generates, detects and verifies, producing watermarked weights, detection results and benchmark reports."></a><figcaption>From model and agent outputs to watermark verification. Select compatible methods and edits for each workflow.</figcaption></figure>
+    <figure class="ovx" aria-label="OpenMarkX overview: configurable models and agents, watermark methods and private keys, and evaluation settings enter an extensible platform. OpenMark supplies joint model-policy learning and perturbation-aware training. The platform embeds, generates, detects and verifies, producing watermarked weights, detection results and benchmark reports.">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+          <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+          <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M9 13v1M15 13v1M2 13v3M22 13v3"/><circle cx="12" cy="3.5" r="1"/></symbol>
+          <symbol id="i-vl" viewBox="0 0 24 24"><rect x="2" y="5" width="12" height="12" rx="1.5"/><path d="m2 15 4-4 3 3 2-2 3 3"/><circle cx="10" cy="9" r="1.2"/><path d="M17 8h5M17 12h5M17 16h3"/></symbol>
+          <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-8 8"/></symbol>
+          <symbol id="i-field" viewBox="0 0 24 24"><path d="M2 9c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5 0"/><path d="m3 20 3-7h15l-3 7zM8.5 13l-2.5 7M13.5 13l-2.5 7M4.3 16.5h15"/></symbol>
+          <symbol id="i-plug" viewBox="0 0 24 24"><path d="M7 2v5M13 2v5M4 7h12v3a6 6 0 0 1-12 0zM10 16v6"/><circle cx="18.5" cy="17.5" r="4"/><path d="M18.5 15.5v4M16.5 17.5h4"/></symbol>
+          <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="12" r="4.5"/><path d="M12 12h10M18 12v3.5M21.5 12v2.5"/></symbol>
+          <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="var(--paper)"/><circle cx="15" cy="12" r="2" fill="var(--paper)"/><circle cx="10" cy="18" r="2" fill="var(--paper)"/></symbol>
+          <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12.5 9 5 9-5M3 17l9 5 9-5"/></symbol>
+          <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+          <symbol id="i-cubes" viewBox="0 0 24 24"><path d="m12 2 5 2.8v5.6L12 13 7 10.4V4.8z"/><path d="m7 10.4-5 2.8v5.6L7 21.5l5-2.7 5 2.7 5-2.7v-5.6l-5-2.8M12 13v5.8M7 15.9v5.6M17 15.9v5.6M2 13.2l5 2.7 5-2.7 5 2.7 5-2.7"/></symbol>
+          <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 9h8M8 12.5h5"/></symbol>
+          <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></symbol>
+          <symbol id="i-detect" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="m21 21-6-6M5.5 10h2l1.2-2.5 2 5 1.3-2.5h2.5"/></symbol>
+          <symbol id="i-report" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 18v-3M12 18v-6M16 18v-4"/></symbol>
+        </defs>
+      </svg>
+      <div class="ovx-cap"><svg class="mark" viewBox="-8 -8 186 116" aria-hidden="true"><g fill="none" stroke-width="14.5" stroke-linecap="round" stroke-linejoin="round"><path d="M88 56 L104 84 L122 58" stroke="var(--accent)"/><circle cx="42" cy="58" r="35" stroke="var(--ink)"/><path d="M70 36 L104 71 L134 38 M134 34 V92 M116 7 H162 V38" stroke="var(--ink)"/></g></svg><span>Watermarking open model and agent outputs</span></div>
+      <div class="ovx-grid">
+        <section class="ovx-col">
+          <h3>Inputs</h3>
+          <div class="ovx-sec">
+            <h4>Models &amp; agents</h4>
+            <div class="ovx-icons two"><span><svg><use href="#i-file"/></svg>Text models</span><span><svg><use href="#i-bot"/></svg>Agents</span></div>
+            <div class="ovx-icons three"><span><svg><use href="#i-vl"/></svg>Vision-language</span><span><svg><use href="#i-img"/></svg>Images</span><span><svg><use href="#i-field"/></svg>Physics fields</span></div>
+          </div>
+          <div class="ovx-sec">
+            <h4>Methods &amp; keys</h4>
+            <p class="ovx-row"><svg><use href="#i-plug"/></svg><span>Method library + your method</span></p>
+            <p class="ovx-row"><svg><use href="#i-key"/></svg><span>Private key</span></p>
+          </div>
+          <div class="ovx-sec">
+            <h4>Evaluation setup</h4>
+            <p class="ovx-row"><svg><use href="#i-sliders"/></svg><span>Data &middot; Prompts &middot; Modifications</span></p>
+          </div>
+        </section>
+        <i class="ovx-arrow" aria-hidden="true"></i>
+        <section class="ovx-col wide">
+          <h3>Extensible platform</h3>
+          <div class="ovx-sec">
+            <h4>Watermark method library</h4>
+            <div class="ovx-lib">
+              <a class="ovx-om" href="openmark.html">
+                <span class="ovx-omt"><svg class="mark" viewBox="-8 4 150 104" aria-hidden="true"><g fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M88 56 L104 84 L122 58" stroke="var(--accent)"/><circle cx="42" cy="58" r="35" stroke="#231A15"/><path d="M70 36 L104 71 L134 38 M134 30 V92" stroke="#231A15"/></g></svg><b>Open<span>Mark</span></b><em>Proposed method</em></span>
+                <span class="ovx-row"><svg><use href="#i-layers"/></svg><span>Joint model&ndash;policy learning</span></span>
+                <span class="ovx-row"><svg><use href="#i-gear"/></svg><span>Perturbation-aware training</span></span>
+              </a>
+              <div class="ovx-other"><b>Other methods</b><span class="ovx-add">Add a method +</span></div>
+            </div>
+            <p class="ovx-note">Select a compatible method for each model</p>
+          </div>
+          <i class="ovx-arrow down" aria-hidden="true"></i>
+          <div class="ovx-sec">
+            <h4>Watermark &amp; evaluate</h4>
+            <div class="ovx-flow">
+              <span class="st"><svg><use href="#i-cubes"/></svg>Embed</span><i class="sa" aria-hidden="true"></i>
+              <span class="st opt"><svg><use href="#i-sliders"/></svg>Weight edits<small>optional</small></span><i class="sa" aria-hidden="true"></i>
+              <span class="st"><svg><use href="#i-chat"/></svg>Generate</span><i class="sa" aria-hidden="true"></i>
+              <span class="st opt"><svg><use href="#i-edit"/></svg>Output edits<small>optional</small></span><i class="sa" aria-hidden="true"></i>
+              <span class="st"><svg><use href="#i-detect"/></svg>Detect / verify</span>
+            </div>
+            <p class="ovx-note">Weight edits: fine-tune &middot; merge &middot; quantize &middot; prune</p>
+            <p class="ovx-note strong">Compare detectability, quality &amp; robustness</p>
+          </div>
+        </section>
+        <i class="ovx-arrow" aria-hidden="true"></i>
+        <section class="ovx-col out">
+          <h3>Outputs</h3>
+          <div class="ovx-sec"><h4>Watermarked weights</h4><p class="ovx-row"><svg><use href="#i-cubes"/></svg><span>Standard inference</span></p></div>
+          <div class="ovx-sec"><h4>Detection results</h4><p class="ovx-row"><svg><use href="#i-detect"/></svg><span>Output scores &middot; Model verdicts</span></p></div>
+          <div class="ovx-sec"><h4>Benchmark reports</h4><p class="ovx-row"><svg><use href="#i-report"/></svg><span>Quality &middot; Detectability &middot; Robustness</span></p></div>
+          <p class="ovx-note foot">Samples &middot; Configurations &middot; Leaderboards</p>
+        </section>
+      </div>
+    </figure>
     <div class="ticket">
       <div class="install"><code id="installCmd">git clone https://github.com/loopleap-lab/OpenMarkX &amp;&amp; pip install -e OpenMarkX</code><button class="btn sm" type="button" id="installCopy">Copy</button></div>
       <div class="tear"><a class="primary js-repo" href="#start">View on GitHub</a><a href="docs.html">Developer guide</a></div>
